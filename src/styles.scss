@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body { height: 100%; margin: 0; }
+body { font-family: Roboto, "Helvetica Neue", sans-serif; background-color: #f9fafb; }
+
+/* Override Material Table styles for Tailwind compatibility */
+.mat-mdc-table {
+  background: transparent !important;
+}
+
+.mat-mdc-header-cell {
+  background-color: #f9fafb !important;
+  color: #6b7280 !important;
+  font-weight: 600 !important;
+}
+
+.mat-mdc-cell {
+  border-bottom: 1px solid #f3f4f6 !important;
+}
+
+.mdc-data-table__row:last-child .mat-mdc-cell {
+  border-bottom: none !important;
+}
+
+/* Fix for Tailwind Preflight adding borders to MDC notched outline */
+.mdc-notched-outline__notch {
+  border-right-style: hidden !important;
+  border-left-style: hidden !important;
+}
+
+/* Fix for Material form field asterisk/label colliding with the right side of the notch */
+.mdc-floating-label {
+  padding-right: 4px !important;
+}
+
+.mat-mdc-form-field-required-marker {
+  display: inline-block;
+  padding-right: 4px;
+}
+
+/* Ensure modern-dialogs have no border radius */
+.modern-dialog .mdc-dialog__surface {
+  border-radius: 2px !important;
+}
+
