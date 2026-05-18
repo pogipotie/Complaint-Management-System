@@ -164,7 +164,12 @@ export class LoginComponent {
       next: async ({ data, error }) => {
         if (error) {
           this.loading = false;
-          this.errorMsg = error.message;
+          // Handle 'Email not confirmed' specifically
+          if (error.message.toLowerCase().includes('email not confirmed')) {
+            this.errorMsg = 'Your email address is not verified. Please check your inbox or register again to receive a new OTP.';
+          } else {
+            this.errorMsg = error.message;
+          }
         } else if (data.user) {
           try {
             const profile = await this.authService.getUserProfile(data.user.id);
@@ -172,15 +177,20 @@ export class LoginComponent {
             
             this.closeDialog(); // Close modal on success
 
-            if (profile && (profile.role === 'admin' || profile.role === 'staff')) {
-              this.router.navigate(['/admin/dashboard']);
-            } else {
-              this.router.navigate(['/citizen/complaints']);
+            if (profile) {
+              if (profile.role === 'admin' || profile.role === 'staff') {
+                this.router.navigate(['/admin/dashboard']);
+              } else if (profile.role === 'brgy_captain') {
+                this.router.navigate(['/captain/dashboard']);
+              } else {
+                this.router.navigate(['/citizen/complaints']);
+              }
             }
           } catch (profileError) {
             this.loading = false;
-            this.closeDialog();
-            this.router.navigate(['/citizen/complaints']); // fallback
+            // Provide a better error if the profile is missing entirely
+            this.errorMsg = 'Your profile data could not be found. Please contact support.';
+            this.authService.signOut(); // Ensure they don't stay in a broken state
           }
         }
       },

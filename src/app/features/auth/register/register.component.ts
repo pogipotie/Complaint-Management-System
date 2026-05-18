@@ -1,8 +1,7 @@
-import { Component, inject, OnInit, OnDestroy, NgZone } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
-import { AuthService } from '../../../core/services/auth.service';
 import { SupabaseService } from '../../../core/services/supabase.service';
 import { environment } from '../../../../environments/environment';
 
@@ -101,7 +100,10 @@ import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config
 
                 <mat-form-field appearance="outline" class="w-full">
                   <mat-label>Password</mat-label>
-                  <input matInput formControlName="password" type="password" placeholder="Min. 6 characters">
+                  <input matInput formControlName="password" [type]="hidePassword ? 'password' : 'text'" placeholder="Min. 6 characters">
+                  <button type="button" mat-icon-button matSuffix (click)="hidePassword = !hidePassword" [attr.aria-label]="'Hide password'" [attr.aria-pressed]="hidePassword">
+                    <mat-icon>{{hidePassword ? 'visibility_off' : 'visibility'}}</mat-icon>
+                  </button>
                   <mat-error *ngIf="registerForm.get('password')?.hasError('required')">Password is required</mat-error>
                   <mat-error *ngIf="registerForm.get('password')?.hasError('minlength')">Must be at least 6 characters</mat-error>
                 </mat-form-field>
@@ -202,7 +204,7 @@ import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                 <mat-form-field appearance="outline" class="w-full">
                   <mat-label>Barangay</mat-label>
-                  <mat-select formControlName="barangay">
+                  <mat-select formControlName="barangay" (selectionChange)="onBarangayChange($event.value)">
                     <mat-option *ngFor="let brgy of barangays" [value]="brgy">{{ brgy }}</mat-option>
                   </mat-select>
                   <mat-error *ngIf="registerForm.get('barangay')?.hasError('required')">Required</mat-error>
@@ -347,9 +349,9 @@ import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config
         </div>
 
         <div class="text-sm text-center pb-8">
-          <a routerLink="/auth/login" class="font-medium text-gray-900 hover:text-primary-600 bg-white py-2 px-6 rounded-sm shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] border-2 border-gray-900 inline-block uppercase tracking-wider text-[11px] font-black transition-colors">
+          <button type="button" (click)="closeAndReturnToLogin()" class="font-medium text-gray-900 hover:text-primary-600 bg-white py-2 px-6 rounded-sm shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] border-2 border-gray-900 inline-block uppercase tracking-wider text-[11px] font-black transition-colors">
             Already have an account? Sign in
-          </a>
+          </button>
         </div>
 
       </div>
@@ -399,10 +401,8 @@ import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config
 })
 export class RegisterComponent implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
-  private authService = inject(AuthService);
   private supabaseService = inject(SupabaseService);
   private router = inject(Router);
-  private ngZone = inject(NgZone);
 
   registerForm: FormGroup = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
@@ -425,6 +425,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
     otp: ['', [Validators.pattern('^[0-9]{6}$')]]
   });
 
+  hidePassword = true;
   loading = false;
   errorMsg = '';
   successMsg = '';
@@ -458,6 +459,12 @@ export class RegisterComponent implements OnInit, OnDestroy {
     if (this.timerInterval) {
       clearInterval(this.timerInterval);
     }
+  }
+
+  closeAndReturnToLogin() {
+    // Navigate back to the landing page and pass a query parameter
+    // to automatically trigger the login modal.
+    this.router.navigate(['/'], { queryParams: { action: 'login' } });
   }
 
   startResendTimer() {
@@ -546,6 +553,30 @@ export class RegisterComponent implements OnInit, OnDestroy {
     this.mapLoaded = true;
   }
 
+  onBarangayChange(barangay: string) {
+    if (!this.mapLoaded || !barangay) return;
+    
+    // Create a Geocoder instance to find the exact coordinates of the selected Barangay
+    const geocoder = new google.maps.Geocoder();
+    const address = `Barangay ${barangay}, Gonzaga, Cagayan, Philippines`;
+    
+    this.locating = true;
+    geocoder.geocode({ address: address }, (results, status) => {
+      this.locating = false;
+      if (status === 'OK' && results && results[0]) {
+        const location = results[0].geometry.location;
+        const newCenter = { lat: location.lat(), lng: location.lng() };
+        
+        // Pan the map to the new Barangay
+        this.mapCenter = newCenter;
+        // Automatically drop a pin there so the user doesn't have to start from scratch
+        this.updateMarker(newCenter);
+      } else {
+        console.warn('Geocode was not successful for the following reason: ' + status);
+      }
+    });
+  }
+
   getCurrentLocation() {
     if (!navigator.geolocation) {
       this.errorMsg = 'Geolocation is not supported by your browser';
@@ -587,7 +618,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
         const compressedFile = await this.compressImage(file);
         this.selectedFile = compressedFile;
         const reader = new FileReader();
-        reader.onload = e => this.imagePreviewUrl = reader?.result ?? null;
+        reader.onload = () => this.imagePreviewUrl = reader?.result ?? null;
         reader.readAsDataURL(compressedFile);
       } catch (err) {
         this.errorMsg = 'Failed to process image.';
@@ -670,7 +701,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
           
           // Before blindly resending, let's try to check if they are ALREADY in the public.users table.
           // If they are in public.users, it means they fully finished registration in the past.
-          const { data: existingUser } = await this.supabaseService.supabase
+          await this.supabaseService.supabase
             .from('users')
             .select('id')
             .eq('id', (await this.supabaseService.supabase.auth.getUser()).data.user?.id || '') // This won't work perfectly without admin rights to query by email, but we can try to sign in
@@ -825,7 +856,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
       const filePath = `${userId}/${Date.now()}.jpeg`;
       const { error: uploadError } = await this.supabaseService.supabase.storage
         .from('citizen_ids')
-        .upload(filePath, this.selectedFile);
+        .upload(filePath, this.selectedFile!);
         
       if (uploadError) throw uploadError;
 

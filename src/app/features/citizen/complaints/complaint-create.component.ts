@@ -75,19 +75,19 @@ import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config
         </button>
       </div>
 
-      <div *ngIf="!isVerified && verificationStatus === 'rejected'" class="bg-red-50 border-2 border-gray-900 rounded-sm p-8 shadow-[4px_4px_0px_0px_rgba(17,24,39,1)] text-center">
+      <div *ngIf="!isVerified && verificationStatus === 'rejected'" class="bg-red-50 border-2 border-gray-900 rounded-sm p-8 shadow-[4px_4px_0px_0px_rgba(17,24,39,1)] text-center flex flex-col items-center">
         <mat-icon class="text-red-600 scale-[2] mb-4">gpp_bad</mat-icon>
         <h2 class="text-2xl font-black text-gray-900 uppercase tracking-tight" style="font-family: 'Arial Black', Impact, sans-serif;">Registration Rejected</h2>
         <p class="mt-4 font-bold text-gray-700">Your account registration was declined by the municipality.</p>
         
-        <div class="mt-4 bg-white border-2 border-gray-900 p-4 text-left max-w-lg mx-auto shadow-[2px_2px_0px_0px_rgba(17,24,39,1)]">
-          <p class="text-xs font-black text-gray-500 uppercase tracking-widest mb-1 flex items-center gap-1">
+        <div class="mt-4 mb-6 bg-white border-2 border-gray-900 p-4 text-center w-full max-w-lg shadow-[2px_2px_0px_0px_rgba(17,24,39,1)]">
+          <p class="text-xs font-black text-gray-500 uppercase tracking-widest mb-1 flex items-center justify-center gap-1">
             <mat-icon class="scale-75 text-red-500">info</mat-icon> Reason for Rejection:
           </p>
           <p class="text-sm font-bold text-gray-900">{{ rejectionReason || 'No specific reason provided.' }}</p>
         </div>
 
-        <p class="mt-6 text-sm text-gray-600 font-bold max-w-lg mx-auto">
+        <p class="text-sm text-gray-600 font-bold w-full max-w-lg text-center leading-relaxed">
           Your account data will be automatically deleted 24 hours after your original registration time. Once deleted, you may register again with corrected information.
         </p>
         
@@ -96,13 +96,13 @@ import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config
         </button>
       </div>
 
-      <div *ngIf="!isVerified && verificationStatus === 'banned'" class="bg-gray-800 border-2 border-gray-900 rounded-sm p-8 shadow-[4px_4px_0px_0px_rgba(17,24,39,1)] text-center">
+      <div *ngIf="!isVerified && verificationStatus === 'banned'" class="bg-gray-800 border-2 border-gray-900 rounded-sm p-8 shadow-[4px_4px_0px_0px_rgba(17,24,39,1)] text-center flex flex-col items-center">
         <mat-icon class="text-white scale-[2] mb-4">block</mat-icon>
         <h2 class="text-2xl font-black text-white uppercase tracking-tight" style="font-family: 'Arial Black', Impact, sans-serif;">Account Banned</h2>
         <p class="mt-4 font-bold text-gray-300">Your account has been permanently suspended by the municipality administration.</p>
         
-        <div class="mt-4 bg-gray-900 border-2 border-gray-700 p-4 text-left max-w-lg mx-auto shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-          <p class="text-xs font-black text-gray-400 uppercase tracking-widest mb-1 flex items-center gap-1">
+        <div class="mt-4 bg-gray-900 border-2 border-gray-700 p-4 text-center w-full max-w-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+          <p class="text-xs font-black text-gray-400 uppercase tracking-widest mb-1 flex items-center justify-center gap-1">
             <mat-icon class="scale-75 text-gray-300">info</mat-icon> Reason for Ban:
           </p>
           <p class="text-sm font-bold text-white">{{ rejectionReason || 'Violation of community guidelines.' }}</p>

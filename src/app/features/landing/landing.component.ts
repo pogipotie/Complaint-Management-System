@@ -1,6 +1,6 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -349,11 +349,29 @@ import { LoginComponent } from '../auth/login/login.component';
 export class LandingComponent implements OnInit {
   private supabaseService = inject(SupabaseService);
   private dialog = inject(MatDialog);
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
   
   announcements: any[] = [];
   loadingAnnouncements = true;
 
   async ngOnInit() {
+    // Check if we need to auto-open the login modal (e.g. returning from registration)
+    this.route.queryParams.subscribe(params => {
+      if (params['action'] === 'login') {
+        // Use setTimeout to ensure the view is initialized before opening dialog
+        setTimeout(() => {
+          this.openLoginModal();
+          // Clear the query parameter so it doesn't re-open on refresh
+          this.router.navigate([], {
+            queryParams: { action: null },
+            queryParamsHandling: 'merge',
+            replaceUrl: true
+          });
+        }, 100);
+      }
+    });
+
     this.loadingAnnouncements = true;
     // Fetch latest 3 announcements for the public landing page
     const { data, error } = await this.supabaseService.supabase

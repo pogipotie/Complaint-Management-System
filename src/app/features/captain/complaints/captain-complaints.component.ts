@@ -18,7 +18,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatMenuModule } from '@angular/material/menu';
 import { ComplaintDetailDialogComponent } from '../../citizen/complaints/complaint-detail-dialog.component';
-import { AdminStatusUpdateDialogComponent } from './admin-status-update-dialog.component';
+import { AdminStatusUpdateDialogComponent } from '../../admin/complaints/admin-status-update-dialog.component';
 
 @Component({
   selector: 'app-admin-complaints',
@@ -66,21 +66,7 @@ import { AdminStatusUpdateDialogComponent } from './admin-status-update-dialog.c
       </div>
 
       <!-- Advanced Filters Row -->
-      <div *ngIf="showFilters" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-5 bg-gray-50 border-2 border-gray-900 rounded-sm shadow-[4px_4px_0px_0px_rgba(17,24,39,1)] animate-in fade-in slide-in-from-top-2 duration-200">
-        <!-- Barangay Filter -->
-        <div class="space-y-1.5">
-          <label class="text-[10px] font-black uppercase tracking-widest text-gray-600">Barangay</label>
-          <div class="relative">
-            <select [(ngModel)]="filterValues.barangay" (change)="applyAllFilters()" class="w-full appearance-none bg-white border-2 border-gray-900 rounded-sm pl-3 pr-8 py-2 text-xs font-bold uppercase tracking-wider text-gray-900 shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] focus:outline-none focus:ring-0 focus:border-primary-600 cursor-pointer">
-              <option value="">ALL BARANGAYS</option>
-              <option *ngFor="let brgy of barangays" [value]="brgy">{{ brgy }}</option>
-            </select>
-            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-900">
-              <mat-icon class="scale-75">expand_more</mat-icon>
-            </div>
-          </div>
-        </div>
-
+      <div *ngIf="showFilters" class="grid grid-cols-1 sm:grid-cols-3 gap-4 p-5 bg-gray-50 border-2 border-gray-900 rounded-sm shadow-[4px_4px_0px_0px_rgba(17,24,39,1)] animate-in fade-in slide-in-from-top-2 duration-200">
         <!-- Category Filter -->
         <div class="space-y-1.5">
           <label class="text-[10px] font-black uppercase tracking-widest text-gray-600">Category</label>
@@ -217,7 +203,7 @@ import { AdminStatusUpdateDialogComponent } from './admin-status-update-dialog.c
                       <mat-icon>visibility</mat-icon>
                     </button>
                     
-                    <ng-container *ngIf="complaint.status !== 'closed' && complaint.status !== 'rejected'">
+                    <ng-container *ngIf="complaint.status !== 'closed' && complaint.status !== 'rejected' && !complaint.is_escalated">
                       <div class="relative inline-block w-36">
                         <select class="w-full appearance-none bg-white border-2 border-gray-900 rounded-sm pl-3 pr-8 py-1.5 text-xs font-black uppercase tracking-wider text-gray-900 shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] focus:outline-none focus:ring-0 focus:border-primary-600 cursor-pointer"
                                 [value]="complaint.status" 
@@ -235,11 +221,11 @@ import { AdminStatusUpdateDialogComponent } from './admin-status-update-dialog.c
                       </div>
                     </ng-container>
 
-                    <ng-container *ngIf="complaint.status === 'closed' || complaint.status === 'rejected'">
+                    <ng-container *ngIf="complaint.status === 'closed' || complaint.status === 'rejected' || complaint.is_escalated">
                       <div class="w-36 px-3 py-1.5 border-2 border-gray-900 rounded-sm text-xs font-black uppercase tracking-wider text-center flex items-center justify-center gap-1 shadow-[1px_1px_0px_0px_rgba(17,24,39,1)]"
-                           [ngClass]="complaint.status === 'rejected' ? 'bg-red-100 text-red-900' : 'bg-gray-100 text-gray-900'">
-                        <mat-icon class="scale-75 -ml-1">lock</mat-icon>
-                        {{ complaint.status }}
+                           [ngClass]="complaint.is_escalated ? 'bg-red-100 text-red-900' : (complaint.status === 'rejected' ? 'bg-red-50 text-red-900' : 'bg-gray-100 text-gray-900')">
+                        <mat-icon class="scale-75 -ml-1">{{ complaint.is_escalated ? 'whatshot' : 'lock' }}</mat-icon>
+                        {{ complaint.is_escalated ? 'ESCALATED' : complaint.status }}
                       </div>
                     </ng-container>
                   </div>
@@ -309,7 +295,7 @@ import { AdminStatusUpdateDialogComponent } from './admin-status-update-dialog.c
     }
   `]
 })
-export class AdminComplaintsComponent implements OnInit, OnDestroy {
+export class CaptainComplaintsComponent implements OnInit, OnDestroy {
   private complaintsService = inject(ComplaintsService);
   private supabaseService = inject(SupabaseService);
   private realtimeService = inject(RealtimeService);
@@ -325,18 +311,11 @@ export class AdminComplaintsComponent implements OnInit, OnDestroy {
   // Filter State
   filterValues = {
     global: '',
-    barangay: '',
     category: '',
     priority: '',
     status: ''
   };
 
-  barangays: string[] = [
-    'Amunitan', 'Batangan', 'Baua', 'Cabiraoan', 'Callao', 'Caroan', 'Casitan', 
-    'Claro M. Recto', 'Flourishing', 'Ipil', 'Iraya', 'Luga', 'Magrafil', 'Minanga', 
-    'Paradise', 'Pateng', 'Progressive', 'San Jose', 'Santa Clara', 'Santa Cruz', 
-    'Santa Maria', 'Smart', 'Tapel', 'Valle', 'Isca'
-  ];
   availableCategories: string[] = [];
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
@@ -401,7 +380,6 @@ export class AdminComplaintsComponent implements OnInit, OnDestroy {
         data.users?.full_name?.toLowerCase().includes(searchTerms.global) ||
         data.id?.toLowerCase().includes(searchTerms.global);
 
-      const barangayMatch = !searchTerms.barangay || data.barangay === searchTerms.barangay;
       const categoryMatch = !searchTerms.category || data.complaint_categories?.name === searchTerms.category;
       const priorityMatch = !searchTerms.priority || data.priority === searchTerms.priority;
       
@@ -412,7 +390,7 @@ export class AdminComplaintsComponent implements OnInit, OnDestroy {
         statusMatch = data.status === searchTerms.status;
       }
 
-      return globalMatch && barangayMatch && categoryMatch && priorityMatch && statusMatch;
+      return globalMatch && categoryMatch && priorityMatch && statusMatch;
     };
   }
 
@@ -425,7 +403,7 @@ export class AdminComplaintsComponent implements OnInit, OnDestroy {
     this.dataSource.filter = JSON.stringify(this.filterValues);
     
     // Check if any filter is actually applied for UI state
-    this.isFiltering = !!this.filterValues.global || !!this.filterValues.barangay || 
+    this.isFiltering = !!this.filterValues.global || 
                        !!this.filterValues.category || !!this.filterValues.priority || 
                        !!this.filterValues.status;
 
@@ -438,7 +416,6 @@ export class AdminComplaintsComponent implements OnInit, OnDestroy {
     inputElement.value = '';
     this.filterValues = {
       global: '',
-      barangay: '',
       category: '',
       priority: '',
       status: ''

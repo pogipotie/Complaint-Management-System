@@ -14,6 +14,10 @@ export const routes: Routes = [
     loadChildren: () => import('./features/admin/admin.routes').then(m => m.ADMIN_ROUTES)
   },
   {
+    path: 'captain',
+    loadChildren: () => import('./features/captain/captain.routes').then(m => m.CAPTAIN_ROUTES)
+  },
+  {
     path: '',
     loadComponent: () => import('./features/landing/landing.component').then(m => m.LandingComponent),
     pathMatch: 'full'

@@ -1,6 +1,6 @@
 import { Component, Inject, OnInit, ViewChild, ElementRef, AfterViewChecked, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef, MatDialog } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -11,6 +11,31 @@ import { environment } from '../../../../environments/environment';
 import { SupabaseService } from '../../../core/services/supabase.service';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+
+// A simple modern confirmation dialog directly in this file to avoid creating new components
+@Component({
+  selector: 'app-confirm-dialog',
+  standalone: true,
+  imports: [CommonModule, MatDialogModule, MatButtonModule, MatIconModule],
+  template: `
+    <div class="bg-white rounded-sm border-2 border-gray-900 shadow-[4px_4px_0px_0px_rgba(17,24,39,1)]">
+      <div class="pt-6 pb-4 px-6 border-b-2 border-gray-900 bg-red-50 flex items-center gap-3">
+        <mat-icon class="text-red-600 scale-125">warning</mat-icon>
+        <h2 class="text-xl font-black text-red-900 uppercase tracking-tight m-0" style="font-family: 'Arial Black', Impact, sans-serif;">{{ data.title }}</h2>
+      </div>
+      <mat-dialog-content class="!p-6 !py-8">
+        <p class="text-sm font-bold text-gray-700 uppercase tracking-wider leading-relaxed">{{ data.message }}</p>
+      </mat-dialog-content>
+      <mat-dialog-actions align="end" class="!px-6 !pb-6 !pt-4 border-t-2 border-gray-900 m-0 bg-gray-50 gap-3">
+        <button mat-flat-button mat-dialog-close color="primary" class="!px-6 !rounded-sm !border-2 !border-gray-900 !shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] hover:!translate-y-[1px] hover:!translate-x-[1px] hover:!shadow-[1px_1px_0px_0px_rgba(17,24,39,1)] transition-all font-black uppercase tracking-wider text-[11px] !bg-gray-200 !text-gray-900">Cancel</button>
+        <button mat-flat-button [mat-dialog-close]="true" color="warn" class="!px-6 !rounded-sm !border-2 !border-gray-900 !shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] hover:!translate-y-[1px] hover:!translate-x-[1px] hover:!shadow-[1px_1px_0px_0px_rgba(17,24,39,1)] transition-all font-black uppercase tracking-wider text-[11px]">{{ data.confirmText }}</button>
+      </mat-dialog-actions>
+    </div>
+  `
+})
+export class ConfirmDialogComponent {
+  constructor(@Inject(MAT_DIALOG_DATA) public data: { title: string, message: string, confirmText: string }) {}
+}
 
 @Component({
   selector: 'app-complaint-detail-dialog',
@@ -46,6 +71,12 @@ import html2canvas from 'html2canvas';
                     'bg-red-200 text-red-900': data.status === 'rejected'
                   }">
               {{ data.status.replace('_', ' ') }}
+            </span>
+
+            <!-- Escalated Badge -->
+            <span *ngIf="data.is_escalated" class="inline-flex items-center px-2 py-0.5 rounded-sm border-2 border-red-900 bg-red-100 text-red-900 text-[10px] font-black tracking-widest uppercase shadow-[1px_1px_0px_0px_rgba(127,29,29,1)]">
+              <mat-icon class="scale-[0.6] -ml-1 -mr-1">whatshot</mat-icon>
+              ESCALATED
             </span>
             
             <!-- Priority Badge -->
@@ -227,27 +258,52 @@ import html2canvas from 'html2canvas';
                 No comments yet. Start the conversation!
               </div>
 
-              <div *ngFor="let comment of comments" class="flex gap-3" [class.flex-row-reverse]="comment.user_id === currentUserId">
-                <div class="w-8 h-8 rounded-sm border-2 border-gray-900 flex-shrink-0 flex items-center justify-center text-gray-900 text-xs font-black shadow-[1px_1px_0px_0px_rgba(17,24,39,1)]"
-                     [ngClass]="comment.user_role === 'citizen' ? 'bg-primary-200' : 'bg-green-400'">
-                  {{ comment.user_full_name ? comment.user_full_name.charAt(0).toUpperCase() : 'U' }}
-                </div>
-                <div class="flex flex-col max-w-[80%]" [class.items-end]="comment.user_id === currentUserId">
-                  <div class="flex items-baseline gap-2 mb-1" [class.flex-row-reverse]="comment.user_id === currentUserId">
-                    <span class="text-[10px] font-black uppercase tracking-widest text-gray-700">{{ comment.user_full_name || 'User' }}</span>
-                    <span class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{{ comment.created_at | date:'short' }}</span>
-                    <span *ngIf="comment.user_role !== 'citizen'" class="text-[9px] border-2 border-green-600 bg-green-100 text-green-800 px-1 rounded-sm uppercase font-black">Staff</span>
+              <div *ngFor="let comment of comments" class="flex gap-3" [class.flex-row-reverse]="comment.user_id === currentUserId" [class.w-full]="comment.is_internal" [class.justify-center]="comment.is_internal">
+                
+                <ng-container *ngIf="!comment.is_internal">
+                  <div class="w-8 h-8 rounded-sm border-2 border-gray-900 flex-shrink-0 flex items-center justify-center text-gray-900 text-xs font-black shadow-[1px_1px_0px_0px_rgba(17,24,39,1)]"
+                       [ngClass]="comment.user_role === 'citizen' ? 'bg-primary-200' : (comment.user_role === 'brgy_captain' ? 'bg-orange-200' : 'bg-green-400')">
+                    {{ comment.user_full_name ? comment.user_full_name.charAt(0).toUpperCase() : 'U' }}
                   </div>
-                  <div class="p-3 border-2 border-gray-900 text-xs font-bold uppercase tracking-wider leading-relaxed shadow-[2px_2px_0px_0px_rgba(17,24,39,1)]"
-                       [ngClass]="comment.user_id === currentUserId ? 'bg-primary-100 text-primary-900 rounded-l-sm rounded-br-sm' : 'bg-gray-100 text-gray-800 rounded-r-sm rounded-bl-sm'">
-                    {{ comment.body }}
+                  <div class="flex flex-col max-w-[80%]" [class.items-end]="comment.user_id === currentUserId">
+                    <div class="flex items-baseline gap-2 mb-1" [class.flex-row-reverse]="comment.user_id === currentUserId">
+                      <span class="text-[10px] font-black uppercase tracking-widest text-gray-700">{{ comment.user_full_name || 'User' }}</span>
+                      <span class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{{ comment.created_at | date:'short' }}</span>
+                      <span *ngIf="comment.user_role !== 'citizen'" class="text-[9px] border-2 border-gray-900 px-1 rounded-sm uppercase font-black"
+                            [ngClass]="comment.user_role === 'brgy_captain' ? 'bg-orange-100 text-orange-900' : 'bg-green-100 text-green-800'">
+                        {{ comment.user_role === 'brgy_captain' ? 'Captain' : 'Staff' }}
+                      </span>
+                    </div>
+                    <div class="p-3 border-2 border-gray-900 text-xs font-bold uppercase tracking-wider leading-relaxed shadow-[2px_2px_0px_0px_rgba(17,24,39,1)]"
+                         [ngClass]="comment.user_id === currentUserId ? 'bg-primary-100 text-primary-900 rounded-l-sm rounded-br-sm' : 'bg-gray-100 text-gray-800 rounded-r-sm rounded-bl-sm'">
+                      {{ comment.body }}
+                    </div>
                   </div>
-                </div>
+                </ng-container>
+
+                <!-- Internal Status Update Comment -->
+                <ng-container *ngIf="comment.is_internal">
+                  <div class="w-full max-w-[90%] my-2">
+                    <div class="bg-gray-100 border-2 border-gray-900 rounded-sm p-3 flex gap-3 shadow-[2px_2px_0px_0px_rgba(17,24,39,1)]">
+                      <mat-icon class="text-gray-500 mt-0.5">info</mat-icon>
+                      <div class="flex-1">
+                        <div class="flex items-center justify-between mb-1">
+                          <span class="text-[10px] font-black uppercase tracking-widest text-gray-700">{{ comment.user_full_name || 'System' }} ({{ comment.user_role === 'brgy_captain' ? 'Captain' : 'Admin' }})</span>
+                          <span class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{{ comment.created_at | date:'short' }}</span>
+                        </div>
+                        <div class="text-xs font-bold uppercase tracking-wider text-gray-800 whitespace-pre-wrap leading-relaxed">
+                          {{ comment.comment || comment.body }}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </ng-container>
+
               </div>
             </div>
 
-            <!-- Comment Input (Hidden if complaint is rejected or closed) -->
-            <div *ngIf="!(data.status === 'rejected' || data.status === 'closed')" class="p-3 bg-gray-50 border-t-2 border-gray-900 flex gap-2">
+            <!-- Comment Input (Hidden if complaint is rejected or closed, OR if escalated and viewed by Captain) -->
+            <div *ngIf="!(data.status === 'rejected' || data.status === 'closed' || (data.is_escalated && currentRole === 'brgy_captain'))" class="p-3 bg-gray-50 border-t-2 border-gray-900 flex gap-2">
               <input type="text" [(ngModel)]="newComment" (keyup.enter)="postComment()"
                      class="flex-1 rounded-sm border-2 border-gray-900 px-4 py-2 text-xs font-bold uppercase tracking-wider focus:outline-none focus:border-primary-600 focus:ring-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)] placeholder-gray-400" 
                      placeholder="Type a message...">
@@ -256,12 +312,19 @@ import html2canvas from 'html2canvas';
               </button>
             </div>
 
-            <!-- Read-only message for rejected/closed complaints -->
-            <div *ngIf="(data.status === 'rejected' || data.status === 'closed')" class="p-4 bg-gray-100 border-t-2 border-gray-900 flex items-center justify-center gap-2"
-                 [ngClass]="data.status === 'rejected' ? 'bg-red-50' : 'bg-gray-100'">
-              <mat-icon class="scale-90" [ngClass]="data.status === 'rejected' ? 'text-red-600' : 'text-gray-600'">lock</mat-icon>
-              <span class="text-xs font-black uppercase tracking-widest" [ngClass]="data.status === 'rejected' ? 'text-red-800' : 'text-gray-800'">
-                Thread Locked: Complaint {{ data.status | titlecase }}
+            <!-- Read-only message for rejected/closed complaints or escalated (for captain) -->
+            <div *ngIf="(data.status === 'rejected' || data.status === 'closed' || (data.is_escalated && currentRole === 'brgy_captain'))" class="p-4 bg-gray-100 border-t-2 border-gray-900 flex items-center justify-center gap-2"
+                 [ngClass]="data.is_escalated && currentRole === 'brgy_captain' ? 'bg-red-50' : (data.status === 'rejected' ? 'bg-red-50' : 'bg-gray-100')">
+              <mat-icon class="scale-90" [ngClass]="data.is_escalated && currentRole === 'brgy_captain' ? 'text-red-600' : (data.status === 'rejected' ? 'text-red-600' : 'text-gray-600')">
+                {{ data.is_escalated && currentRole === 'brgy_captain' ? 'whatshot' : 'lock' }}
+              </mat-icon>
+              <span class="text-xs font-black uppercase tracking-widest" [ngClass]="data.is_escalated && currentRole === 'brgy_captain' ? 'text-red-800' : (data.status === 'rejected' ? 'text-red-800' : 'text-gray-800')">
+                <ng-container *ngIf="data.is_escalated && currentRole === 'brgy_captain'; else statusLock">
+                  Thread Locked: Escalated to Admin
+                </ng-container>
+                <ng-template #statusLock>
+                  Thread Locked: Complaint {{ data.status | titlecase }}
+                </ng-template>
               </span>
             </div>
           </div>
@@ -270,8 +333,14 @@ import html2canvas from 'html2canvas';
       </mat-dialog-content>
 
       <!-- Actions -->
-      <mat-dialog-actions align="end" class="!px-6 sm:!px-8 !pb-6 !pt-4 border-t-2 border-gray-900 m-0 bg-gray-50 rounded-b-sm">
-        <button mat-button color="primary" class="h-10 px-4 mr-auto font-black uppercase tracking-wider text-[10px]" (click)="exportToPDF()" [disabled]="exportingPdf">
+      <mat-dialog-actions align="end" class="!px-6 sm:!px-8 !pb-6 !pt-4 border-t-2 border-gray-900 m-0 bg-gray-50 rounded-b-sm flex-wrap gap-2">
+        
+        <button *ngIf="!isCitizen && !data.is_escalated && currentRole === 'brgy_captain'" mat-flat-button color="warn" class="h-10 px-4 mr-auto font-black uppercase tracking-wider text-[10px] !rounded-sm !border-2 !border-gray-900 !shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] hover:!translate-y-[1px] hover:!translate-x-[1px] hover:!shadow-[1px_1px_0px_0px_rgba(17,24,39,1)] transition-all" (click)="escalateComplaint()" [disabled]="escalating">
+          <mat-icon>whatshot</mat-icon>
+          {{ escalating ? 'Escalating...' : 'Escalate to Admin' }}
+        </button>
+
+        <button mat-button color="primary" class="h-10 px-4 font-black uppercase tracking-wider text-[10px]" (click)="exportToPDF()" [disabled]="exportingPdf" [class.mr-auto]="isCitizen || data.is_escalated || currentRole === 'admin'">
           <mat-icon *ngIf="!exportingPdf">picture_as_pdf</mat-icon>
           <mat-icon *ngIf="exportingPdf" class="animate-spin">autorenew</mat-icon>
           {{ exportingPdf ? 'Exporting...' : 'Export to PDF' }}
@@ -324,8 +393,11 @@ export class ComplaintDetailDialogComponent implements OnInit, AfterViewChecked 
   shouldScrollToBottom = false;
 
   exportingPdf = false;
+  escalating = false;
+  currentRole: string | null = null;
 
   private supabaseService = inject(SupabaseService);
+  private dialog = inject(MatDialog);
 
   constructor(
     public dialogRef: MatDialogRef<ComplaintDetailDialogComponent>,
@@ -349,6 +421,17 @@ export class ComplaintDetailDialogComponent implements OnInit, AfterViewChecked 
       this.currentUserId = user.id;
       // Determine if the current user is the citizen who created it
       this.isCitizen = this.data.created_by === user.id;
+
+      // Get user role for escalation button logic
+      const { data: userData } = await this.supabaseService.supabase
+        .from('users')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+      
+      if (userData) {
+        this.currentRole = userData.role;
+      }
     }
 
     this.loadComments();
@@ -374,7 +457,6 @@ export class ComplaintDetailDialogComponent implements OnInit, AfterViewChecked 
       .from('complaint_comments')
       .select('*, users!complaint_comments_user_id_fkey(full_name, role)')
       .eq('complaint_id', this.data.id)
-      .eq('is_internal', false)
       .order('created_at', { ascending: true });
 
     if (!error && data) {
@@ -394,25 +476,23 @@ export class ComplaintDetailDialogComponent implements OnInit, AfterViewChecked 
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'complaint_comments', filter: `complaint_id=eq.${this.data.id}` },
         async (payload: any) => {
-          if (payload.new['is_internal'] === false) {
-            // Fetch user info for the new comment
-            const { data: userData } = await this.supabaseService.supabase
-              .from('users')
-              .select('full_name, role')
-              .eq('id', payload.new['user_id'])
-              .single();
-              
-            const newComment = {
-              ...payload.new,
-              user_full_name: userData?.full_name,
-              user_role: userData?.role
-            };
+          // Fetch user info for the new comment
+          const { data: userData } = await this.supabaseService.supabase
+            .from('users')
+            .select('full_name, role')
+            .eq('id', payload.new['user_id'])
+            .single();
             
-            // Only add if we don't already have it (optimistic update might have added it)
-            if (!this.comments.find(c => c.id === newComment.id)) {
-              this.comments.push(newComment);
-              this.shouldScrollToBottom = true;
-            }
+          const newComment = {
+            ...payload.new,
+            user_full_name: userData?.full_name,
+            user_role: userData?.role
+          };
+          
+          // Only add if we don't already have it (optimistic update might have added it)
+          if (!this.comments.find(c => c.id === newComment.id)) {
+            this.comments.push(newComment);
+            this.shouldScrollToBottom = true;
           }
         }
       )
@@ -447,6 +527,49 @@ export class ComplaintDetailDialogComponent implements OnInit, AfterViewChecked 
       this.shouldScrollToBottom = true;
     }
     this.postingComment = false;
+  }
+
+  async escalateComplaint() {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      width: '90vw',
+      maxWidth: '400px',
+      panelClass: 'modern-dialog',
+      data: {
+        title: 'Confirm Escalation',
+        message: 'Are you sure you want to escalate this complaint to the Municipal Admin? This should be used for issues requiring municipal resources.',
+        confirmText: 'Yes, Escalate'
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(async (result) => {
+      if (result) {
+        this.escalating = true;
+        const { error } = await this.supabaseService.supabase
+          .from('complaints')
+          .update({ is_escalated: true })
+          .eq('id', this.data.id);
+
+        if (error) {
+          alert('Failed to escalate complaint: ' + error.message);
+        } else {
+          this.data.is_escalated = true;
+          
+          // Note: The system notification to Admins is now handled automatically by a secure database trigger (on_complaint_escalation)
+          // so we don't need to insert it manually from the frontend.
+
+          // Insert an automatic comment noting the escalation
+          if (this.currentUserId) {
+            await this.supabaseService.supabase.from('complaint_comments').insert({
+              complaint_id: this.data.id,
+              user_id: this.currentUserId,
+              body: 'System: Complaint escalated to Municipal Admin for assistance.',
+              is_internal: false
+            });
+          }
+        }
+        this.escalating = false;
+      }
+    });
   }
 
   setRating(rating: number) {

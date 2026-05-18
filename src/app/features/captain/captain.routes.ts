@@ -1,0 +1,28 @@
+import { Routes } from '@angular/router';
+import { CaptainLayoutComponent } from './captain-layout.component';
+import { authGuard } from '../../core/guards/auth.guard';
+import { roleGuard } from '../../core/guards/role.guard';
+
+export const CAPTAIN_ROUTES: Routes = [
+  {
+    path: '',
+    component: CaptainLayoutComponent,
+    canActivate: [authGuard, roleGuard],
+    data: { roles: ['brgy_captain'] },
+    children: [
+      { 
+        path: 'dashboard', 
+        loadComponent: () => import('./dashboard/captain-dashboard.component').then(m => m.CaptainDashboardComponent)
+      },
+      { 
+        path: 'complaints', 
+        loadComponent: () => import('./complaints/captain-complaints.component').then(m => m.CaptainComplaintsComponent)
+      },
+      { 
+        path: 'users', 
+        loadComponent: () => import('./users/captain-users.component').then(m => m.CaptainUsersComponent)
+      },
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
+    ]
+  }
+];

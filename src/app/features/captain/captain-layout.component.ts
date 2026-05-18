@@ -1,7 +1,7 @@
-import { Component, inject, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { RouterOutlet, RouterModule, Router, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { MatSidenavModule, MatSidenav } from '@angular/material/sidenav';
+import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
@@ -11,11 +11,11 @@ import { MatBadgeModule } from '@angular/material/badge';
 import { AuthService } from '../../core/services/auth.service';
 import { NotificationsService, Notification } from '../../core/services/notifications.service';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
+import { filter, takeUntil } from 'rxjs/operators';
 import { Subject, Observable } from 'rxjs';
-import { takeUntil, filter } from 'rxjs/operators';
 
 @Component({
-  selector: 'app-admin-layout',
+  selector: 'app-captain-layout',
   standalone: true,
   imports: [
     RouterOutlet, 
@@ -35,33 +35,28 @@ import { takeUntil, filter } from 'rxjs/operators';
       <!-- Sidebar -->
       <mat-sidenav #sidenav [mode]="isMobile ? 'over' : 'side'" [opened]="!isMobile" class="w-64 border-r-2 border-gray-900 bg-white shadow-[4px_0_0_0_rgba(17,24,39,1)]">
         <mat-toolbar class="bg-primary-50 border-b-2 border-gray-900 flex items-center px-4">
-          <mat-icon color="primary" class="mr-2">domain</mat-icon>
+          <mat-icon color="primary" class="mr-2">local_police</mat-icon>
           <span class="text-xl font-black text-gray-900 uppercase tracking-tight truncate" style="font-family: 'Arial Black', Impact, sans-serif;">
-            Municipality
+            Barangay Captain
           </span>
         </mat-toolbar>
 
         <mat-nav-list class="pt-4 px-2">
-          <div mat-subheader class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 px-4">Management</div>
+          <div mat-subheader class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 px-4">Menu</div>
           
-          <a mat-list-item routerLink="/admin/dashboard" routerLinkActive="bg-primary-100 text-primary-900 border-2 border-gray-900 shadow-[2px_2px_0px_0px_rgba(17,24,39,1)]" class="hover:bg-gray-50 transition-all rounded-sm mb-2">
+          <a mat-list-item routerLink="/captain/dashboard" routerLinkActive="bg-primary-100 text-primary-900 border-2 border-gray-900 shadow-[2px_2px_0px_0px_rgba(17,24,39,1)]" class="hover:bg-gray-50 transition-all rounded-sm mb-2">
             <mat-icon matListItemIcon [color]="router.url.includes('/dashboard') ? 'primary' : ''" class="text-gray-900">dashboard</mat-icon>
             <span matListItemTitle class="font-bold uppercase tracking-wider text-[11px]">Dashboard</span>
           </a>
 
-          <a *ngIf="userRole === 'admin' || userRole === 'staff'" mat-list-item routerLink="/admin/users" routerLinkActive="bg-primary-100 text-primary-900 border-2 border-gray-900 shadow-[2px_2px_0px_0px_rgba(17,24,39,1)]" class="hover:bg-gray-50 transition-all rounded-sm mb-2">
-            <mat-icon matListItemIcon [color]="router.url.includes('/users') ? 'primary' : ''" class="text-gray-900">people</mat-icon>
-            <span matListItemTitle class="font-bold uppercase tracking-wider text-[11px]">User Approvals</span>
-          </a>
-
-          <a mat-list-item routerLink="/admin/complaints" routerLinkActive="bg-primary-100 text-primary-900 border-2 border-gray-900 shadow-[2px_2px_0px_0px_rgba(17,24,39,1)]" class="hover:bg-gray-50 transition-all rounded-sm mb-2">
+          <a mat-list-item routerLink="/captain/complaints" routerLinkActive="bg-primary-100 text-primary-900 border-2 border-gray-900 shadow-[2px_2px_0px_0px_rgba(17,24,39,1)]" class="hover:bg-gray-50 transition-all rounded-sm mb-2">
             <mat-icon matListItemIcon [color]="router.url.includes('/complaints') ? 'primary' : ''" class="text-gray-900">list_alt</mat-icon>
-            <span matListItemTitle class="font-bold uppercase tracking-wider text-[11px]">Complaints List</span>
+            <span matListItemTitle class="font-bold uppercase tracking-wider text-[11px]">Complaints</span>
           </a>
 
-          <a *ngIf="userRole === 'admin' || userRole === 'staff'" mat-list-item routerLink="/admin/announcements" routerLinkActive="bg-primary-100 text-primary-900 border-2 border-gray-900 shadow-[2px_2px_0px_0px_rgba(17,24,39,1)]" class="hover:bg-gray-50 transition-all rounded-sm mb-2">
-            <mat-icon matListItemIcon [color]="router.url.includes('/announcements') ? 'primary' : ''" class="text-gray-900">campaign</mat-icon>
-            <span matListItemTitle class="font-bold uppercase tracking-wider text-[11px]">Announcements</span>
+          <a mat-list-item routerLink="/captain/users" routerLinkActive="bg-primary-100 text-primary-900 border-2 border-gray-900 shadow-[2px_2px_0px_0px_rgba(17,24,39,1)]" class="hover:bg-gray-50 transition-all rounded-sm mb-2">
+            <mat-icon matListItemIcon [color]="router.url.includes('/users') ? 'primary' : ''" class="text-gray-900">people</mat-icon>
+            <span matListItemTitle class="font-bold uppercase tracking-wider text-[11px]">Citizens</span>
           </a>
         </mat-nav-list>
 
@@ -87,7 +82,6 @@ import { takeUntil, filter } from 'rxjs/operators';
           <span class="flex-auto"></span>
 
           <div class="flex items-center space-x-1 md:space-x-2">
-            
             <!-- Notifications Menu -->
             <button mat-icon-button color="primary" [matMenuTriggerFor]="notificationMenu" class="sm:inline-flex">
               <mat-icon [matBadge]="(unreadCount$ | async)" [matBadgeHidden]="(unreadCount$ | async) === 0" matBadgeColor="warn">notifications</mat-icon>
@@ -138,41 +132,33 @@ import { takeUntil, filter } from 'rxjs/operators';
                 </ng-container>
               </div>
             </mat-menu>
-            
+
             <button mat-icon-button [matMenuTriggerFor]="userMenu">
               <div class="h-8 w-8 rounded-sm border-2 border-gray-900 bg-primary-600 flex items-center justify-center text-white font-black shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] text-sm">
-                A
+                C
               </div>
             </button>
             <mat-menu #userMenu="matMenu" class="retro-menu">
               <button mat-menu-item disabled class="!border-b-2 !border-gray-900">
                 <mat-icon class="text-gray-900">account_circle</mat-icon>
-                <span class="font-bold uppercase tracking-wider text-[11px] text-gray-900">Admin Profile</span>
+                <span class="font-bold uppercase tracking-wider text-[11px] text-gray-900">Captain Profile</span>
               </button>
-              <button mat-menu-item (click)="logout()" class="bg-red-50 hover:!bg-red-100 transition-colors">
-                <mat-icon color="warn">logout</mat-icon>
-                <span class="text-red-600 font-black uppercase tracking-wider text-[11px]">Sign out</span>
+              <button mat-menu-item (click)="logout()">
+                <mat-icon class="text-gray-900">logout</mat-icon>
+                <span class="font-bold uppercase tracking-wider text-[11px] text-gray-900">Sign out</span>
               </button>
             </mat-menu>
           </div>
         </mat-toolbar>
 
-        <!-- Scrollable Main Area -->
-        <div class="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 relative">
-          <!-- Background decoration -->
-          <div class="absolute inset-0 bg-gray-50 -z-10"></div>
-          
-          <div class="max-w-7xl mx-auto w-full relative z-0">
-            <router-outlet></router-outlet>
-          </div>
-        </div>
+        <!-- Main Content Area -->
+        <main class="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto">
+          <router-outlet></router-outlet>
+        </main>
       </mat-sidenav-content>
-      
     </mat-sidenav-container>
   `,
   styles: [`
-    .mat-mdc-list-item-icon { margin-right: 16px !important; }
-    
     ::ng-deep .retro-menu {
       min-width: 200px !important;
       padding: 0 !important;
@@ -205,7 +191,6 @@ import { takeUntil, filter } from 'rxjs/operators';
       background-color: #f8fafc !important;
     }
 
-    /* Reset Angular Material's internal button hover state to avoid double-hover effects */
     .notification-item::before {
       display: none !important;
     }
@@ -222,61 +207,36 @@ import { takeUntil, filter } from 'rxjs/operators';
     }
   `]
 })
-export class AdminLayoutComponent implements OnInit, OnDestroy {
-  private authService = inject(AuthService);
-  private notificationsService = inject(NotificationsService);
+export class CaptainLayoutComponent implements OnInit, OnDestroy {
   public router = inject(Router);
+  private authService = inject(AuthService);
   private breakpointObserver = inject(BreakpointObserver);
+  private notificationsService = inject(NotificationsService);
 
-  @ViewChild('sidenav') sidenav!: MatSidenav;
-  
   isMobile = false;
-  userRole: string | null = null;
   private destroy$ = new Subject<void>();
   
-  userEmail: string = 'Admin';
   userId: string | null = null;
-
   notifications$: Observable<Notification[]> = this.notificationsService.notifications$;
   unreadCount$: Observable<number> = this.notificationsService.unreadCount$;
 
   ngOnInit() {
     if (this.authService.user) {
-      this.userEmail = this.authService.user.email || 'Admin';
       this.userId = this.authService.user.id;
-      
       this.notificationsService.loadNotifications(this.userId);
       this.notificationsService.subscribeToNotifications(this.userId);
-
-      this.authService.getUserProfile(this.userId).then(profile => {
-        if (profile) {
-          this.userRole = profile.role;
-        }
-      });
     }
-    this.breakpointObserver
-      .observe([Breakpoints.XSmall, Breakpoints.Small])
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(result => {
-        this.isMobile = result.matches;
-        if (!this.isMobile && this.sidenav) {
-          this.sidenav.open();
-        } else if (this.isMobile && this.sidenav) {
-          this.sidenav.close();
-        }
-      });
 
-    // Close sidenav on mobile after navigation
-    this.router.events
-      .pipe(
-        filter(event => event instanceof NavigationEnd),
-        takeUntil(this.destroy$)
-      )
-      .subscribe(() => {
-        if (this.isMobile && this.sidenav) {
-          this.sidenav.close();
-        }
-      });
+    this.breakpointObserver.observe([Breakpoints.Handset]).pipe(takeUntil(this.destroy$)).subscribe(result => {
+      this.isMobile = result.matches;
+    });
+
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd),
+      takeUntil(this.destroy$)
+    ).subscribe(() => {
+      // Force change detection or specific logic if needed
+    });
   }
 
   ngOnDestroy() {
@@ -311,11 +271,10 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
       this.notificationsService.markAsRead(note.id);
     }
     
-    // Navigate based on notification type/content
     if (note.title.includes('Registration Resubmitted') || note.type === 'system') {
-      this.router.navigate(['/admin/users']);
+      this.router.navigate(['/captain/users']);
     } else {
-      this.router.navigate(['/admin/complaints']);
+      this.router.navigate(['/captain/complaints']);
     }
   }
 
@@ -334,19 +293,13 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   }
 
   getPageTitle(): string {
-    const url = this.router.url;
-    if (url.includes('/dashboard')) return 'Admin Dashboard';
-    if (url.includes('/complaints')) return 'Complaints Management';
-    if (url.includes('/announcements')) return 'Announcements';
-    if (url.includes('/users')) return 'User Approvals';
-    return 'Admin Portal';
+    if (this.router.url.includes('/captain/dashboard')) return 'Dashboard';
+    if (this.router.url.includes('/captain/complaints')) return 'Barangay Complaints';
+    return 'Barangay Captain';
   }
 
-  logout() {
-    this.authService.signOut().subscribe({
-      next: () => {
-        this.router.navigate(['/auth/login']);
-      }
-    });
+  async logout() {
+    await this.authService.signOut();
+    this.router.navigate(['/']);
   }
 }
