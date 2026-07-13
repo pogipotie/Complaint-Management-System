@@ -117,13 +117,22 @@ export class ResetPasswordComponent implements OnInit {
     confirmPassword: ['', [Validators.required]]
   }, { validators: this.passwordMatchValidator });
 
-  ngOnInit() {
+  async ngOnInit() {
     // When the user arrives here via the email link, Supabase will parse the URL hash
     // and establish a session. If there's an error (e.g. link expired), it's available in the hash.
     const hash = window.location.hash;
     if (hash && hash.includes('error_description=')) {
       const params = new URLSearchParams(hash.replace('#', '?'));
       this.errorMsg = decodeURIComponent(params.get('error_description') || 'Invalid or expired reset link.');
+    }
+
+    // Check if the user is actually in a recovery state (has an active session)
+    // If not, redirect them back to the login page so they can't access this directly.
+    const { data } = await this.authService['supabaseService'].supabase.auth.getSession();
+    
+    // If there is no session AND the URL doesn't contain the access token from the email link
+    if (!data.session && !hash.includes('access_token')) {
+      this.router.navigate(['/?action=login']);
     }
   }
 
