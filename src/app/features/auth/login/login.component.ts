@@ -4,10 +4,11 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 
-import { MatDialogRef } from '@angular/material/dialog';
+import { MatDialogRef, MatDialog } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
+import { ForgotPasswordComponent } from '../forgot-password/forgot-password.component';
 
 @Component({
   selector: 'app-login',
@@ -91,7 +92,7 @@ import { MatDividerModule } from '@angular/material/divider';
 
           <div class="flex items-center justify-between mt-4 mb-6">
             <div class="text-[11px] font-bold tracking-wider uppercase">
-              <a href="#" class="text-primary-600 hover:text-primary-500 transition-colors" (click)="$event.preventDefault()">
+              <a href="#" class="text-primary-600 hover:text-primary-500 transition-colors" (click)="openForgotPassword($event)">
                 Forgot your password?
               </a>
             </div>
@@ -137,6 +138,7 @@ export class LoginComponent {
   private authService = inject(AuthService);
   private router = inject(Router);
   public dialogRef = inject(MatDialogRef<LoginComponent>, { optional: true });
+  private dialog = inject(MatDialog);
 
   hidePassword = true;
 
@@ -152,6 +154,17 @@ export class LoginComponent {
     if (this.dialogRef) {
       this.dialogRef.close();
     }
+  }
+
+  openForgotPassword(event: Event) {
+    event.preventDefault();
+    this.closeDialog();
+    this.dialog.open(ForgotPasswordComponent, {
+      width: '95vw',
+      maxWidth: '500px',
+      panelClass: 'modern-dialog',
+      autoFocus: false
+    });
   }
 
   onSubmit() {
