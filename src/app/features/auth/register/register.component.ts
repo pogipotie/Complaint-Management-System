@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { Router, RouterModule } from '@angular/router';
 import { SupabaseService } from '../../../core/services/supabase.service';
 import { environment } from '../../../../environments/environment';
+import { AuthService } from '../../../core/services/auth.service';
 
 import { GoogleMap, MapMarker } from '@angular/google-maps';
 import { MatCardModule } from '@angular/material/card';
@@ -402,6 +403,7 @@ import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config
 export class RegisterComponent implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
   private supabaseService = inject(SupabaseService);
+  private authService = inject(AuthService);
   private router = inject(Router);
 
   registerForm: FormGroup = this.fb.group({
@@ -482,7 +484,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
   }
 
   // ---- Wizard Logic ----
-  nextStep() {
+  async nextStep() {
     this.errorMsg = '';
     
     // Validate Step 1
@@ -495,6 +497,30 @@ export class RegisterComponent implements OnInit, OnDestroy {
         if (control?.invalid) isValid = false;
       });
       if (!isValid) return;
+
+      this.loading = true;
+      const email = this.registerForm.get('email')?.value;
+      const emailExists = await this.authService.checkEmailExists(email);
+      
+      if (emailExists) {
+        // Check if fully verified
+        const { error: signInCheckError } = await this.supabaseService.supabase.auth.signInWithPassword({
+          email: email,
+          password: 'dummy_password_to_check_status_123'
+        });
+
+        if (signInCheckError?.message.toLowerCase().includes('email not confirmed')) {
+          // They are unverified, they can proceed and we'll resend OTP at the end
+          this.loading = false;
+        } else {
+          // They are fully verified.
+          this.loading = false;
+          this.errorMsg = 'This email is already registered. Please proceed to the Login page.';
+          return;
+        }
+      } else {
+        this.loading = false;
+      }
     }
     
     // Validate Step 2
@@ -688,63 +714,47 @@ export class RegisterComponent implements OnInit, OnDestroy {
     const formVals = this.registerForm.value;
     
     try {
+      // Check if email already exists
+      const emailExists = await this.authService.checkEmailExists(formVals.email);
+      
+      if (emailExists) {
+        const { error: signInCheckError } = await this.supabaseService.supabase.auth.signInWithPassword({
+          email: formVals.email,
+          password: 'dummy_password_to_check_status_123'
+        });
+
+        if (signInCheckError?.message.toLowerCase().includes('email not confirmed')) {
+          this.errorMsg = 'This email is already registered but unverified. We are resending your code...';
+          
+          const { error: resendError } = await this.supabaseService.supabase.auth.resend({
+            type: 'signup',
+            email: formVals.email
+          });
+
+          if (resendError) {
+            throw new Error('Failed to resend code. Please try again.');
+          }
+
+          this.currentStep = 4;
+          this.loading = false;
+          this.formSubmitted = false;
+          this.successMsg = 'A new code has been sent to your email.';
+          this.startResendTimer();
+          
+          setTimeout(() => { this.successMsg = ''; }, 5000);
+          return;
+        } else {
+          throw new Error('This email is already fully registered. Please proceed to the Login page.');
+        }
+      }
+
       // 1. Sign up the user in auth.users
       const { data: authData, error: authError } = await this.supabaseService.supabase.auth.signUp({
         email: formVals.email,
         password: formVals.password
       });
 
-      if (authError) {
-        // If the user already exists but hasn't verified their email yet,
-        // Supabase might throw an "User already registered" error.
-        if (authError.message.toLowerCase().includes('already registered')) {
-          
-          // Before blindly resending, let's try to check if they are ALREADY in the public.users table.
-          // If they are in public.users, it means they fully finished registration in the past.
-          await this.supabaseService.supabase
-            .from('users')
-            .select('id')
-            .eq('id', (await this.supabaseService.supabase.auth.getUser()).data.user?.id || '') // This won't work perfectly without admin rights to query by email, but we can try to sign in
-            .maybeSingle();
-
-          // A better way to check if an email is already fully verified without admin rights:
-          // Try to sign in with a dummy password. If it returns 'Invalid login credentials', the user exists and is verified.
-          // If it returns 'Email not confirmed', we know they are unverified!
-          const { error: signInCheckError } = await this.supabaseService.supabase.auth.signInWithPassword({
-            email: formVals.email,
-            password: 'dummy_password_to_check_status_123'
-          });
-
-          if (signInCheckError?.message.toLowerCase().includes('email not confirmed')) {
-            // They are unverified! We can safely resend the OTP.
-            this.errorMsg = 'This email is already registered but unverified. We are resending your code...';
-            
-            const { error: resendError } = await this.supabaseService.supabase.auth.resend({
-              type: 'signup',
-              email: formVals.email
-            });
-
-            if (resendError) {
-              throw new Error('Email is already registered. Please try logging in, or use a different email.');
-            }
-
-            // Successfully resent. Jump to Step 4.
-            this.currentStep = 4;
-            this.loading = false;
-            this.formSubmitted = false;
-            this.successMsg = 'A new code has been sent to your email.';
-            this.startResendTimer();
-            
-            setTimeout(() => { this.successMsg = ''; }, 5000);
-            return;
-          } else {
-            // They are fully verified. Do NOT send an OTP. Block them.
-            throw new Error('This email is already fully registered. Please proceed to the Login page.');
-          }
-        }
-        
-        throw authError;
-      }
+      if (authError) throw authError;
       
       // Check if email confirmation is enabled (session will be null)
       if (!authData.session) {
