@@ -357,7 +357,7 @@ export class ConfirmDialogComponent {
       <!-- Actions -->
       <mat-dialog-actions align="end" class="!px-6 sm:!px-8 !pb-6 !pt-4 border-t-2 border-gray-900 m-0 bg-gray-50 rounded-b-sm flex-wrap gap-2">
         
-        <button *ngIf="!isCitizen && !data.is_escalated && currentRole === 'brgy_captain'" mat-flat-button color="warn" class="h-10 px-4 mr-auto font-black uppercase tracking-wider text-[10px] !rounded-sm !border-2 !border-gray-900 !shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] hover:!translate-y-[1px] hover:!translate-x-[1px] hover:!shadow-[1px_1px_0px_0px_rgba(17,24,39,1)] transition-all" (click)="escalateComplaint()" [disabled]="escalating">
+        <button *ngIf="!isCitizen && !data.is_escalated && currentRole === 'brgy_captain' && data.status !== 'closed' && data.status !== 'resolved' && data.status !== 'rejected'" mat-flat-button color="warn" class="h-10 px-4 mr-auto font-black uppercase tracking-wider text-[10px] !rounded-sm !border-2 !border-gray-900 !shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] hover:!translate-y-[1px] hover:!translate-x-[1px] hover:!shadow-[1px_1px_0px_0px_rgba(17,24,39,1)] transition-all" (click)="escalateComplaint()" [disabled]="escalating">
           <mat-icon>whatshot</mat-icon>
           {{ escalating ? 'Escalating...' : 'Escalate to Admin' }}
         </button>
@@ -618,6 +618,11 @@ export class ComplaintDetailDialogComponent implements OnInit, AfterViewChecked 
   }
 
   async escalateComplaint() {
+    if (this.data.status === 'closed' || this.data.status === 'resolved' || this.data.status === 'rejected') {
+      alert('Cannot escalate a complaint that is already closed, resolved, or rejected.');
+      return;
+    }
+
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
       width: '90vw',
       maxWidth: '400px',
