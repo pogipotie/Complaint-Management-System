@@ -8,6 +8,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { LoginComponent } from '../auth/login/login.component';
+import { LegalDialogComponent } from '../../shared/components/legal-dialog/legal-dialog.component';
 
 @Component({
   selector: 'app-landing',
@@ -298,9 +299,9 @@ import { LoginComponent } from '../auth/login/login.component';
             © 2026 Local Government Unit. All rights reserved.
           </p>
           <div class="flex gap-4 text-sm text-gray-400">
-            <a href="#" class="hover:text-white transition-colors">Privacy Policy</a>
-            <a href="#" class="hover:text-white transition-colors">Terms of Service</a>
-            <a href="#" class="hover:text-white transition-colors">Contact Us</a>
+            <button (click)="openLegal('privacy')" class="hover:text-white transition-colors bg-transparent border-none p-0 cursor-pointer">Privacy Policy</button>
+            <button (click)="openLegal('terms')" class="hover:text-white transition-colors bg-transparent border-none p-0 cursor-pointer">Terms of Service</button>
+            <a href="mailto:support@municipality.gov.ph" class="hover:text-white transition-colors">Contact Us</a>
           </div>
         </div>
       </footer>
@@ -392,6 +393,16 @@ export class LandingComponent implements OnInit {
       maxWidth: '900px',
       panelClass: 'modern-dialog',
       autoFocus: false
+    });
+  }
+
+  openLegal(type: 'privacy' | 'terms') {
+    this.dialog.open(LegalDialogComponent, {
+      width: '95vw',
+      maxWidth: '700px',
+      panelClass: 'modern-dialog',
+      autoFocus: false,
+      data: { type }
     });
   }
 }

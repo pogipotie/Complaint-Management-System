@@ -7,8 +7,10 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatBadgeModule } from '@angular/material/badge';
+import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { AuthService } from '../../core/services/auth.service';
 import { NotificationsService, Notification } from '../../core/services/notifications.service';
+import { LegalDialogComponent } from '../../shared/components/legal-dialog/legal-dialog.component';
 import { Observable } from 'rxjs';
 
 @Component({
@@ -169,8 +171,8 @@ import { Observable } from 'rxjs';
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center">
           <p class="text-sm text-gray-500">© 2026 Municipality Portal. All rights reserved.</p>
           <div class="flex space-x-4 mt-4 sm:mt-0">
-            <a href="#" class="text-gray-400 hover:text-gray-500">Privacy Policy</a>
-            <a href="#" class="text-gray-400 hover:text-gray-500">Terms of Service</a>
+            <button (click)="openLegal('privacy')" class="text-gray-400 hover:text-gray-500 bg-transparent border-none p-0 cursor-pointer">Privacy Policy</button>
+            <button (click)="openLegal('terms')" class="text-gray-400 hover:text-gray-500 bg-transparent border-none p-0 cursor-pointer">Terms of Service</button>
           </div>
         </div>
       </footer>
@@ -309,6 +311,16 @@ export class CitizenLayoutComponent implements OnInit, OnDestroy {
       next: () => {
         this.router.navigate(['/auth/login']);
       }
+    });
+  }
+
+  openLegal(type: 'privacy' | 'terms') {
+    this.dialog.open(LegalDialogComponent, {
+      width: '95vw',
+      maxWidth: '700px',
+      panelClass: 'modern-dialog',
+      autoFocus: false,
+      data: { type }
     });
   }
 }
