@@ -54,48 +54,63 @@ export class ConfirmDialogComponent {
   template: `
     <div class="relative bg-white rounded-sm border-2 border-gray-900 shadow-[4px_4px_0px_0px_rgba(17,24,39,1)]">
       
-      <!-- Header -->
-      <div mat-dialog-title class="pt-8 pb-5 px-6 sm:px-8 border-b-2 border-gray-900 m-0 bg-gray-50 sticky top-0 z-20 flex justify-between items-start gap-4 rounded-t-sm">
-        <div>
-          <h2 class="text-xl sm:text-2xl font-black text-gray-900 uppercase tracking-tight leading-tight mb-3" style="font-family: 'Arial Black', Impact, sans-serif;">{{ data.title }}</h2>
-          
-          <div class="flex flex-wrap gap-2 items-center">
-            <!-- Status Badge -->
-            <span class="inline-flex px-2 py-0.5 rounded-sm border-2 border-gray-900 text-[10px] font-black tracking-widest uppercase shadow-[1px_1px_0px_0px_rgba(17,24,39,1)]"
-                  [ngClass]="{
-                    'bg-yellow-200 text-yellow-900': data.status === 'pending',
-                    'bg-blue-200 text-blue-900': data.status === 'assigned',
-                    'bg-primary-200 text-primary-900': data.status === 'in_progress',
-                    'bg-green-200 text-green-900': data.status === 'resolved',
-                    'bg-gray-200 text-gray-900': data.status === 'closed',
-                    'bg-red-200 text-red-900': data.status === 'rejected'
-                  }">
-              {{ data.status.replace('_', ' ') }}
-            </span>
-
-            <!-- Escalated Badge -->
-            <span *ngIf="data.is_escalated" class="inline-flex items-center px-2 py-0.5 rounded-sm border-2 border-red-900 bg-red-100 text-red-900 text-[10px] font-black tracking-widest uppercase shadow-[1px_1px_0px_0px_rgba(127,29,29,1)]">
-              <mat-icon class="scale-[0.6] -ml-1 -mr-1">whatshot</mat-icon>
-              ESCALATED
-            </span>
-            
-            <!-- Priority Badge -->
-            <span class="inline-flex px-2 py-0.5 rounded-sm text-[10px] font-black tracking-widest uppercase border-2 border-gray-900 shadow-[1px_1px_0px_0px_rgba(17,24,39,1)]"
-                  [ngClass]="{
-                    'bg-green-100 text-green-900': data.priority === 'low',
-                    'bg-yellow-100 text-yellow-900': data.priority === 'medium',
-                    'bg-orange-100 text-orange-900': data.priority === 'high',
-                    'bg-red-100 text-red-900': data.priority === 'emergency'
-                  }">
-              {{ data.priority }} Priority
-            </span>
-          </div>
-        </div>
+      <!-- Header (Now purely functional, visual title moved to pdf-content) -->
+      <div mat-dialog-title class="pt-4 pb-2 px-6 sm:px-8 border-b-2 border-gray-900 m-0 bg-gray-50 sticky top-0 z-20 flex justify-between items-center gap-4 rounded-t-sm">
+        <span class="text-sm font-black uppercase tracking-widest text-gray-500">Complaint Details</span>
+        <button mat-icon-button mat-dialog-close class="scale-90 text-gray-500 hover:text-gray-900 transition-colors">
+          <mat-icon>close</mat-icon>
+        </button>
       </div>
 
       <!-- Content -->
       <mat-dialog-content class="mat-typography !p-6 sm:!p-8 custom-scrollbar max-h-[70vh]">
         <div class="space-y-6" id="pdf-content">
+          
+          <!-- Official Document Header (Visible in UI and PDF) -->
+          <div class="border-b-4 border-gray-900 pb-6 mb-6">
+            <div class="flex justify-between items-start gap-4 mb-4">
+              <div>
+                <p class="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Official Complaint Record</p>
+                <h2 class="text-2xl sm:text-3xl font-black text-gray-900 uppercase tracking-tight leading-tight" style="font-family: 'Arial Black', Impact, sans-serif;">{{ data.title }}</h2>
+              </div>
+              <div class="text-right shrink-0">
+                <p class="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Reference ID</p>
+                <p class="text-sm font-black text-gray-900 tracking-wider">{{ data.id.substring(0,8).toUpperCase() }}</p>
+              </div>
+            </div>
+
+            <div class="flex flex-wrap gap-2 items-center">
+              <!-- Status Badge -->
+              <span class="inline-flex px-2 py-0.5 rounded-sm border-2 border-gray-900 text-[10px] font-black tracking-widest uppercase shadow-[1px_1px_0px_0px_rgba(17,24,39,1)]"
+                    [ngClass]="{
+                      'bg-yellow-200 text-yellow-900': data.status === 'pending',
+                      'bg-blue-200 text-blue-900': data.status === 'assigned',
+                      'bg-primary-200 text-primary-900': data.status === 'in_progress',
+                      'bg-green-200 text-green-900': data.status === 'resolved',
+                      'bg-gray-200 text-gray-900': data.status === 'closed',
+                      'bg-red-200 text-red-900': data.status === 'rejected'
+                    }">
+                STATUS: {{ data.status.replace('_', ' ') }}
+              </span>
+
+              <!-- Escalated Badge -->
+              <span *ngIf="data.is_escalated" class="inline-flex items-center px-2 py-0.5 rounded-sm border-2 border-red-900 bg-red-100 text-red-900 text-[10px] font-black tracking-widest uppercase shadow-[1px_1px_0px_0px_rgba(127,29,29,1)]">
+                <mat-icon class="scale-[0.6] -ml-1 -mr-1">whatshot</mat-icon>
+                ESCALATED TO ADMIN
+              </span>
+              
+              <!-- Priority Badge -->
+              <span class="inline-flex px-2 py-0.5 rounded-sm text-[10px] font-black tracking-widest uppercase border-2 border-gray-900 shadow-[1px_1px_0px_0px_rgba(17,24,39,1)]"
+                    [ngClass]="{
+                      'bg-green-100 text-green-900': data.priority === 'low',
+                      'bg-yellow-100 text-yellow-900': data.priority === 'medium',
+                      'bg-orange-100 text-orange-900': data.priority === 'high',
+                      'bg-red-100 text-red-900': data.priority === 'emergency'
+                    }">
+                PRIORITY: {{ data.priority }}
+              </span>
+            </div>
+          </div>
           
           <!-- Image Section -->
           <div *ngIf="data.evidence_paths && data.evidence_paths.length > 0" class="rounded-sm overflow-hidden border-2 border-gray-900 bg-gray-100 flex justify-center shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)] relative">
@@ -116,6 +131,13 @@ export class ConfirmDialogComponent {
           <!-- Metadata Grid -->
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-gray-50 p-5 rounded-sm border-2 border-gray-900 shadow-[2px_2px_0px_0px_rgba(17,24,39,1)]">
             <div>
+              <p class="text-[10px] text-gray-500 font-black uppercase tracking-widest mb-1">Reported By</p>
+              <p class="text-xs font-bold text-gray-900 flex items-center uppercase tracking-wider">
+                <mat-icon class="scale-75 text-gray-400 -ml-1 mr-1 shrink-0">person</mat-icon>
+                {{ data.users?.full_name || 'Anonymous' }}
+              </p>
+            </div>
+            <div>
               <p class="text-[10px] text-gray-500 font-black uppercase tracking-widest mb-1">Date Reported</p>
               <p class="text-xs font-bold text-gray-900 flex items-center uppercase tracking-wider">
                 <mat-icon class="scale-75 text-gray-400 -ml-1 mr-1 shrink-0">calendar_today</mat-icon>
@@ -129,7 +151,7 @@ export class ConfirmDialogComponent {
                 {{ data.custom_category || data.complaint_categories?.name || 'Uncategorized' }}
               </p>
             </div>
-            <div class="sm:col-span-2">
+            <div>
               <p class="text-[10px] text-gray-500 font-black uppercase tracking-widest mb-1">Location / Barangay</p>
               <p class="text-xs font-bold text-gray-900 flex items-start mt-1 uppercase tracking-wider">
                 <mat-icon class="scale-75 text-red-500 mr-1 -ml-1 shrink-0">location_on</mat-icon>
