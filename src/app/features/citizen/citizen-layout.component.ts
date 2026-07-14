@@ -25,7 +25,8 @@ import { Observable } from 'rxjs';
     MatIconModule,
     MatMenuModule,
     MatDividerModule,
-    MatBadgeModule
+    MatBadgeModule,
+    MatDialogModule
   ],
   template: `
     <div class="min-h-screen bg-gray-50 flex flex-col">
@@ -239,6 +240,7 @@ export class CitizenLayoutComponent implements OnInit, OnDestroy {
   private authService = inject(AuthService);
   private notificationsService = inject(NotificationsService);
   private router = inject(Router);
+  private dialog = inject(MatDialog);
   
   userEmail: string = 'User';
   userId: string | null = null;
