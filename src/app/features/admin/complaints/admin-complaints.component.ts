@@ -165,7 +165,7 @@ import { AdminStatusUpdateDialogComponent } from './admin-status-update-dialog.c
               <ng-container matColumnDef="category">
                 <th mat-header-cell *matHeaderCellDef class="font-black text-gray-900 uppercase tracking-widest bg-gray-50 border-b-2 border-gray-900">Category & Location</th>
                 <td mat-cell *matCellDef="let complaint" class="py-4 border-b border-gray-200">
-                  <div class="text-[11px] font-black uppercase tracking-wider text-gray-900">{{ complaint.complaint_categories?.name || 'Uncategorized' }}</div>
+                  <div class="text-[11px] font-black uppercase tracking-wider text-gray-900">{{ complaint.custom_category || complaint.complaint_categories?.name || 'Uncategorized' }}</div>
                   <div class="text-[10px] font-bold uppercase tracking-wider text-gray-500 flex items-center mt-1">
                     <mat-icon class="text-[12px] w-[12px] h-[12px] mr-1">location_on</mat-icon>
                     {{ complaint.barangay }}

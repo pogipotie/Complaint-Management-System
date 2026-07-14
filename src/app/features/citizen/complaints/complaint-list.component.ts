@@ -102,7 +102,7 @@ import { ComplaintDeleteDialogComponent } from './complaint-delete-dialog.compon
                 <div class="space-y-2 mb-6">
                   <div class="flex items-center text-xs font-bold text-gray-600 w-full overflow-hidden uppercase tracking-wider">
                     <mat-icon class="scale-[0.6] -ml-1 mr-1 shrink-0 text-gray-900">folder</mat-icon>
-                    <span class="truncate">{{ complaint.complaint_categories?.name || 'Uncategorized' }}</span>
+                    <span class="truncate">{{ complaint.custom_category || complaint.complaint_categories?.name || 'Uncategorized' }}</span>
                   </div>
                   <div class="flex items-center text-xs font-bold text-gray-600 w-full overflow-hidden uppercase tracking-wider">
                     <mat-icon class="scale-[0.6] -ml-1 mr-1 shrink-0 text-gray-900">location_on</mat-icon>

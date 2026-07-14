@@ -136,10 +136,16 @@ import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <mat-form-field appearance="outline">
                   <mat-label>Category</mat-label>
-                  <mat-select formControlName="category_id">
+                  <mat-select formControlName="category_id" (selectionChange)="onCategoryChange($event.value)">
                     <mat-option *ngFor="let cat of categories" [value]="cat.id">{{ cat.name }}</mat-option>
                   </mat-select>
                   <mat-error *ngIf="complaintForm.get('category_id')?.hasError('required')">Category is required</mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" *ngIf="showCustomCategory">
+                  <mat-label>Specify Category</mat-label>
+                  <input matInput formControlName="custom_category" placeholder="e.g. Stray Dogs">
+                  <mat-error *ngIf="complaintForm.get('custom_category')?.hasError('required')">Please specify the category</mat-error>
                 </mat-form-field>
 
                 <mat-form-field appearance="outline">
@@ -580,6 +586,7 @@ export class ComplaintCreateComponent implements OnInit, OnDestroy {
   complaintForm: FormGroup = this.fb.group({
     title: ['', [Validators.required, Validators.minLength(5)]],
     category_id: ['', Validators.required],
+    custom_category: [''],
     priority: ['medium', Validators.required],
     barangay: ['', Validators.required],
     description: ['', [Validators.required, Validators.minLength(10)]],
@@ -588,6 +595,7 @@ export class ComplaintCreateComponent implements OnInit, OnDestroy {
   });
 
   categories: any[] = [];
+  showCustomCategory = false;
   loading = false;
   errorMsg = '';
 
@@ -661,16 +669,35 @@ export class ComplaintCreateComponent implements OnInit, OnDestroy {
     }
   }
 
+  onCategoryChange(categoryId: string) {
+    const selectedCategory = this.categories.find(c => c.id === categoryId);
+    if (selectedCategory && selectedCategory.name === 'Other') {
+      this.showCustomCategory = true;
+      this.complaintForm.get('custom_category')?.setValidators([Validators.required]);
+    } else {
+      this.showCustomCategory = false;
+      this.complaintForm.get('custom_category')?.clearValidators();
+      this.complaintForm.get('custom_category')?.setValue('');
+    }
+    this.complaintForm.get('custom_category')?.updateValueAndValidity();
+  }
+
   nextStep() {
     // Validate current step before proceeding
     if (this.currentStep === 1) {
       const titleControl = this.complaintForm.get('title');
       const categoryControl = this.complaintForm.get('category_id');
+      const customCategoryControl = this.complaintForm.get('custom_category');
       const priorityControl = this.complaintForm.get('priority');
+      
       titleControl?.markAsTouched();
       categoryControl?.markAsTouched();
+      if (this.showCustomCategory) {
+        customCategoryControl?.markAsTouched();
+      }
       priorityControl?.markAsTouched();
-      if (titleControl?.invalid || categoryControl?.invalid || priorityControl?.invalid) return;
+      
+      if (titleControl?.invalid || categoryControl?.invalid || priorityControl?.invalid || (this.showCustomCategory && customCategoryControl?.invalid)) return;
     }
     
     if (this.currentStep === 2) {

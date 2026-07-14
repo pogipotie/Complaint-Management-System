@@ -51,7 +51,9 @@ import { environment } from '../../../../environments/environment';
           <map-info-window #infoWindow>
             <div *ngIf="selectedComplaint" class="p-1 max-w-xs">
               <h3 class="font-black text-gray-900 text-sm mb-1 truncate uppercase" style="font-family: 'Arial Black', Impact, sans-serif;">{{ selectedComplaint.title }}</h3>
-              <p class="text-[10px] font-bold text-gray-500 mb-2 uppercase tracking-wider">{{ selectedComplaint.category_name }} • {{ selectedComplaint.barangay }}</p>
+              <p class="text-[10px] font-bold text-gray-500 mb-2 uppercase tracking-wider">
+                {{ selectedComplaint.custom_category || selectedComplaint.category_name || 'Uncategorized' }} • {{ selectedComplaint.barangay }}
+              </p>
               
               <div class="flex gap-2 mb-3">
                 <span class="px-2 py-0.5 text-[10px] font-bold uppercase rounded-sm border border-gray-900"

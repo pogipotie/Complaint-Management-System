@@ -7,6 +7,7 @@ export interface Complaint {
   title: string;
   description: string;
   category_id: string;
+  custom_category?: string;
   priority: string;
   barangay: string;
   latitude?: number;

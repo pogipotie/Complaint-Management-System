@@ -126,7 +126,7 @@ export class ConfirmDialogComponent {
               <p class="text-[10px] text-gray-500 font-black uppercase tracking-widest mb-1">Category</p>
               <p class="text-xs font-bold text-gray-900 flex items-center uppercase tracking-wider">
                 <mat-icon class="scale-75 text-primary-500 -ml-1 mr-1 shrink-0">folder</mat-icon>
-                {{ data.complaint_categories?.name || 'Uncategorized' }}
+                {{ data.custom_category || data.complaint_categories?.name || 'Uncategorized' }}
               </p>
             </div>
             <div class="sm:col-span-2">
