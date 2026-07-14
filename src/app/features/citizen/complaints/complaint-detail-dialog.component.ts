@@ -370,6 +370,72 @@ export class ConfirmDialogComponent {
         <button mat-flat-button mat-dialog-close color="primary" class="!px-8 !rounded-sm !border-2 !border-gray-900 !shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] hover:!translate-y-[1px] hover:!translate-x-[1px] hover:!shadow-[1px_1px_0px_0px_rgba(17,24,39,1)] transition-all font-black uppercase tracking-wider text-[11px] !bg-gray-100 !text-gray-900">Close</button>
       </mat-dialog-actions>
     </div>
+
+    <!-- Hidden Print Template for PDF Export -->
+    <div id="print-template" style="position: absolute; left: -9999px; top: 0; width: 800px; background: white; padding: 40px; font-family: Arial, sans-serif; color: black; z-index: -1;">
+      <div style="border-bottom: 2px solid black; padding-bottom: 20px; margin-bottom: 20px;">
+        <h1 style="font-size: 24px; font-weight: bold; margin: 0; text-transform: uppercase;">Official Complaint Record</h1>
+        <p style="margin: 5px 0 0 0; color: #555;">Reference ID: {{ data.id.toUpperCase() }}</p>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; margin-bottom: 30px;">
+        <div>
+          <h2 style="font-size: 20px; margin: 0 0 10px 0;">{{ data.title }}</h2>
+          <p style="margin: 0; font-size: 14px;"><strong>Status:</strong> {{ data.status.replace('_', ' ').toUpperCase() }}</p>
+          <p style="margin: 5px 0 0 0; font-size: 14px;"><strong>Priority:</strong> {{ data.priority.toUpperCase() }}</p>
+          <p *ngIf="data.is_escalated" style="margin: 5px 0 0 0; font-size: 14px; color: red;"><strong>ESCALATED TO ADMIN</strong></p>
+        </div>
+      </div>
+
+      <div style="margin-bottom: 30px; border: 1px solid #ccc; padding: 15px; border-radius: 4px;">
+        <h3 style="margin: 0 0 15px 0; font-size: 16px; border-bottom: 1px solid #eee; padding-bottom: 5px;">Complaint Details</h3>
+        <table style="width: 100%; font-size: 14px; line-height: 1.5;">
+          <tr>
+            <td style="width: 30%; font-weight: bold; padding: 5px 0;">Reported By:</td>
+            <td>{{ data.users?.full_name || 'Anonymous' }}</td>
+          </tr>
+          <tr>
+            <td style="font-weight: bold; padding: 5px 0;">Date Reported:</td>
+            <td>{{ data.created_at | date:'medium' }}</td>
+          </tr>
+          <tr>
+            <td style="font-weight: bold; padding: 5px 0;">Category:</td>
+            <td>{{ data.custom_category || data.complaint_categories?.name || 'Uncategorized' }}</td>
+          </tr>
+          <tr>
+            <td style="font-weight: bold; padding: 5px 0;">Location:</td>
+            <td>{{ data.barangay }}</td>
+          </tr>
+        </table>
+      </div>
+
+      <div style="margin-bottom: 30px;">
+        <h3 style="margin: 0 0 10px 0; font-size: 16px; border-bottom: 1px solid #eee; padding-bottom: 5px;">Description</h3>
+        <p style="font-size: 14px; line-height: 1.6; white-space: pre-wrap;">{{ data.description }}</p>
+      </div>
+
+      <div *ngIf="data.resolution_notes" style="margin-bottom: 30px; background-color: #f0fdf4; padding: 15px; border: 1px solid #16a34a; border-radius: 4px;">
+        <h3 style="margin: 0 0 10px 0; font-size: 16px; color: #166534; border-bottom: 1px solid #bbf7d0; padding-bottom: 5px;">Resolution Notes</h3>
+        <p style="font-size: 14px; line-height: 1.6; color: #166534; white-space: pre-wrap;">{{ data.resolution_notes }}</p>
+      </div>
+
+      <div *ngIf="data.rating" style="margin-bottom: 30px; border: 1px solid #ccc; padding: 15px; border-radius: 4px;">
+        <h3 style="margin: 0 0 10px 0; font-size: 16px; border-bottom: 1px solid #eee; padding-bottom: 5px;">Citizen Feedback</h3>
+        <p style="margin: 0 0 5px 0; font-size: 14px;"><strong>Rating:</strong> {{ data.rating }} / 5 Stars</p>
+        <p *ngIf="data.feedback_text" style="font-size: 14px; font-style: italic; color: #555; margin: 0;">"{{ data.feedback_text }}"</p>
+      </div>
+
+      <div *ngIf="data.evidence_paths && data.evidence_paths.length > 0" style="margin-bottom: 30px; page-break-inside: avoid;">
+        <h3 style="margin: 0 0 10px 0; font-size: 16px; border-bottom: 1px solid #eee; padding-bottom: 5px;">Evidence Photo (Before)</h3>
+        <img [src]="data.evidence_paths[0]" style="max-width: 100%; max-height: 400px; object-fit: contain; border: 1px solid #ccc; padding: 5px;" crossorigin="anonymous">
+      </div>
+
+      <div *ngIf="data.resolution_images && data.resolution_images.length > 0" style="margin-bottom: 30px; page-break-inside: avoid;">
+        <h3 style="margin: 0 0 10px 0; font-size: 16px; border-bottom: 1px solid #eee; padding-bottom: 5px;">Resolution Photo (After)</h3>
+        <img [src]="data.resolution_images[0]" style="max-width: 100%; max-height: 400px; object-fit: contain; border: 1px solid #ccc; padding: 5px;" crossorigin="anonymous">
+      </div>
+
+    </div>
   `,
   styles: [`
     :host {
@@ -626,8 +692,8 @@ export class ComplaintDetailDialogComponent implements OnInit, AfterViewChecked 
     // Slight delay to ensure UI updates before capture
     setTimeout(async () => {
       try {
-        const element = document.getElementById('pdf-content');
-        if (!element) throw new Error('PDF content element not found');
+        const element = document.getElementById('print-template');
+        if (!element) throw new Error('PDF print template element not found');
 
         // We use html2canvas to capture the styled HTML as an image
         const canvas = await html2canvas(element, {
@@ -649,21 +715,8 @@ export class ComplaintDetailDialogComponent implements OnInit, AfterViewChecked 
         const pdfWidth = pdf.internal.pageSize.getWidth();
         const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
-        // Add a nice header
-        pdf.setFontSize(18);
-        pdf.setTextColor(31, 41, 55); // gray-800
-        pdf.text('Complaint Official Record', 10, 15);
-        
-        pdf.setFontSize(10);
-        pdf.setTextColor(107, 114, 128); // gray-500
-        pdf.text(`Generated on: ${new Date().toLocaleString()}`, 10, 22);
-        
-        // Draw a separator line
-        pdf.setDrawColor(229, 231, 235); // gray-200
-        pdf.line(10, 26, pdfWidth - 10, 26);
-
         // Add the captured content
-        pdf.addImage(imgData, 'JPEG', 10, 30, pdfWidth - 20, pdfHeight - 40);
+        pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
 
         // Save the PDF
         const filename = `Complaint_${this.data.id ? this.data.id.substring(0,8) : 'Export'}.pdf`;
