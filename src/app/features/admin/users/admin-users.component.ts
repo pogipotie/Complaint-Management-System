@@ -2,6 +2,7 @@ import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SupabaseService } from '../../../core/services/supabase.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -11,7 +12,10 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatTabsModule } from '@angular/material/tabs';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { AdminUserDetailDialogComponent } from './admin-user-detail-dialog.component';
+import { AdminCreateCaptainDialogComponent } from './admin-create-captain-dialog.component';
 import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config';
 
 @Component({
@@ -28,23 +32,36 @@ import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config
     MatDialogModule,
     MatFormFieldModule,
     MatSelectModule,
-    MatPaginatorModule
+    MatPaginatorModule,
+    MatTabsModule,
+    MatSnackBarModule
   ],
   template: `
     <div class="p-6 max-w-7xl mx-auto pb-20">
       <div class="flex justify-between items-center mb-6">
         <div>
-          <h1 class="text-3xl font-black text-gray-900 uppercase tracking-tight" style="font-family: 'Arial Black', Impact, sans-serif;">User Approvals</h1>
-          <p class="text-sm font-bold text-gray-600 uppercase tracking-wider">Verify citizen registrations and IDs</p>
+          <h1 class="text-3xl font-black text-gray-900 uppercase tracking-tight" style="font-family: 'Arial Black', Impact, sans-serif;">User Management</h1>
+          <p class="text-sm font-bold text-gray-600 uppercase tracking-wider">Manage Citizens and Barangay Captains</p>
         </div>
         <button mat-flat-button color="primary" (click)="loadUsers()" [disabled]="loading" class="!rounded-sm !border-2 !border-gray-900 !shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] hover:!translate-y-[1px] hover:!translate-x-[1px] hover:!shadow-[1px_1px_0px_0px_rgba(17,24,39,1)] transition-all font-black uppercase tracking-wider">
           <mat-icon>refresh</mat-icon> Refresh
         </button>
       </div>
 
+      <mat-tab-group (selectedTabChange)="onTabChange($event)" class="mb-6 custom-tabs">
+        <mat-tab label="CITIZENS"></mat-tab>
+        <mat-tab label="BARANGAY CAPTAINS"></mat-tab>
+      </mat-tab-group>
+
+      <div *ngIf="activeTab === 1" class="mb-6 flex justify-end">
+        <button mat-flat-button color="accent" (click)="openCreateCaptainDialog()" class="!rounded-sm !border-2 !border-gray-900 !shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] font-black uppercase tracking-wider !bg-yellow-400 !text-gray-900">
+          <mat-icon>add</mat-icon> Create Captain Account
+        </button>
+      </div>
+
       <!-- Filters -->
       <div class="flex flex-col sm:flex-row gap-4 mb-8 bg-gray-50 border-2 border-gray-900 p-4 rounded-sm shadow-[4px_4px_0px_0px_rgba(17,24,39,1)]">
-        <mat-form-field appearance="outline" class="w-full sm:w-1/3 bg-white filter-field">
+        <mat-form-field appearance="outline" class="w-full sm:w-1/3 bg-white filter-field" *ngIf="activeTab === 0">
           <mat-label>Verification Status</mat-label>
           <mat-select [(ngModel)]="statusFilter" (selectionChange)="applyFilters()">
             <mat-option value="all">All Statuses</mat-option>
@@ -169,11 +186,21 @@ import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config
     ::ng-deep .mat-mdc-paginator-container {
       padding: 8px 16px !important;
     }
+    ::ng-deep .custom-tabs .mdc-tab-indicator__inner--theme-secondary {
+      border-color: #111827 !important;
+      border-width: 4px !important;
+    }
+    ::ng-deep .custom-tabs .mdc-tab__text-label {
+      font-weight: 900 !important;
+      letter-spacing: 0.05em !important;
+    }
   `]
 })
 export class AdminUsersComponent implements OnInit {
   private supabaseService = inject(SupabaseService);
+  private authService = inject(AuthService);
   private dialog = inject(MatDialog);
+  private snackBar = inject(MatSnackBar);
 
   users: any[] = [];
   filteredUsers: any[] = [];
@@ -185,6 +212,7 @@ export class AdminUsersComponent implements OnInit {
   barangays = MUNICIPALITY_CONFIG.barangays;
   statusFilter = 'all';
   barangayFilter = 'all';
+  activeTab = 0; // 0 = Citizens, 1 = Captains
 
   // Pagination state
   pageSize = 6;
@@ -194,15 +222,47 @@ export class AdminUsersComponent implements OnInit {
     this.loadUsers();
   }
 
+  onTabChange(event: any) {
+    this.activeTab = event.index;
+    this.applyFilters();
+  }
+
+  openCreateCaptainDialog() {
+    const dialogRef = this.dialog.open(AdminCreateCaptainDialogComponent, {
+      width: '500px',
+      maxWidth: '90vw'
+    });
+
+    dialogRef.afterClosed().subscribe(async (result) => {
+      if (result) {
+        this.loading = true;
+        try {
+          await this.authService.createCaptainAccount({
+            email: result.email,
+            password: result.password,
+            fullName: result.fullName,
+            barangay: result.barangay
+          });
+          
+          this.snackBar.open('Captain account successfully created!', 'Close', { duration: 3000 });
+          this.loadUsers(); // Refresh the list
+        } catch (err: any) {
+          console.error(err);
+          this.snackBar.open(err.message || 'Failed to create account', 'Close', { duration: 5000, panelClass: ['bg-red-600', 'text-white'] });
+          this.loading = false;
+        }
+      }
+    });
+  }
+
   async loadUsers() {
     this.loading = true;
     
-    // Fetch users who are citizens and have pending verification (or show all and allow filtering)
-    // For now, let's fetch 'pending' and 'rejected' to let admins review them.
+    // Fetch users (both citizen and brgy_captain)
     const { data, error } = await this.supabaseService.supabase
       .from('users')
       .select('*')
-      .eq('role', 'citizen')
+      .in('role', ['citizen', 'brgy_captain'])
       .order('created_at', { ascending: false });
 
     if (!error && data) {
@@ -262,9 +322,12 @@ export class AdminUsersComponent implements OnInit {
 
   applyFilters() {
     this.filteredUsers = this.users.filter(user => {
+      // Role Filter based on Tab
+      const roleMatch = this.activeTab === 0 ? user.role === 'citizen' : user.role === 'brgy_captain';
+      
       const matchStatus = this.statusFilter === 'all' || user.verification_status === this.statusFilter;
       const matchBarangay = this.barangayFilter === 'all' || user.barangay === this.barangayFilter;
-      return matchStatus && matchBarangay;
+      return roleMatch && matchStatus && matchBarangay;
     });
     
     // Reset to first page when filters change

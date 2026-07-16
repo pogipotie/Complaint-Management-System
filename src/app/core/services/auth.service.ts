@@ -61,4 +61,17 @@ export class AuthService {
     if (error) throw error;
     return data;
   }
+
+  async createCaptainAccount(payload: { email: string, password: string, fullName: string, barangay: string }): Promise<any> {
+    const { data, error } = await this.supabaseService.supabase
+      .rpc('admin_create_captain', {
+        captain_email: payload.email,
+        captain_password: payload.password,
+        captain_full_name: payload.fullName,
+        captain_barangay: payload.barangay
+      });
+
+    if (error) throw error;
+    return data;
+  }
 }
