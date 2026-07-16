@@ -127,6 +127,36 @@ import { takeUntil, filter } from 'rxjs/operators';
                           </ng-container>
                         </div>
 
+                        <div *ngIf="note.complaint" class="mt-2 mb-3 p-3 bg-white border-2 border-gray-900 rounded-sm shadow-[2px_2px_0px_0px_rgba(17,24,39,1)]">
+                          <div class="flex justify-between items-start mb-2">
+                            <div>
+                              <p class="text-[9px] font-black uppercase tracking-widest text-gray-500 mb-0.5">Reference ID</p>
+                              <p class="text-[10px] font-bold uppercase tracking-wider text-gray-900 font-mono">{{ note.complaint.id | slice:0:8 }}</p>
+                            </div>
+                            <span class="px-1.5 py-0.5 rounded-sm border-2 border-gray-900 text-[9px] font-black uppercase tracking-widest shadow-[1px_1px_0px_0px_rgba(17,24,39,1)]"
+                                  [ngClass]="getStatusColor(note.complaint.status)">
+                              {{ note.complaint.status }}
+                            </span>
+                          </div>
+                          
+                          <p class="text-[11px] font-black text-gray-900 uppercase tracking-tight leading-tight mb-2 truncate" style="font-family: 'Arial Black', Impact, sans-serif;">{{ note.complaint.title }}</p>
+                          
+                          <div class="flex flex-col gap-1.5 text-[9px] font-bold text-gray-600 uppercase tracking-widest">
+                            <div class="flex items-center">
+                              <mat-icon style="font-size: 12px; width: 12px; height: 12px; line-height: 12px;" class="mr-1.5 text-gray-400">category</mat-icon>
+                              <span class="truncate">{{ note.complaint.category?.name || 'General' }}</span>
+                            </div>
+                            <div class="flex items-center">
+                              <mat-icon style="font-size: 12px; width: 12px; height: 12px; line-height: 12px;" class="mr-1.5 text-gray-400">place</mat-icon>
+                              <span class="truncate">{{ note.complaint.barangay || note.complaint.location_text || 'Location' }}</span>
+                            </div>
+                            <div class="flex items-center mt-0.5 text-gray-500">
+                              <mat-icon style="font-size: 12px; width: 12px; height: 12px; line-height: 12px;" class="mr-1.5">event</mat-icon>
+                              <span>Reported: {{ note.complaint.created_at | date:'MMM d, yyyy' }}</span>
+                            </div>
+                          </div>
+                        </div>
+
                         <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest flex items-center">
                           <mat-icon style="font-size: 12px; width: 12px; height: 12px; line-height: 12px;" class="mr-1">schedule</mat-icon>
                           {{ note.created_at | date:'short' }}

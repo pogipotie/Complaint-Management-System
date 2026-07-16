@@ -12,6 +12,7 @@ export interface Notification {
   body: string;
   is_read: boolean;
   created_at: string;
+  complaint?: any;
 }
 
 @Injectable({
@@ -31,7 +32,7 @@ export class NotificationsService {
   async loadNotifications(userId: string) {
     const { data, error } = await this.supabaseService.supabase
       .from('notifications')
-      .select('*')
+      .select('*, complaint:complaints(id, title, status, location_text, barangay, created_at, category:complaint_categories(name))')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .limit(20);
@@ -54,8 +55,15 @@ export class NotificationsService {
           table: 'notifications',
           filter: `user_id=eq.${userId}`
         },
-        (payload) => {
-          const newNotification = payload.new as Notification;
+        async (payload) => {
+          // Fetch the new notification with joined complaint details
+          const { data } = await this.supabaseService.supabase
+            .from('notifications')
+            .select('*, complaint:complaints(id, title, status, location_text, barangay, created_at, category:complaint_categories(name))')
+            .eq('id', payload.new['id'])
+            .single();
+
+          const newNotification = (data || payload.new) as Notification;
           const current = this.notificationsSubject.value;
           const updated = [newNotification, ...current].slice(0, 20); // Keep last 20
           this.notificationsSubject.next(updated);
