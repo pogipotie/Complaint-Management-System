@@ -212,7 +212,6 @@ import { AdminStatusUpdateDialogComponent } from '../../admin/complaints/admin-s
                           <option value="assigned" [disabled]="complaint.status === 'resolved'">ASSIGNED</option>
                           <option value="in_progress" [disabled]="complaint.status === 'resolved'">IN PROGRESS</option>
                           <option value="resolved">RESOLVED</option>
-                          <option value="closed">CLOSED</option>
                           <option value="rejected" [disabled]="complaint.status === 'resolved'">REJECTED</option>
                         </select>
                         <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-900">
