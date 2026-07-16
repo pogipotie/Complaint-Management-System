@@ -104,8 +104,8 @@ import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config
           </div>
 
           <div class="p-4 flex-grow flex flex-col gap-4">
-            <!-- Details -->
-            <div class="grid grid-cols-2 gap-2 text-sm">
+            <!-- Details (Citizen Only) -->
+            <div *ngIf="user.role === 'citizen'" class="grid grid-cols-2 gap-2 text-sm">
               <div>
                 <span class="text-xs font-bold text-gray-500 uppercase">Phone</span>
                 <div class="font-medium text-gray-900">{{ user.phone || 'N/A' }}</div>
@@ -120,8 +120,19 @@ import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config
               </div>
             </div>
 
-            <!-- ID Preview -->
-            <div class="mt-2 border-2 border-dashed border-gray-300 rounded-sm p-2 flex flex-col items-center justify-center bg-gray-50 min-h-[150px]">
+            <!-- Details (Captain Only) -->
+            <div *ngIf="user.role === 'brgy_captain'" class="grid grid-cols-1 gap-2 text-sm text-center py-4">
+               <div class="flex flex-col items-center justify-center">
+                 <div class="h-16 w-16 bg-gray-200 border-2 border-gray-900 rounded-full flex items-center justify-center shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] mb-3 overflow-hidden">
+                   <mat-icon class="text-gray-500 scale-150">person</mat-icon>
+                 </div>
+                 <span class="text-xs font-bold text-gray-500 uppercase">Account Type</span>
+                 <div class="font-medium text-gray-900">Official Local Government Unit</div>
+               </div>
+            </div>
+
+            <!-- ID Preview (Citizen Only) -->
+            <div *ngIf="user.role === 'citizen'" class="mt-2 border-2 border-dashed border-gray-300 rounded-sm p-2 flex flex-col items-center justify-center bg-gray-50 min-h-[150px]">
               <span class="text-xs font-bold text-gray-500 uppercase mb-2">Proof of Residency (ID)</span>
               <img *ngIf="user.proof_of_residency_url" [src]="user.proof_of_residency_url" class="max-h-[150px] object-contain border border-gray-200 shadow-sm cursor-pointer" alt="ID Image" (click)="openImage(user.proof_of_residency_url)">
               <div *ngIf="!user.proof_of_residency_url" class="text-sm text-gray-400 font-medium italic">
@@ -131,7 +142,7 @@ import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config
           </div>
 
           <div class="border-t-2 border-gray-900 bg-gray-50 p-4 flex flex-col gap-3 mt-auto">
-            <button mat-stroked-button color="primary" class="w-full !rounded-sm !border-2 !border-gray-900 !shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] hover:!translate-y-[1px] hover:!translate-x-[1px] hover:!shadow-[1px_1px_0px_0px_rgba(17,24,39,1)] transition-all font-black uppercase tracking-wider" (click)="viewUserDetails(user)">
+            <button *ngIf="user.role === 'citizen'" mat-stroked-button color="primary" class="w-full !rounded-sm !border-2 !border-gray-900 !shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] hover:!translate-y-[1px] hover:!translate-x-[1px] hover:!shadow-[1px_1px_0px_0px_rgba(17,24,39,1)] transition-all font-black uppercase tracking-wider" (click)="viewUserDetails(user)">
               <mat-icon>visibility</mat-icon> View Full Details
             </button>
             
