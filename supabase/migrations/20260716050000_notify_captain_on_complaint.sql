@@ -1,6 +1,6 @@
 -- Update the complaint trigger to notify admins and the assigned barangay captain
 CREATE OR REPLACE FUNCTION public.on_complaint_status_change()
-RETURNS trigger LANGUAGE plpgsql AS $body
+RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
   IF (TG_OP = 'INSERT') THEN
     INSERT INTO public.complaint_status_history(complaint_id, from_status, to_status, changed_by, note) 
@@ -65,4 +65,4 @@ BEGIN
 
   RETURN NEW;
 END;
-$body;
+$$;
