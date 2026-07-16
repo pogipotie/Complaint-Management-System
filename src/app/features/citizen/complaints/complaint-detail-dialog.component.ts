@@ -293,7 +293,7 @@ export class ConfirmDialogComponent {
                       <span class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{{ comment.created_at | date:'short' }}</span>
                       <span *ngIf="comment.user_role !== 'citizen'" class="text-[9px] border-2 border-gray-900 px-1 rounded-sm uppercase font-black"
                             [ngClass]="comment.user_role === 'brgy_captain' ? 'bg-orange-100 text-orange-900' : 'bg-green-100 text-green-800'">
-                        {{ comment.user_role === 'brgy_captain' ? 'Captain' : 'Staff' }}
+                        {{ comment.user_role === 'brgy_captain' ? 'Captain' : 'Admin' }}
                       </span>
                     </div>
                     <div class="p-3 border-2 border-gray-900 text-xs font-bold uppercase tracking-wider leading-relaxed shadow-[2px_2px_0px_0px_rgba(17,24,39,1)]"
