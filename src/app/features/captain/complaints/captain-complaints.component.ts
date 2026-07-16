@@ -19,6 +19,7 @@ import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatMenuModule } from '@angular/material/menu';
 import { ComplaintDetailDialogComponent } from '../../citizen/complaints/complaint-detail-dialog.component';
 import { AdminStatusUpdateDialogComponent } from '../../admin/complaints/admin-status-update-dialog.component';
+import { DescriptionDialogComponent } from '../../../shared/components/description-dialog/description-dialog.component';
 
 @Component({
   selector: 'app-admin-complaints',
@@ -143,7 +144,10 @@ import { AdminStatusUpdateDialogComponent } from '../../admin/complaints/admin-s
                       {{ complaint.users?.full_name || 'Unknown Citizen' }}
                     </span>
                   </div>
-                  <div class="text-xs font-bold text-gray-500 line-clamp-1 max-w-xs">{{ complaint.description }}</div>
+                  <button mat-stroked-button (click)="openDescription(complaint, $event)" class="!h-8 !px-3 !rounded-sm !border-2 !border-gray-900 !shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] hover:!translate-y-[1px] hover:!translate-x-[1px] hover:!shadow-[1px_1px_0px_0px_rgba(17,24,39,1)] transition-all bg-white text-[10px] font-black uppercase tracking-wider">
+                    <mat-icon class="scale-75 -ml-1">visibility</mat-icon>
+                    View Description
+                  </button>
                 </td>
               </ng-container>
 
@@ -420,6 +424,19 @@ export class CaptainComplaintsComponent implements OnInit, OnDestroy {
       status: ''
     };
     this.applyAllFilters();
+  }
+
+  openDescription(complaint: any, event: Event) {
+    event.stopPropagation(); // Prevent opening the full complaint detail dialog
+    this.dialog.open(DescriptionDialogComponent, {
+      width: '90vw',
+      maxWidth: '600px',
+      panelClass: 'retro-dialog',
+      data: {
+        title: complaint.title,
+        description: complaint.description
+      }
+    });
   }
 
   exportToCsv() {
