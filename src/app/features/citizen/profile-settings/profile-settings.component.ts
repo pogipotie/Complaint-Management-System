@@ -98,6 +98,9 @@ import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config
                     <mat-select formControlName="barangay">
                       <mat-option *ngFor="let brgy of barangays" [value]="brgy">{{ brgy }}</mat-option>
                     </mat-select>
+                    <mat-hint *ngIf="verificationStatus === 'verified'" class="text-[10px] font-bold text-gray-500">
+                      Cannot be changed after verification.
+                    </mat-hint>
                     <mat-error *ngIf="profileForm.get('barangay')?.hasError('required')">Required</mat-error>
                   </mat-form-field>
 
@@ -277,6 +280,12 @@ export class ProfileSettingsComponent implements OnInit {
         emergency_contact_name: data.emergency_contact_name,
         emergency_contact_number: data.emergency_contact_number
       });
+
+      if (this.verificationStatus === 'verified') {
+        this.profileForm.get('barangay')?.disable();
+      } else {
+        this.profileForm.get('barangay')?.enable();
+      }
 
       // Fetch signed URL if an ID exists
       if (data.proof_of_residency_url) {
