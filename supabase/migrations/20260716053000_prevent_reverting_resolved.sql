@@ -1,12 +1,12 @@
--- Prevent reverting from 'resolved' to earlier statuses
+-- Prevent reverting from 'resolved' to earlier statuses or rejected
 CREATE OR REPLACE FUNCTION prevent_reverting_resolved_status()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 BEGIN
-  -- If the old status was 'resolved' and the new status is one of the earlier ones
-  IF OLD.status = 'resolved' AND NEW.status IN ('pending', 'assigned', 'in_progress') THEN
+  -- If the old status was 'resolved' and the new status is one of the earlier ones or rejected
+  IF OLD.status = 'resolved' AND NEW.status IN ('pending', 'assigned', 'in_progress', 'rejected') THEN
     RAISE EXCEPTION 'Cannot revert a resolved complaint back to % status.', NEW.status;
   END IF;
   
