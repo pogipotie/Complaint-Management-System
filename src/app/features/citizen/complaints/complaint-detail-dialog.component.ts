@@ -655,8 +655,8 @@ export class ComplaintDetailDialogComponent implements OnInit, AfterViewChecked 
             await this.supabaseService.supabase.from('complaint_comments').insert({
               complaint_id: this.data.id,
               user_id: this.currentUserId,
-              body: 'System: Complaint escalated to Municipal Admin for assistance.',
-              is_internal: false
+              body: 'Complaint escalated to Municipal Admin for assistance.',
+              is_internal: true
             });
           }
         }
