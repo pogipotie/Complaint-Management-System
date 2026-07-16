@@ -11,7 +11,7 @@ BEGIN
 
     -- 2. Notify the citizen who created the complaint
     INSERT INTO public.notifications(user_id, complaint_id, type, title, body, should_email)
-    VALUES (NEW.created_by, NEW.id, 'status_update', 'Complaint Escalated', concat('Your complaint "', NEW.title, '" has been escalated to the Municipal Admin for assistance.'), true);
+    VALUES (NEW.created_by, NEW.id, 'status_changed', 'Complaint Escalated', concat('Your complaint "', NEW.title, '" has been escalated to the Municipal Admin for assistance.'), true);
   END IF;
 
   RETURN NEW;
