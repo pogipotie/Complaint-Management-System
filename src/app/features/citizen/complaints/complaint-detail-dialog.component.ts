@@ -113,10 +113,10 @@ export class ConfirmDialogComponent {
           </div>
           
           <!-- Image Section -->
-          <div *ngIf="data.evidence_paths && data.evidence_paths.length > 0" class="rounded-sm overflow-hidden border-2 border-gray-900 bg-gray-100 flex justify-center shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)] relative">
+          <div *ngIf="data.image_url || (data.evidence_paths && data.evidence_paths.length > 0)" class="rounded-sm overflow-hidden border-2 border-gray-900 bg-gray-100 flex justify-center shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)] relative">
             <div class="w-full relative">
               <span class="absolute top-2 left-2 bg-gray-900 text-white text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-sm shadow-[1px_1px_0px_0px_rgba(255,255,255,0.3)] z-20 border border-gray-700">Before (Citizen Report)</span>
-              <img [src]="data.evidence_paths[0]" alt="Complaint Photo" class="max-h-72 object-contain w-full relative z-10 hover:scale-105 transition-transform duration-500 cursor-pointer">
+              <img [src]="data.image_url || data.evidence_paths[0]" alt="Complaint Photo" class="max-h-72 object-contain w-full relative z-10 hover:scale-105 transition-transform duration-500 cursor-pointer">
             </div>
           </div>
 
@@ -425,9 +425,9 @@ export class ConfirmDialogComponent {
         <p *ngIf="data.feedback_text" style="font-size: 14px; font-style: italic; color: #555; margin: 0;">"{{ data.feedback_text }}"</p>
       </div>
 
-      <div *ngIf="data.evidence_paths && data.evidence_paths.length > 0" style="margin-bottom: 30px; page-break-inside: avoid;">
+      <div *ngIf="data.image_url || (data.evidence_paths && data.evidence_paths.length > 0)" style="margin-bottom: 30px; page-break-inside: avoid;">
         <h3 style="margin: 0 0 10px 0; font-size: 16px; border-bottom: 1px solid #eee; padding-bottom: 5px;">Evidence Photo (Before)</h3>
-        <img [src]="data.evidence_paths[0]" style="max-width: 100%; max-height: 400px; object-fit: contain; border: 1px solid #ccc; padding: 5px;" crossorigin="anonymous">
+        <img [src]="data.image_url || data.evidence_paths[0]" style="max-width: 100%; max-height: 400px; object-fit: contain; border: 1px solid #ccc; padding: 5px;" crossorigin="anonymous">
       </div>
 
       <div *ngIf="data.resolution_images && data.resolution_images.length > 0" style="margin-bottom: 30px; page-break-inside: avoid;">
