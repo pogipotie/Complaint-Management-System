@@ -208,9 +208,9 @@ import { AdminStatusUpdateDialogComponent } from '../../admin/complaints/admin-s
                         <select class="w-full appearance-none bg-white border-2 border-gray-900 rounded-sm pl-3 pr-8 py-1.5 text-xs font-black uppercase tracking-wider text-gray-900 shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] focus:outline-none focus:ring-0 focus:border-primary-600 cursor-pointer"
                                 [value]="complaint.status" 
                                 (change)="updateStatus(complaint, $any($event.target).value)">
-                          <option value="pending">PENDING</option>
-                          <option value="assigned">ASSIGNED</option>
-                          <option value="in_progress">IN PROGRESS</option>
+                          <option value="pending" [disabled]="complaint.status === 'resolved'">PENDING</option>
+                          <option value="assigned" [disabled]="complaint.status === 'resolved'">ASSIGNED</option>
+                          <option value="in_progress" [disabled]="complaint.status === 'resolved'">IN PROGRESS</option>
                           <option value="resolved">RESOLVED</option>
                           <option value="closed">CLOSED</option>
                           <option value="rejected">REJECTED</option>
