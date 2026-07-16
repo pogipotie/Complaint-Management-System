@@ -14,7 +14,7 @@ export const CITIZEN_ROUTES: Routes = [
     path: '',
     component: CitizenLayoutComponent,
     canActivate: [authGuard, roleGuard],
-    data: { roles: ['citizen', 'admin', 'staff'] }, // allow staff/admin to view citizen side if needed
+    data: { roles: ['citizen', 'admin'] }, // allow admin to view citizen side if needed
     children: [
       { path: 'complaints', component: ComplaintListComponent },
       { path: 'complaints/new', component: ComplaintCreateComponent },

@@ -191,7 +191,7 @@ export class LoginComponent {
             this.closeDialog(); // Close modal on success
 
             if (profile) {
-              if (profile.role === 'admin' || profile.role === 'staff') {
+              if (profile.role === 'admin') {
                 this.router.navigate(['/admin/dashboard']);
               } else if (profile.role === 'brgy_captain') {
                 this.router.navigate(['/captain/dashboard']);

@@ -57,7 +57,7 @@ import { MatIconModule } from '@angular/material/icon';
 
           <div>
             <h3 class="text-base font-black text-gray-900 uppercase tracking-tight mb-2">4. Data Sharing and Disclosure</h3>
-            <p>We do not sell or rent your personal information. Your data is only accessible to authorized LGU personnel (Municipal Admins, Staff, and Barangay Captains) who require it to resolve your complaint. We may disclose information if required by law or to protect public safety.</p>
+            <p>We do not sell or rent your personal information. Your data is only accessible to authorized LGU personnel (Municipal Admins and Barangay Captains) who require it to resolve your complaint. We may disclose information if required by law or to protect public safety.</p>
           </div>
 
           <div>
@@ -93,7 +93,7 @@ import { MatIconModule } from '@angular/material/icon';
 
           <div>
             <h3 class="text-base font-black text-gray-900 uppercase tracking-tight mb-2">4. Account Suspension</h3>
-            <p>The LGU reserves the right to suspend or permanently ban any account that violates these terms, submits fraudulent reports, or engages in abusive behavior toward municipal staff or other users.</p>
+            <p>The LGU reserves the right to suspend or permanently ban any account that violates these terms, submits fraudulent reports, or engages in abusive behavior toward municipal officials or other users.</p>
           </div>
 
           <div>

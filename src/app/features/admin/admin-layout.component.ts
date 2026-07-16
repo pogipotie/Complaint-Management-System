@@ -49,7 +49,7 @@ import { takeUntil, filter } from 'rxjs/operators';
             <span matListItemTitle class="font-bold uppercase tracking-wider text-[11px]">Dashboard</span>
           </a>
 
-          <a *ngIf="userRole === 'admin' || userRole === 'staff'" mat-list-item routerLink="/admin/users" routerLinkActive="bg-primary-100 text-primary-900 border-2 border-gray-900 shadow-[2px_2px_0px_0px_rgba(17,24,39,1)]" class="hover:bg-gray-50 transition-all rounded-sm mb-2">
+          <a *ngIf="userRole === 'admin'" mat-list-item routerLink="/admin/users" routerLinkActive="bg-primary-100 text-primary-900 border-2 border-gray-900 shadow-[2px_2px_0px_0px_rgba(17,24,39,1)]" class="hover:bg-gray-50 transition-all rounded-sm mb-2">
             <mat-icon matListItemIcon [color]="router.url.includes('/users') ? 'primary' : ''" class="text-gray-900">people</mat-icon>
             <span matListItemTitle class="font-bold uppercase tracking-wider text-[11px]">User Approvals</span>
           </a>
@@ -59,7 +59,7 @@ import { takeUntil, filter } from 'rxjs/operators';
             <span matListItemTitle class="font-bold uppercase tracking-wider text-[11px]">Complaints List</span>
           </a>
 
-          <a *ngIf="userRole === 'admin' || userRole === 'staff'" mat-list-item routerLink="/admin/announcements" routerLinkActive="bg-primary-100 text-primary-900 border-2 border-gray-900 shadow-[2px_2px_0px_0px_rgba(17,24,39,1)]" class="hover:bg-gray-50 transition-all rounded-sm mb-2">
+          <a *ngIf="userRole === 'admin'" mat-list-item routerLink="/admin/announcements" routerLinkActive="bg-primary-100 text-primary-900 border-2 border-gray-900 shadow-[2px_2px_0px_0px_rgba(17,24,39,1)]" class="hover:bg-gray-50 transition-all rounded-sm mb-2">
             <mat-icon matListItemIcon [color]="router.url.includes('/announcements') ? 'primary' : ''" class="text-gray-900">campaign</mat-icon>
             <span matListItemTitle class="font-bold uppercase tracking-wider text-[11px]">Announcements</span>
           </a>

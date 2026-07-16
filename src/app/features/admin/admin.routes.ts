@@ -12,7 +12,7 @@ export const ADMIN_ROUTES: Routes = [
     path: '',
     component: AdminLayoutComponent,
     canActivate: [authGuard, roleGuard],
-    data: { roles: ['admin', 'staff'] },
+    data: { roles: ['admin'] },
     children: [
       { path: 'dashboard', component: AdminDashboardComponent },
       { path: 'complaints', component: AdminComplaintsComponent },

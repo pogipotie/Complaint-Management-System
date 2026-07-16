@@ -246,7 +246,7 @@ import { LegalDialogComponent } from '../../shared/components/legal-dialog/legal
                       Real-time Updates
                     </h3>
                     <p class="font-bold text-sm sm:text-base text-gray-800 leading-snug">
-                      Receive instant notifications as soon as a municipality staff member assigns, reviews, or resolves your reported issue.
+                      Receive instant notifications as soon as a Barangay Captain or Municipal Admin assigns, reviews, or resolves your reported issue.
                     </p>
                   </div>
                 </div>
