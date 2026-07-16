@@ -179,6 +179,9 @@ import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config
                 <mat-select formControlName="barangay" (selectionChange)="onBarangayChange($event.value)">
                   <mat-option *ngFor="let brgy of barangays" [value]="brgy">{{ brgy }}</mat-option>
                 </mat-select>
+                <mat-hint *ngIf="isVerified" class="text-[10px] font-bold text-gray-500">
+                  Locked to your registered barangay.
+                </mat-hint>
                 <mat-error *ngIf="complaintForm.get('barangay')?.hasError('required')">Barangay is required</mat-error>
               </mat-form-field>
 
@@ -642,7 +645,7 @@ export class ComplaintCreateComponent implements OnInit, OnDestroy {
     if (user) {
       const { data } = await this.supabaseService.supabase
         .from('users')
-        .select('verification_status, rejection_reason')
+        .select('verification_status, rejection_reason, barangay')
         .eq('id', user.id)
         .single();
       
@@ -650,6 +653,15 @@ export class ComplaintCreateComponent implements OnInit, OnDestroy {
         this.isVerified = data.verification_status === 'verified';
         this.verificationStatus = data.verification_status;
         this.rejectionReason = data.rejection_reason;
+        
+        if (this.isVerified && data.barangay) {
+          this.complaintForm.patchValue({ barangay: data.barangay });
+          this.complaintForm.get('barangay')?.disable();
+          
+          if (this.geocoder) {
+            this.onBarangayChange(data.barangay);
+          }
+        }
       } else {
         this.isVerified = false;
         this.verificationStatus = 'pending';
@@ -769,8 +781,13 @@ export class ComplaintCreateComponent implements OnInit, OnDestroy {
     }
 
     // We don't automatically request geolocation on init anymore to avoid annoying the user
-    // We just set a default center (Manila)
-    this.updateMarker(this.mapCenter);
+    // Instead, if the form already has a barangay (e.g. from verification), map to it. Otherwise, set default center.
+    const currentBarangay = this.complaintForm.get('barangay')?.value;
+    if (currentBarangay && this.geocoder) {
+      this.onBarangayChange(currentBarangay);
+    } else {
+      this.updateMarker(this.mapCenter);
+    }
   }
 
   onBarangayChange(barangay: string) {
@@ -971,7 +988,7 @@ export class ComplaintCreateComponent implements OnInit, OnDestroy {
     }
 
     const payload = {
-      ...this.complaintForm.value,
+      ...this.complaintForm.getRawValue(),
       created_by: user.id,
       image_url: image_url
     };
