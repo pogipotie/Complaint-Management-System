@@ -527,8 +527,12 @@ export class AdminComplaintsComponent implements OnInit, OnDestroy {
     document.body.removeChild(link);
   }
 
-  async updateStatus(complaint: any, newStatus: string) {
-    if (complaint.status === newStatus) return;
+  async updateStatus(complaint: any, event: Event) {
+    const selectElement = event.target as HTMLSelectElement;
+    const newStatus = selectElement.value;
+    const oldStatus = complaint.status;
+
+    if (oldStatus === newStatus) return;
 
     const dialogRef = this.dialog.open(AdminStatusUpdateDialogComponent, {
       data: { complaint, newStatus },
@@ -539,6 +543,7 @@ export class AdminComplaintsComponent implements OnInit, OnDestroy {
 
     dialogRef.afterClosed().subscribe(async (result) => {
       if (result && result.proceed) {
+        // ... (rest of the update logic remains the same)
         let uploadedPaths: string[] = complaint.resolution_images || [];
 
         if (result.resolutionFile) {
@@ -582,7 +587,9 @@ export class AdminComplaintsComponent implements OnInit, OnDestroy {
 
         if (error) {
           console.error('Failed to update status', error);
-          this.loadComplaints(); // Revert visually on error
+          // Revert visually on error
+          selectElement.value = oldStatus;
+          complaint.status = oldStatus;
         } else {
           complaint.status = newStatus;
           complaint.resolution_notes = result.note;
@@ -590,7 +597,8 @@ export class AdminComplaintsComponent implements OnInit, OnDestroy {
         }
       } else {
         // User cancelled, revert the dropdown visually
-        this.dataSource.data = [...this.dataSource.data];
+        selectElement.value = oldStatus;
+        complaint.status = oldStatus;
       }
     });
   }
