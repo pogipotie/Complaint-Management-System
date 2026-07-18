@@ -175,8 +175,9 @@ export class OfficialChatComponent implements OnInit, OnDestroy, AfterViewChecke
       .subscribe();
   }
 
-  onEnter(event: KeyboardEvent) {
-    if (!event.shiftKey) {
+  onEnter(event: Event) {
+    const keyboardEvent = event as KeyboardEvent;
+    if (!keyboardEvent.shiftKey) {
       event.preventDefault();
       this.sendMessage();
     }
