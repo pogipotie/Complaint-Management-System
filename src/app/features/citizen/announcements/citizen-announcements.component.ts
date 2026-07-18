@@ -25,66 +25,131 @@ import { MatIconModule } from '@angular/material/icon';
       </div>
 
       <!-- Empty State -->
-      <mat-card *ngIf="!loadingAnnouncements && announcements.length === 0" class="mat-elevation-z0 border border-gray-200 bg-white rounded-sm">
+      <mat-card *ngIf="!loadingAnnouncements && municipalAnnouncements.length === 0 && barangayAnnouncements.length === 0" class="mat-elevation-z0 border border-gray-200 bg-white rounded-sm">
         <div class="flex flex-col items-center justify-center min-h-[400px] w-full text-center px-6 py-12">
           <div class="bg-primary-50 p-6 rounded-full mb-6 flex items-center justify-center">
             <mat-icon class="h-16 w-16 text-primary-300 flex items-center justify-center" style="font-size: 64px; height: 64px; width: 64px;">notifications_paused</mat-icon>
           </div>
           <h3 class="text-xl font-bold text-gray-900 mb-2">No Active Announcements</h3>
           <p class="text-base text-gray-500 max-w-md w-full text-center">
-            There are currently no active alerts, road closures, or emergencies reported by the municipality.
+            There are currently no active alerts, road closures, or emergencies reported by the municipality or your barangay.
           </p>
         </div>
       </mat-card>
 
-      <!-- Announcements Grid -->
-      <div *ngIf="!loadingAnnouncements && announcements.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div *ngFor="let ann of announcements" class="relative group">
-          <!-- Retro offset shadow effect -->
-          <div class="absolute inset-0 bg-gray-900 rounded-sm translate-x-1.5 translate-y-1.5 transition-transform group-hover:translate-x-2 group-hover:translate-y-2"></div>
-          
-          <!-- Main Card -->
-          <div class="relative bg-white border-2 border-gray-900 rounded-sm overflow-hidden h-full flex flex-col transition-transform group-hover:-translate-x-0.5 group-hover:-translate-y-0.5"
-               [ngClass]="{
-                  'bg-red-50': ann.type === 'Emergency',
-                  'bg-orange-50': ann.type === 'Road Closure',
-                  'bg-blue-50': ann.type === 'Water Interruption',
-                  'bg-yellow-50': ann.type === 'Power Outage',
-                  'bg-primary-50': ann.type === 'General Info'
-               }">
+      <!-- Barangay Announcements Section -->
+      <div *ngIf="!loadingAnnouncements && barangayAnnouncements.length > 0" class="mb-12">
+        <div class="flex items-center gap-3 mb-6 border-b-2 border-gray-900 pb-2">
+          <mat-icon class="text-orange-500 scale-125">holiday_village</mat-icon>
+          <h3 class="text-xl font-black text-gray-900 uppercase tracking-tight" style="font-family: 'Arial Black', Impact, sans-serif;">Barangay Alerts</h3>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div *ngFor="let ann of barangayAnnouncements" class="relative group">
+            <!-- Retro offset shadow effect -->
+            <div class="absolute inset-0 bg-gray-900 rounded-sm translate-x-1.5 translate-y-1.5 transition-transform group-hover:translate-x-2 group-hover:translate-y-2"></div>
             
-            <!-- Window Header -->
-            <div class="h-10 border-b-2 border-gray-900 flex items-center justify-between px-4 shrink-0"
+            <!-- Main Card -->
+            <div class="relative bg-white border-2 border-gray-900 rounded-sm overflow-hidden h-full flex flex-col transition-transform group-hover:-translate-x-0.5 group-hover:-translate-y-0.5"
                  [ngClass]="{
-                    'bg-red-200': ann.type === 'Emergency',
-                    'bg-orange-200': ann.type === 'Road Closure',
-                    'bg-blue-200': ann.type === 'Water Interruption',
-                    'bg-yellow-200': ann.type === 'Power Outage',
-                    'bg-primary-200': ann.type === 'General Info'
+                    'bg-red-50': ann.type === 'Emergency',
+                    'bg-orange-50': ann.type === 'Road Closure',
+                    'bg-blue-50': ann.type === 'Water Interruption',
+                    'bg-yellow-50': ann.type === 'Power Outage',
+                    'bg-primary-50': ann.type === 'General Info'
                  }">
-              <div class="flex items-center gap-2">
-                <span class="font-black text-[10px] tracking-widest text-gray-900 uppercase bg-white/50 px-2 py-0.5 rounded-sm border border-gray-900 shadow-[1px_1px_0px_0px_rgba(17,24,39,1)]">
-                  {{ ann.barangay ? 'Brgy ' + ann.barangay : 'Municipal' }}
+              
+              <!-- Window Header -->
+              <div class="h-10 border-b-2 border-gray-900 flex items-center justify-between px-4 shrink-0"
+                   [ngClass]="{
+                      'bg-red-200': ann.type === 'Emergency',
+                      'bg-orange-200': ann.type === 'Road Closure',
+                      'bg-blue-200': ann.type === 'Water Interruption',
+                      'bg-yellow-200': ann.type === 'Power Outage',
+                      'bg-primary-200': ann.type === 'General Info'
+                   }">
+                <div class="flex items-center gap-2">
+                  <span class="font-black text-[10px] tracking-widest text-gray-900 uppercase bg-white/50 px-2 py-0.5 rounded-sm border border-gray-900 shadow-[1px_1px_0px_0px_rgba(17,24,39,1)]">
+                    Brgy {{ ann.barangay }}
+                  </span>
+                </div>
+                <span class="font-bold text-[11px] tracking-wider text-gray-900 uppercase">
+                  {{ ann.created_at | date:'MMM dd' }}
                 </span>
               </div>
-              <span class="font-bold text-[11px] tracking-wider text-gray-900 uppercase">
-                {{ ann.created_at | date:'MMM dd' }}
-              </span>
+
+              <!-- Content Body -->
+              <div class="p-6 flex-1 flex flex-col">
+                <h3 class="font-black text-xl text-gray-900 uppercase tracking-tight mb-2" style="font-family: 'Arial Black', Impact, sans-serif;">
+                  {{ ann.type }}
+                </h3>
+                
+                <p class="font-bold text-xs text-gray-600 uppercase tracking-widest mb-4">
+                  {{ ann.created_at | date:'shortTime' }}
+                </p>
+
+                <p class="font-medium text-sm text-gray-800 leading-relaxed">
+                  {{ ann.body }}
+                </p>
+              </div>
             </div>
+          </div>
+        </div>
+      </div>
 
-            <!-- Content Body -->
-            <div class="p-6 flex-1 flex flex-col">
-              <h3 class="font-black text-xl text-gray-900 uppercase tracking-tight mb-2" style="font-family: 'Arial Black', Impact, sans-serif;">
-                {{ ann.type }}
-              </h3>
+      <!-- Municipal Announcements Section -->
+      <div *ngIf="!loadingAnnouncements && municipalAnnouncements.length > 0">
+        <div class="flex items-center gap-3 mb-6 border-b-2 border-gray-900 pb-2">
+          <mat-icon class="text-primary-600 scale-125">account_balance</mat-icon>
+          <h3 class="text-xl font-black text-gray-900 uppercase tracking-tight" style="font-family: 'Arial Black', Impact, sans-serif;">Municipal Alerts</h3>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div *ngFor="let ann of municipalAnnouncements" class="relative group">
+            <!-- Retro offset shadow effect -->
+            <div class="absolute inset-0 bg-gray-900 rounded-sm translate-x-1.5 translate-y-1.5 transition-transform group-hover:translate-x-2 group-hover:translate-y-2"></div>
+            
+            <!-- Main Card -->
+            <div class="relative bg-white border-2 border-gray-900 rounded-sm overflow-hidden h-full flex flex-col transition-transform group-hover:-translate-x-0.5 group-hover:-translate-y-0.5"
+                 [ngClass]="{
+                    'bg-red-50': ann.type === 'Emergency',
+                    'bg-orange-50': ann.type === 'Road Closure',
+                    'bg-blue-50': ann.type === 'Water Interruption',
+                    'bg-yellow-50': ann.type === 'Power Outage',
+                    'bg-primary-50': ann.type === 'General Info'
+                 }">
               
-              <p class="font-bold text-xs text-gray-600 uppercase tracking-widest mb-4">
-                {{ ann.created_at | date:'shortTime' }}
-              </p>
+              <!-- Window Header -->
+              <div class="h-10 border-b-2 border-gray-900 flex items-center justify-between px-4 shrink-0"
+                   [ngClass]="{
+                      'bg-red-200': ann.type === 'Emergency',
+                      'bg-orange-200': ann.type === 'Road Closure',
+                      'bg-blue-200': ann.type === 'Water Interruption',
+                      'bg-yellow-200': ann.type === 'Power Outage',
+                      'bg-primary-200': ann.type === 'General Info'
+                   }">
+                <div class="flex items-center gap-2">
+                  <span class="font-black text-[10px] tracking-widest text-gray-900 uppercase bg-white/50 px-2 py-0.5 rounded-sm border border-gray-900 shadow-[1px_1px_0px_0px_rgba(17,24,39,1)]">
+                    Municipal
+                  </span>
+                </div>
+                <span class="font-bold text-[11px] tracking-wider text-gray-900 uppercase">
+                  {{ ann.created_at | date:'MMM dd' }}
+                </span>
+              </div>
 
-              <p class="font-medium text-sm text-gray-800 leading-relaxed">
-                {{ ann.body }}
-              </p>
+              <!-- Content Body -->
+              <div class="p-6 flex-1 flex flex-col">
+                <h3 class="font-black text-xl text-gray-900 uppercase tracking-tight mb-2" style="font-family: 'Arial Black', Impact, sans-serif;">
+                  {{ ann.type }}
+                </h3>
+                
+                <p class="font-bold text-xs text-gray-600 uppercase tracking-widest mb-4">
+                  {{ ann.created_at | date:'shortTime' }}
+                </p>
+
+                <p class="font-medium text-sm text-gray-800 leading-relaxed">
+                  {{ ann.body }}
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -95,7 +160,8 @@ import { MatIconModule } from '@angular/material/icon';
 export class CitizenAnnouncementsComponent implements OnInit {
   private supabaseService = inject(SupabaseService);
   
-  announcements: any[] = [];
+  municipalAnnouncements: any[] = [];
+  barangayAnnouncements: any[] = [];
   loadingAnnouncements = true;
 
   async ngOnInit() {
@@ -106,7 +172,8 @@ export class CitizenAnnouncementsComponent implements OnInit {
       .order('created_at', { ascending: false });
       
     if (!error && data) {
-      this.announcements = data;
+      this.municipalAnnouncements = data.filter(a => !a.barangay);
+      this.barangayAnnouncements = data.filter(a => !!a.barangay);
     }
     this.loadingAnnouncements = false;
   }
