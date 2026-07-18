@@ -18,6 +18,10 @@ export const ADMIN_ROUTES: Routes = [
       { path: 'complaints', component: AdminComplaintsComponent },
       { path: 'announcements', component: AdminAnnouncementsComponent },
       { path: 'users', component: AdminUsersComponent },
+      { 
+        path: 'chat', 
+        loadComponent: () => import('../shared/official-chat/official-chat.component').then(m => m.OfficialChatComponent)
+      },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   }

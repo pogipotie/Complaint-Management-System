@@ -26,6 +26,10 @@ export const CAPTAIN_ROUTES: Routes = [
         path: 'users', 
         loadComponent: () => import('./users/captain-users.component').then(m => m.CaptainUsersComponent)
       },
+      { 
+        path: 'chat', 
+        loadComponent: () => import('../shared/official-chat/official-chat.component').then(m => m.OfficialChatComponent)
+      },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   }

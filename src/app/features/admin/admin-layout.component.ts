@@ -63,6 +63,11 @@ import { takeUntil, filter } from 'rxjs/operators';
             <mat-icon matListItemIcon [color]="router.url.includes('/announcements') ? 'primary' : ''" class="text-gray-900">campaign</mat-icon>
             <span matListItemTitle class="font-bold uppercase tracking-wider text-[11px]">Announcements</span>
           </a>
+
+          <a *ngIf="userRole === 'admin'" mat-list-item routerLink="/admin/chat" routerLinkActive="bg-primary-100 text-primary-900 border-2 border-gray-900 shadow-[2px_2px_0px_0px_rgba(17,24,39,1)]" class="hover:bg-gray-50 transition-all rounded-sm mb-2">
+            <mat-icon matListItemIcon [color]="router.url.includes('/chat') ? 'primary' : ''" class="text-gray-900">forum</mat-icon>
+            <span matListItemTitle class="font-bold uppercase tracking-wider text-[11px]">Official Chat</span>
+          </a>
         </mat-nav-list>
 
         <!-- Bottom Actions -->
