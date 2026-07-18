@@ -237,8 +237,9 @@ import { DescriptionDialogComponent } from '../../../shared/components/descripti
 
               <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
               <tr mat-row *matRowDef="let row; columns: displayedColumns;" 
-                  class="hover:bg-primary-50 transition-colors cursor-default"
-                  [ngClass]="{'bg-red-50/50 border-l-4 border-l-red-600': row.is_escalated}">
+                  class="hover:bg-primary-50 transition-colors cursor-pointer"
+                  [ngClass]="{'bg-red-50/50 border-l-4 border-l-red-600': row.is_escalated}"
+                  (click)="openDetailDialog(row)">
               </tr>
             </table>
             
@@ -351,6 +352,15 @@ export class CaptainComplaintsComponent implements OnInit, OnDestroy {
       this.realtimeSub.unsubscribe();
     }
     this.realtimeService.unsubscribeFromAllComplaints();
+  }
+
+  openDetailDialog(complaint: any) {
+    this.dialog.open(ComplaintDetailDialogComponent, {
+      width: '90vw',
+      maxWidth: '800px',
+      panelClass: 'retro-dialog',
+      data: { ...complaint }
+    });
   }
 
   loadComplaints() {
