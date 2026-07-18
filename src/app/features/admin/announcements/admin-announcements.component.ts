@@ -133,6 +133,7 @@ export class AnnouncementDeleteDialogComponent {
               <th mat-header-cell *matHeaderCellDef class="font-black text-gray-900 uppercase tracking-widest bg-gray-50 border-b-2 border-gray-900">Message</th>
               <td mat-cell *matCellDef="let element" class="max-w-[200px] sm:max-w-md truncate pr-4 text-gray-800 font-medium border-b border-gray-200">
                 <span *ngIf="element.barangay" class="inline-block px-1.5 py-0.5 mr-2 bg-gray-200 text-gray-800 text-[9px] font-black uppercase rounded-sm border border-gray-900">Brgy {{ element.barangay }}</span>
+                <span *ngIf="!element.barangay" class="inline-block px-1.5 py-0.5 mr-2 bg-primary-100 text-primary-900 text-[9px] font-black uppercase rounded-sm border border-gray-900">Municipal</span>
                 {{ element.body }}
               </td>
             </ng-container>

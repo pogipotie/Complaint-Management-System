@@ -64,7 +64,7 @@ import { MatIconModule } from '@angular/material/icon';
                  }">
               <div class="flex items-center gap-2">
                 <span class="font-black text-[10px] tracking-widest text-gray-900 uppercase bg-white/50 px-2 py-0.5 rounded-sm border border-gray-900 shadow-[1px_1px_0px_0px_rgba(17,24,39,1)]">
-                  {{ ann.barangay ? 'Brgy ' + ann.barangay : 'Global' }}
+                  {{ ann.barangay ? 'Brgy ' + ann.barangay : 'Municipal' }}
                 </span>
               </div>
               <span class="font-bold text-[11px] tracking-wider text-gray-900 uppercase">
