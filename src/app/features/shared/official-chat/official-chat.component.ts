@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewChecked, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SupabaseService } from '../../../core/services/supabase.service';
@@ -88,6 +88,7 @@ import { MatButtonModule } from '@angular/material/button';
 export class OfficialChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   private supabaseService = inject(SupabaseService);
   private authService = inject(AuthService);
+  private cdr = inject(ChangeDetectorRef);
 
   @ViewChild('chatContainer') private chatContainer!: ElementRef;
 
@@ -169,6 +170,7 @@ export class OfficialChatComponent implements OnInit, OnDestroy, AfterViewChecke
           if (!this.messages.find(m => m.id === newMsg.id)) {
             this.messages.push(newMsg);
             this.shouldScroll = true;
+            this.cdr.detectChanges(); // Force UI update
           }
         }
       )

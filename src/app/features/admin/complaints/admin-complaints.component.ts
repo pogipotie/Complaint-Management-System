@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ComplaintsService } from '../../../core/services/complaints.service';
@@ -319,6 +319,7 @@ export class AdminComplaintsComponent implements OnInit, OnDestroy {
   private supabaseService = inject(SupabaseService);
   private realtimeService = inject(RealtimeService);
   private dialog = inject(MatDialog);
+  private cdr = inject(ChangeDetectorRef);
 
   displayedColumns: string[] = ['details', 'category', 'priority', 'status', 'action'];
   dataSource = new MatTableDataSource<any>([]);
@@ -355,17 +356,7 @@ export class AdminComplaintsComponent implements OnInit, OnDestroy {
     // Subscribe to realtime updates
     this.realtimeService.subscribeToAllComplaints();
     this.realtimeSub = this.realtimeService.complaintsChanges$.subscribe(payload => {
-      if (payload.eventType === 'UPDATE') {
-        const data = this.dataSource.data;
-        const index = data.findIndex(c => c.id === payload.new.id);
-        if (index !== -1) {
-          data[index] = { ...data[index], ...payload.new };
-          this.dataSource.data = [...data]; // Trigger update
-          this.extractCategories(this.dataSource.data);
-        }
-      } else {
-        this.loadComplaints();
-      }
+      this.loadComplaints();
     });
   }
 
@@ -391,6 +382,7 @@ export class AdminComplaintsComponent implements OnInit, OnDestroy {
         this.dataSource.data = data;
         this.dataSource.paginator = this.paginator;
         this.extractCategories(data);
+        this.cdr.detectChanges(); // Force UI update since realtime events might run outside NgZone
       }
     });
   }

@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit, ViewChild, ElementRef, AfterViewChecked, inject } from '@angular/core';
+import { Component, Inject, OnInit, ViewChild, ElementRef, AfterViewChecked, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef, MatDialog } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
@@ -486,6 +486,7 @@ export class ComplaintDetailDialogComponent implements OnInit, AfterViewChecked 
 
   private supabaseService = inject(SupabaseService);
   private dialog = inject(MatDialog);
+  private cdr = inject(ChangeDetectorRef);
 
   constructor(
     public dialogRef: MatDialogRef<ComplaintDetailDialogComponent>,
@@ -581,6 +582,7 @@ export class ComplaintDetailDialogComponent implements OnInit, AfterViewChecked 
           if (!this.comments.find(c => c.id === newComment.id)) {
             this.comments.push(newComment);
             this.shouldScrollToBottom = true;
+            this.cdr.detectChanges(); // Force UI update for realtime event
           }
         }
       )
