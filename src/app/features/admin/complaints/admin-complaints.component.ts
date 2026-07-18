@@ -217,12 +217,12 @@ import { DescriptionDialogComponent } from '../../../shared/components/descripti
                 <th mat-header-cell *matHeaderCellDef class="font-black text-gray-900 uppercase tracking-widest text-right bg-gray-50 border-b-2 border-gray-900">Action</th>
                 <td mat-cell *matCellDef="let complaint" class="py-4 whitespace-nowrap text-right border-b border-gray-200">
                   <div class="flex items-center justify-end gap-2">
-                    <button mat-icon-button color="primary" (click)="openDetails(complaint)" matTooltip="View Full Details" class="border-2 border-gray-900 rounded-sm bg-primary-50 shadow-[1px_1px_0px_0px_rgba(17,24,39,1)] scale-90">
+                    <button mat-icon-button color="primary" (click)="openDetailDialog(complaint); $event.stopPropagation()" matTooltip="View Full Details" class="border-2 border-gray-900 rounded-sm bg-primary-50 shadow-[1px_1px_0px_0px_rgba(17,24,39,1)] scale-90">
                       <mat-icon>visibility</mat-icon>
                     </button>
                     
                     <ng-container *ngIf="complaint.status !== 'closed' && complaint.status !== 'rejected'">
-                      <div class="relative inline-block w-36">
+                      <div class="relative inline-block w-36" (click)="$event.stopPropagation()">
                         <select class="w-full appearance-none bg-white border-2 border-gray-900 rounded-sm pl-3 pr-8 py-1.5 text-xs font-black uppercase tracking-wider text-gray-900 shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] focus:outline-none focus:ring-0 focus:border-primary-600 cursor-pointer"
                                 [value]="complaint.status" 
                                 (change)="updateStatus(complaint, $any($event.target).value)">

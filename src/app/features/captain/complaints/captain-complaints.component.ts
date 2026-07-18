@@ -200,15 +200,15 @@ import { DescriptionDialogComponent } from '../../../shared/components/descripti
 
               <!-- Action Column -->
               <ng-container matColumnDef="action">
-                <th mat-header-cell *matHeaderCellDef class="font-black text-gray-900 uppercase tracking-widest text-right bg-gray-50 border-b-2 border-gray-900">Action</th>
+                <th mat-header-cell *matHeaderCellDef class="font-black text-gray-900 uppercase tracking-widest text-right border-b-4 border-gray-900 bg-gray-50 py-4 w-48 pr-4">Actions</th>
                 <td mat-cell *matCellDef="let complaint" class="py-4 whitespace-nowrap text-right border-b border-gray-200">
                   <div class="flex items-center justify-end gap-2">
-                    <button mat-icon-button color="primary" (click)="openDetails(complaint)" matTooltip="View Full Details" class="border-2 border-gray-900 rounded-sm bg-primary-50 shadow-[1px_1px_0px_0px_rgba(17,24,39,1)] scale-90">
+                    <button mat-icon-button color="primary" (click)="openDetailDialog(complaint); $event.stopPropagation()" matTooltip="View Full Details" class="border-2 border-gray-900 rounded-sm bg-primary-50 shadow-[1px_1px_0px_0px_rgba(17,24,39,1)] scale-90">
                       <mat-icon>visibility</mat-icon>
                     </button>
                     
                     <ng-container *ngIf="complaint.status !== 'closed' && complaint.status !== 'rejected' && !complaint.is_escalated">
-                      <div class="relative inline-block w-36">
+                      <div class="relative inline-block w-36" (click)="$event.stopPropagation()">
                         <select class="w-full appearance-none bg-white border-2 border-gray-900 rounded-sm pl-3 pr-8 py-1.5 text-xs font-black uppercase tracking-wider text-gray-900 shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] focus:outline-none focus:ring-0 focus:border-primary-600 cursor-pointer"
                                 [value]="complaint.status" 
                                 (change)="updateStatus(complaint, $any($event.target).value)">
@@ -219,7 +219,7 @@ import { DescriptionDialogComponent } from '../../../shared/components/descripti
                           <option value="rejected" [disabled]="complaint.status === 'resolved'">REJECTED</option>
                         </select>
                         <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-900">
-                          <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                          <mat-icon class="scale-75">expand_more</mat-icon>
                         </div>
                       </div>
                     </ng-container>
