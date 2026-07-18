@@ -62,16 +62,14 @@ import { MatIconModule } from '@angular/material/icon';
                     'bg-yellow-200': ann.type === 'Power Outage',
                     'bg-primary-200': ann.type === 'General Info'
                  }">
-              <span class="font-bold text-[11px] tracking-wider text-gray-900 uppercase">
-                {{ ann.created_at | date:'MMM dd, yyyy' }}
-              </span>
-              <div class="flex gap-1.5">
-                <mat-icon class="scale-[0.6] text-gray-900" *ngIf="ann.type === 'Emergency'">warning</mat-icon>
-                <mat-icon class="scale-[0.6] text-gray-900" *ngIf="ann.type === 'Road Closure'">traffic</mat-icon>
-                <mat-icon class="scale-[0.6] text-gray-900" *ngIf="ann.type === 'Water Interruption'">water_drop</mat-icon>
-                <mat-icon class="scale-[0.6] text-gray-900" *ngIf="ann.type === 'Power Outage'">bolt</mat-icon>
-                <mat-icon class="scale-[0.6] text-gray-900" *ngIf="ann.type === 'General Info'">info</mat-icon>
+              <div class="flex items-center gap-2">
+                <span class="font-black text-[10px] tracking-widest text-gray-900 uppercase bg-white/50 px-2 py-0.5 rounded-sm border border-gray-900 shadow-[1px_1px_0px_0px_rgba(17,24,39,1)]">
+                  {{ ann.barangay ? 'Brgy ' + ann.barangay : 'Global' }}
+                </span>
               </div>
+              <span class="font-bold text-[11px] tracking-wider text-gray-900 uppercase">
+                {{ ann.created_at | date:'MMM dd' }}
+              </span>
             </div>
 
             <!-- Content Body -->

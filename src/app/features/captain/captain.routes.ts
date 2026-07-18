@@ -19,6 +19,10 @@ export const CAPTAIN_ROUTES: Routes = [
         loadComponent: () => import('./complaints/captain-complaints.component').then(m => m.CaptainComplaintsComponent)
       },
       { 
+        path: 'announcements', 
+        loadComponent: () => import('./announcements/captain-announcements.component').then(m => m.CaptainAnnouncementsComponent)
+      },
+      { 
         path: 'users', 
         loadComponent: () => import('./users/captain-users.component').then(m => m.CaptainUsersComponent)
       },

@@ -10,9 +10,10 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
 import { MatDialogModule, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { SupabaseService } from '../../../core/services/supabase.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
-  selector: 'app-announcement-delete-dialog',
+  selector: 'app-captain-announcement-delete-dialog',
   standalone: true,
   imports: [CommonModule, MatButtonModule, MatIconModule, MatDialogModule],
   template: `
@@ -31,12 +32,12 @@ import { SupabaseService } from '../../../core/services/supabase.service';
     </div>
   `
 })
-export class AnnouncementDeleteDialogComponent {
-  public dialogRef = inject(MatDialogRef<AnnouncementDeleteDialogComponent>);
+export class CaptainAnnouncementDeleteDialogComponent {
+  public dialogRef = inject(MatDialogRef<CaptainAnnouncementDeleteDialogComponent>);
 }
 
 @Component({
-  selector: 'app-admin-announcements',
+  selector: 'app-captain-announcements',
   standalone: true,
   imports: [
     CommonModule,
@@ -58,9 +59,9 @@ export class AnnouncementDeleteDialogComponent {
         <div>
           <h2 class="text-3xl font-black text-gray-900 flex items-center gap-3 uppercase tracking-tight" style="font-family: 'Arial Black', Impact, sans-serif;">
             <mat-icon class="text-primary-600 scale-150 mr-1">campaign</mat-icon>
-            Announcements
+            Barangay Announcements
           </h2>
-          <p class="text-gray-600 font-bold text-sm mt-2 uppercase tracking-widest">Create and manage alerts visible to all citizens.</p>
+          <p class="text-gray-600 font-bold text-sm mt-2 uppercase tracking-widest">Create and manage alerts visible only to citizens in {{ currentUserBarangay || 'your barangay' }}.</p>
         </div>
       </div>
 
@@ -132,7 +133,6 @@ export class AnnouncementDeleteDialogComponent {
             <ng-container matColumnDef="body">
               <th mat-header-cell *matHeaderCellDef class="font-black text-gray-900 uppercase tracking-widest bg-gray-50 border-b-2 border-gray-900">Message</th>
               <td mat-cell *matCellDef="let element" class="max-w-[200px] sm:max-w-md truncate pr-4 text-gray-800 font-medium border-b border-gray-200">
-                <span *ngIf="element.barangay" class="inline-block px-1.5 py-0.5 mr-2 bg-gray-200 text-gray-800 text-[9px] font-black uppercase rounded-sm border border-gray-900">Brgy {{ element.barangay }}</span>
                 {{ element.body }}
               </td>
             </ng-container>
@@ -172,21 +172,28 @@ export class AnnouncementDeleteDialogComponent {
     mat-card-header { padding: 16px 24px !important; }
   `]
 })
-export class AdminAnnouncementsComponent implements OnInit {
+export class CaptainAnnouncementsComponent implements OnInit {
   private fb = inject(FormBuilder);
   private supabaseService = inject(SupabaseService);
   private dialog = inject(MatDialog);
+  private authService = inject(AuthService);
 
   announcements: any[] = [];
   displayedColumns = ['type', 'body', 'created_at', 'actions'];
   loading = false;
+  currentUserBarangay: string | null = null;
 
   announcementForm: FormGroup = this.fb.group({
     type: ['General Info', Validators.required],
     body: ['', [Validators.required, Validators.minLength(10)]]
   });
 
-  ngOnInit() {
+  async ngOnInit() {
+    // Get the current captain's barangay
+    if (this.authService.user) {
+      const profile = await this.authService.getUserProfile(this.authService.user.id);
+      this.currentUserBarangay = profile?.barangay || null;
+    }
     this.loadAnnouncements();
   }
 
@@ -205,11 +212,13 @@ export class AdminAnnouncementsComponent implements OnInit {
     if (this.announcementForm.invalid) return;
     this.loading = true;
 
-    const { type, body } = this.announcementForm.value;
-    
     const { error } = await this.supabaseService.supabase
       .from('announcements')
-      .insert({ type, body });
+      .insert({
+        type: this.announcementForm.value.type,
+        body: this.announcementForm.value.body,
+        barangay: this.currentUserBarangay // Attach captain's barangay
+      });
 
     this.loading = false;
     
@@ -217,24 +226,30 @@ export class AdminAnnouncementsComponent implements OnInit {
       this.announcementForm.reset({ type: 'General Info' });
       this.loadAnnouncements();
     } else {
-      console.error('Failed to post announcement', error);
+      console.error('Error posting announcement:', error);
+      alert('Failed to post announcement.');
     }
   }
 
   deleteAnnouncement(id: string) {
-    const dialogRef = this.dialog.open(AnnouncementDeleteDialogComponent, {
+    const dialogRef = this.dialog.open(CaptainAnnouncementDeleteDialogComponent, {
       width: '400px',
-      panelClass: 'modern-dialog',
-      autoFocus: false
+      panelClass: 'retro-dialog'
     });
 
-    dialogRef.afterClosed().subscribe(async (result) => {
+    dialogRef.afterClosed().subscribe(async result => {
       if (result) {
-        await this.supabaseService.supabase
+        const { error } = await this.supabaseService.supabase
           .from('announcements')
           .delete()
           .eq('id', id);
-        this.loadAnnouncements();
+
+        if (!error) {
+          this.loadAnnouncements();
+        } else {
+          console.error('Error deleting announcement:', error);
+          alert('Failed to delete announcement.');
+        }
       }
     });
   }

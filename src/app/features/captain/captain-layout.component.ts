@@ -54,6 +54,11 @@ import { Subject, Observable } from 'rxjs';
             <span matListItemTitle class="font-bold uppercase tracking-wider text-[11px]">Complaints</span>
           </a>
 
+          <a mat-list-item routerLink="/captain/announcements" routerLinkActive="bg-primary-100 text-primary-900 border-2 border-gray-900 shadow-[2px_2px_0px_0px_rgba(17,24,39,1)]" class="hover:bg-gray-50 transition-all rounded-sm mb-2">
+            <mat-icon matListItemIcon [color]="router.url.includes('/announcements') ? 'primary' : ''" class="text-gray-900">campaign</mat-icon>
+            <span matListItemTitle class="font-bold uppercase tracking-wider text-[11px]">Announcements</span>
+          </a>
+
           <a mat-list-item routerLink="/captain/users" routerLinkActive="bg-primary-100 text-primary-900 border-2 border-gray-900 shadow-[2px_2px_0px_0px_rgba(17,24,39,1)]" class="hover:bg-gray-50 transition-all rounded-sm mb-2">
             <mat-icon matListItemIcon [color]="router.url.includes('/users') ? 'primary' : ''" class="text-gray-900">people</mat-icon>
             <span matListItemTitle class="font-bold uppercase tracking-wider text-[11px]">Citizens</span>
