@@ -318,10 +318,13 @@ export class CitizenLayoutComponent implements OnInit, OnDestroy {
     if (!note.is_read) {
       this.notificationsService.markAsRead(note.id);
     }
-    // Navigate to the specific complaint details
-    this.router.navigate(['/citizen/complaints']);
-    // You can optionally add logic to automatically open the specific complaint dialog here 
-    // by passing state through the router or a shared service.
+    
+    // Navigate based on notification type/content
+    if (note.title.includes('Announcement')) {
+      this.router.navigate(['/citizen/announcements']);
+    } else {
+      this.router.navigate(['/citizen/complaints']);
+    }
   }
 
   markAllAsRead(event: Event) {
