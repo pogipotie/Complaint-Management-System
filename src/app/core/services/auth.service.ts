@@ -38,6 +38,18 @@ export class AuthService {
     return !!data;
   }
 
+  async getUserRoleByEmail(email: string): Promise<string | null> {
+    const { data, error } = await this.supabaseService.supabase
+      .rpc('get_user_role_by_email', { lookup_email: email });
+      
+    if (error) {
+      console.error('Error getting user role:', error);
+      return null;
+    }
+    
+    return data;
+  }
+
   resetPasswordForEmail(email: string): Observable<any> {
     return from(this.supabaseService.supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/auth/reset-password`

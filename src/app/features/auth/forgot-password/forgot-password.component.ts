@@ -114,7 +114,15 @@ export class ForgotPasswordComponent {
         return;
       }
 
-      // 2. If it exists, proceed to send the reset link
+      // 2. Check the user's role. If admin or captain, block reset.
+      const role = await this.authService.getUserRoleByEmail(email);
+      if (role === 'admin' || role === 'brgy_captain' || role === 'staff') {
+        this.loading = false;
+        this.errorMsg = 'Official accounts cannot reset passwords here. Please contact the Municipal Admin directly.';
+        return;
+      }
+
+      // 3. If it exists and is a citizen, proceed to send the reset link
       this.authService.resetPasswordForEmail(email).subscribe({
         next: ({ error }) => {
           this.loading = false;
