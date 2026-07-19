@@ -179,7 +179,7 @@ import { Subject, Observable } from 'rxjs';
               </div>
             </button>
             <mat-menu #userMenu="matMenu" class="retro-menu">
-              <button mat-menu-item disabled class="!border-b-2 !border-gray-900">
+              <button mat-menu-item routerLink="/captain/profile" class="!border-b-2 !border-gray-900">
                 <mat-icon class="text-gray-900">account_circle</mat-icon>
                 <span class="font-bold uppercase tracking-wider text-[11px] text-gray-900">Captain Profile</span>
               </button>

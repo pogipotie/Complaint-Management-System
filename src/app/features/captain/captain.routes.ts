@@ -30,6 +30,10 @@ export const CAPTAIN_ROUTES: Routes = [
         path: 'chat', 
         loadComponent: () => import('../shared/official-chat/official-chat.component').then(m => m.OfficialChatComponent)
       },
+      {
+        path: 'profile',
+        loadComponent: () => import('./profile/captain-profile.component').then(m => m.CaptainProfileComponent)
+      },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   }
