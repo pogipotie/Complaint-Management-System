@@ -209,9 +209,9 @@ import { DescriptionDialogComponent } from '../../../shared/components/descripti
                     
                     <ng-container *ngIf="complaint.status !== 'closed' && complaint.status !== 'rejected' && !complaint.is_escalated">
                       <div class="relative inline-block w-36" (click)="$event.stopPropagation()">
-                        <select class="w-full appearance-none bg-white border-2 border-gray-900 rounded-sm pl-3 pr-8 py-1.5 text-xs font-black uppercase tracking-wider text-gray-900 shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] focus:outline-none focus:ring-0 focus:border-primary-600 cursor-pointer"
+                        <select #statusSelect class="w-full appearance-none bg-white border-2 border-gray-900 rounded-sm pl-3 pr-8 py-1.5 text-xs font-black uppercase tracking-wider text-gray-900 shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] focus:outline-none focus:ring-0 focus:border-primary-600 cursor-pointer"
                                 [value]="complaint.status" 
-                                (change)="updateStatus(complaint, $any($event.target).value)">
+                                (change)="updateStatus(complaint, statusSelect.value, statusSelect)">
                           <option value="pending" [disabled]="complaint.status === 'resolved'">PENDING</option>
                           <option value="assigned" [disabled]="complaint.status === 'resolved'">ASSIGNED</option>
                           <option value="in_progress" [disabled]="complaint.status === 'resolved'">IN PROGRESS</option>
@@ -495,9 +495,7 @@ export class CaptainComplaintsComponent implements OnInit, OnDestroy {
     document.body.removeChild(link);
   }
 
-  async updateStatus(complaint: any, event: Event) {
-    const selectElement = event.target as HTMLSelectElement;
-    const newStatus = selectElement.value;
+  async updateStatus(complaint: any, newStatus: string, selectElement: HTMLSelectElement) {
     const oldStatus = complaint.status;
 
     if (oldStatus === newStatus) return;
@@ -560,6 +558,8 @@ export class CaptainComplaintsComponent implements OnInit, OnDestroy {
           complaint.status = newStatus;
           complaint.resolution_notes = result.note;
           complaint.resolution_images = uploadedPaths;
+          // Refresh data via realtime logic but force the select visually just in case
+          selectElement.value = newStatus;
         }
       } else {
         // User cancelled, revert the dropdown visually
