@@ -11,10 +11,13 @@
 --      (there is no longer a 'closed' value to gate).
 --   3. Refresh the 'prevent_reverting_resolved_status' trigger to no
 --      longer reference the removed enum values.
---   4. Temporarily detach RLS policies that depend on the 'status' column,
---      swap the enum type, then re-attach the policies verbatim.
---      (PostgreSQL forbids ALTER TYPE on columns referenced by policies
---       even when the policy expression does not mention the column.)
+--   4. Temporarily detach every RLS policy AND view/matview/rule that
+--      depends on the 'status' / 'from_status' / 'to_status' columns,
+--      swap the enum type, then recreate them verbatim.
+--      (PostgreSQL refuses ALTER TYPE on columns referenced by any of
+--       these objects — even when their expression does not mention the
+--       column directly. The dependency is recorded in pg_depend at
+--       creation time.)
 -- ============================================================================
 
 -- ----------------------------------------------------------------------------
@@ -79,9 +82,7 @@ EXECUTE FUNCTION prevent_reverting_resolved_status();
 -- ----------------------------------------------------------------------------
 -- 4. Swap the enum type
 -- ----------------------------------------------------------------------------
--- Snapshot every RLS policy that depends on columns we are about to retype,
--- drop those policies, perform the column type swap, then recreate them
--- byte-for-byte. We keep the snapshot in a temp table so we can replay it.
+-- Snapshot every RLS policy that depends on columns we are about to retype.
 CREATE TEMP TABLE _status_policy_snapshot (
   schemaname text,
   tablename  text,
@@ -127,13 +128,63 @@ WHERE n.nspname = 'public'
       AND a.attname IN ('status', 'from_status', 'to_status')
   );
 
--- Drop the dependent policies (CASCADE just in case they are nested).
+-- Snapshot every view/matview (and any non-policy rule) that depends on
+-- columns we are about to retype. We capture the canonical definition
+-- so we can recreate them byte-for-byte after the type swap, and also
+-- snapshot the relation ACL so we can re-grant privileges.
+--
+-- Views depend on their underlying columns transitively through a
+-- rewrite rule (pg_rewrite). So the join path is:
+--   pg_rewrite -> pg_class (the view) + pg_depend (rule -> column)
+CREATE TEMP TABLE _status_view_snapshot (
+  schemaname    text,
+  viewname      text,
+  relkind       char,           -- 'v' view, 'm' materialized view
+  definition    text,
+  is_populated  boolean,
+  relacl        aclitem[]
+) ON COMMIT DROP;
+
+INSERT INTO _status_view_snapshot
+SELECT DISTINCT
+  n.nspname                       AS schemaname,
+  c.relname                       AS viewname,
+  c.relkind                       AS relkind,
+  pg_get_viewdef(c.oid, true)     AS definition,
+  c.relispopulated                AS is_populated,
+  c.relacl                        AS relacl
+FROM pg_rewrite r
+JOIN pg_class c       ON c.oid = r.ev_class
+JOIN pg_namespace n   ON n.oid = c.relnamespace
+JOIN pg_depend d      ON d.objid = r.oid AND d.classid = 'pg_rewrite'::regclass
+JOIN pg_attribute a   ON a.attrelid = d.refobjid AND a.attnum = d.refobjsubid
+WHERE n.nspname = 'public'
+  AND c.relkind IN ('v', 'm')     -- plain view or materialized view
+  AND d.refobjid IN ('public.complaints'::regclass, 'public.complaint_status_history'::regclass)
+  AND a.attname IN ('status', 'from_status', 'to_status');
+
+-- Drop the dependent policies
 DO $$
 DECLARE
   r record;
 BEGIN
   FOR r IN SELECT tablename, policyname FROM _status_policy_snapshot LOOP
     EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I CASCADE;', r.policyname, r.tablename);
+  END LOOP;
+END $$;
+
+-- Drop the dependent views/materialized views (CASCADE also drops dependent
+-- rules; we'll recreate everything explicitly from the snapshots).
+DO $$
+DECLARE
+  r record;
+BEGIN
+  FOR r IN SELECT viewname, relkind, is_populated FROM _status_view_snapshot LOOP
+    IF r.relkind = 'm' THEN
+      EXECUTE format('DROP MATERIALIZED VIEW IF EXISTS public.%I CASCADE;', r.viewname);
+    ELSE
+      EXECUTE format('DROP VIEW IF EXISTS public.%I CASCADE;', r.viewname);
+    END IF;
   END LOOP;
 END $$;
 
@@ -169,6 +220,47 @@ ALTER TABLE public.complaints
 DROP TYPE public.complaint_status;
 ALTER TYPE public.complaint_status_new RENAME TO complaint_status;
 
+-- Restore the views/materialized views using their captured definitions
+-- and re-apply the original ACL (privileges) captured in the snapshot.
+DO $$
+DECLARE
+  r record;
+  acl_item record;
+  grant_sql text;
+BEGIN
+  FOR r IN SELECT * FROM _status_view_snapshot ORDER BY relkind, viewname LOOP
+    IF r.relkind = 'm' THEN
+      EXECUTE format('CREATE MATERIALIZED VIEW public.%I AS %s;', r.viewname, r.definition);
+      IF r.is_populated THEN
+        EXECUTE format('REFRESH MATERIALIZED VIEW public.%I;', r.viewname);
+      END IF;
+    ELSE
+      EXECUTE format('CREATE VIEW public.%I AS %s;', r.viewname, r.definition);
+    END IF;
+
+    -- Re-apply every non-default ACL entry. The default ('=arwdDxt/owner') is
+    -- recreated automatically by CREATE VIEW / CREATE MATERIALIZED VIEW.
+    IF r.relacl IS NOT NULL THEN
+      FOR acl_item IN
+        SELECT grantee::regrole::text AS grantee_text,
+               privilege_type,
+               is_grantable
+        FROM aclexplode(r.relacl) a(grantor, grantee, privilege_type, is_grantable)
+        WHERE grantee <> 0   -- skip PUBLIC-equivalent (already default)
+      LOOP
+        grant_sql := format(
+          'GRANT %s ON public.%I TO %s%s;',
+          acl_item.privilege_type,
+          r.viewname,
+          acl_item.grantee_text,
+          CASE WHEN acl_item.is_grantable THEN ' WITH GRANT OPTION' ELSE '' END
+        );
+        EXECUTE grant_sql;
+      END LOOP;
+    END IF;
+  END LOOP;
+END $$;
+
 -- Restore the policies using their captured qual/with_check expressions
 DO $$
 DECLARE
@@ -190,4 +282,4 @@ BEGIN
   END LOOP;
 END $$;
 
--- The temp table is dropped automatically at end of transaction.
+-- The temp tables are dropped automatically at end of transaction.
