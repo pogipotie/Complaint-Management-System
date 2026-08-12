@@ -279,7 +279,7 @@ END $$;
 
 -- 6b. RLS policies
 --
--- Two extra concerns when replaying the captured expressions:
+-- Three extra concerns when replaying the captured expressions:
 --
 --   (a) `array_agg(rolname) WHERE oid = ANY (p.polroles)` returns NULL
 --       when the policy was created without a `TO` clause (i.e. applies
@@ -292,12 +292,21 @@ END $$;
 --       parse time against the new enum. We rewrite them in-place to
 --       the merged equivalents so the expressions are still valid
 --       ('closed' -> 'resolved', 'in_progress' -> 'assigned').
+--
+--   (c) PostgreSQL only allows WITH CHECK on INSERT and UPDATE policies.
+--       SELECT and DELETE policies must not emit a WITH CHECK clause
+--       (even as `WITH CHECK (true)`). We branch on the policy command.
 DO $$
 DECLARE
   r record;
   roles_csv text;
   fixed_qual text;
   fixed_check text;
+  prefix text;
+  using_clause text;
+  check_clause text;
+  to_clause text;
+  stmt text;
 BEGIN
   FOR r IN SELECT * FROM _status_policy_snapshot LOOP
     roles_csv := array_to_string(r.roles, ', ');
@@ -320,27 +329,37 @@ BEGIN
     fixed_qual  := REPLACE(fixed_qual,  '''in_progress''',                   '''assigned''');
     fixed_check := REPLACE(fixed_check, '''in_progress''',                   '''assigned''');
 
-    IF roles_csv IS NULL OR roles_csv = '' THEN
-      -- Public policy: omit the TO clause
-      EXECUTE format(
-        'CREATE POLICY %I ON public.%I FOR %s USING (%s) WITH CHECK (%s);',
-        r.policyname,
-        r.tablename,
-        r.cmd,
-        COALESCE(fixed_qual, 'true'),
-        COALESCE(fixed_check, 'true')
-      );
+    -- SELECT / DELETE: USING only, no WITH CHECK
+    -- INSERT: WITH CHECK only, no USING (in our case we fall back to 'true')
+    -- UPDATE: both USING and WITH CHECK
+    IF r.cmd = 'SELECT' OR r.cmd = 'DELETE' THEN
+      using_clause := format('USING (%s)', COALESCE(fixed_qual, 'true'));
+      check_clause := '';
+    ELSIF r.cmd = 'INSERT' THEN
+      using_clause := '';
+      check_clause := format('WITH CHECK (%s)', COALESCE(fixed_check, 'true'));
     ELSE
-      EXECUTE format(
-        'CREATE POLICY %I ON public.%I FOR %s TO %s USING (%s) WITH CHECK (%s);',
-        r.policyname,
-        r.tablename,
-        r.cmd,
-        roles_csv,
-        COALESCE(fixed_qual, 'true'),
-        COALESCE(fixed_check, 'true')
-      );
+      using_clause := format('USING (%s)', COALESCE(fixed_qual, 'true'));
+      check_clause := format('WITH CHECK (%s)', COALESCE(fixed_check, 'true'));
     END IF;
+
+    IF roles_csv IS NULL OR roles_csv = '' THEN
+      to_clause := '';
+    ELSE
+      to_clause := format('TO %s ', roles_csv);
+    END IF;
+
+    stmt := format(
+      'CREATE POLICY %I ON public.%I FOR %s %s%s%s;',
+      r.policyname,
+      r.tablename,
+      r.cmd,
+      to_clause,
+      using_clause,
+      check_clause
+    );
+
+    EXECUTE stmt;
   END LOOP;
 END $$;
 
