@@ -75,6 +75,16 @@ import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config
         </button>
       </div>
 
+      <div *ngIf="!isVerified && verificationStatus === 'expired'" class="bg-amber-50 border-2 border-gray-900 rounded-sm p-8 shadow-[4px_4px_0px_0px_rgba(17,24,39,1)] text-center">
+        <mat-icon class="text-amber-600 scale-[2] mb-4">schedule</mat-icon>
+        <h2 class="text-2xl font-black text-gray-900 uppercase tracking-tight" style="font-family: 'Arial Black', Impact, sans-serif;">Residency Expired</h2>
+        <p class="mt-4 font-bold text-gray-700">Your registered residency period has ended.</p>
+        <p class="mt-2 text-sm text-gray-600">Because you registered as a transient resident, your ability to submit complaints is paused when your expected end date passes. To restore your account, please update your profile and upload a new proof of residency.</p>
+        <button mat-flat-button color="primary" routerLink="/citizen/profile" class="mt-6 !rounded-sm !border-2 !border-gray-900 !shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] hover:!translate-y-[1px] hover:!translate-x-[1px] hover:!shadow-[1px_1px_0px_0px_rgba(17,24,39,1)] transition-all font-black uppercase tracking-wider">
+          <mat-icon>manage_accounts</mat-icon> Re-verify Account
+        </button>
+      </div>
+
       <div *ngIf="!isVerified && verificationStatus === 'rejected'" class="bg-red-50 border-2 border-gray-900 rounded-sm p-8 shadow-[4px_4px_0px_0px_rgba(17,24,39,1)] text-center flex flex-col items-center">
         <mat-icon class="text-red-600 scale-[2] mb-4">gpp_bad</mat-icon>
         <h2 class="text-2xl font-black text-gray-900 uppercase tracking-tight" style="font-family: 'Arial Black', Impact, sans-serif;">Registration Rejected</h2>

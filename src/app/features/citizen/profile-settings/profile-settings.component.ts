@@ -41,6 +41,29 @@ import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config
       </div>
 
       <ng-container *ngIf="!loading">
+        
+        <!-- Expiry Warning Banner -->
+        <div *ngIf="daysUntilExpiry !== null && daysUntilExpiry <= 30 && verificationStatus === 'verified'" class="mb-6 bg-amber-50 border-2 border-amber-500 p-4 rounded-sm shadow-[4px_4px_0px_0px_rgba(180,83,9,1)] flex items-start gap-4 animate-fade-in">
+          <mat-icon class="text-amber-600 scale-150 mt-1">notification_important</mat-icon>
+          <div>
+            <h3 class="text-lg font-black text-amber-900 uppercase tracking-tight" style="font-family: 'Arial Black', Impact, sans-serif;">Residency Expiring Soon</h3>
+            <p class="text-sm font-bold text-amber-800 mt-1">
+              Your registered transient residency expires in <span class="text-amber-900 font-black">{{ daysUntilExpiry }} day(s)</span>. 
+              Once expired, you won't be able to submit new complaints. Please upload a new proof of residency and update your dates below.
+            </p>
+          </div>
+        </div>
+
+        <div *ngIf="verificationStatus === 'expired'" class="mb-6 bg-red-50 border-2 border-red-700 p-4 rounded-sm shadow-[4px_4px_0px_0px_rgba(185,28,28,1)] flex items-start gap-4 animate-fade-in">
+          <mat-icon class="text-red-600 scale-150 mt-1">schedule</mat-icon>
+          <div>
+            <h3 class="text-lg font-black text-red-900 uppercase tracking-tight" style="font-family: 'Arial Black', Impact, sans-serif;">Residency Expired</h3>
+            <p class="text-sm font-bold text-red-800 mt-1">
+              Your registered residency period has ended, and your account is currently paused. Please update your residency end date and upload a new proof of residency below to reactivate it.
+            </p>
+          </div>
+        </div>
+
         <form [formGroup]="profileForm" (ngSubmit)="onSubmit()" class="space-y-6">
           
           <div class="relative group">
@@ -75,9 +98,17 @@ import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config
                       <mat-option value="Single">Single</mat-option>
                       <mat-option value="Married">Married</mat-option>
                       <mat-option value="Widowed">Widowed</mat-option>
-                      <mat-option value="Legally Separated">Legally Separated</mat-option>
+                      <mat-option value="Divorced">Divorced</mat-option>
                     </mat-select>
                   </mat-form-field>
+                  
+                  <div *ngIf="verificationStatus === 'expired'" class="md:col-span-2 pt-4 border-t-2 border-gray-900 mt-2">
+                    <mat-form-field appearance="outline" class="w-full">
+                      <mat-label>New Expected End Date</mat-label>
+                      <input matInput type="date" formControlName="residency_end_date">
+                      <mat-hint class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Update this if your stay was extended.</mat-hint>
+                    </mat-form-field>
+                  </div>
                 </div>
               </div>
             </div>
@@ -237,6 +268,7 @@ export class ProfileSettingsComponent implements OnInit {
   selectedFile: File | null = null;
   imagePreviewUrl: string | ArrayBuffer | null = null;
   currentIdUrl: string | null = null;
+  daysUntilExpiry: number | null = null;
 
   profileForm: FormGroup = this.fb.group({
     full_name: ['', Validators.required],
@@ -246,7 +278,8 @@ export class ProfileSettingsComponent implements OnInit {
     barangay: ['', Validators.required],
     street_address: [''],
     emergency_contact_name: [''],
-    emergency_contact_number: ['']
+    emergency_contact_number: [''],
+    residency_end_date: [null]
   });
 
   async ngOnInit() {
@@ -278,8 +311,19 @@ export class ProfileSettingsComponent implements OnInit {
         barangay: data.barangay,
         street_address: data.street_address,
         emergency_contact_name: data.emergency_contact_name,
-        emergency_contact_number: data.emergency_contact_number
+        emergency_contact_number: data.emergency_contact_number,
+        residency_end_date: data.residency_end_date
       });
+
+      // Calculate days until expiry if end date exists
+      if (data.residency_end_date) {
+        const endDate = new Date(data.residency_end_date);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        endDate.setHours(0, 0, 0, 0);
+        const diffTime = endDate.getTime() - today.getTime();
+        this.daysUntilExpiry = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      }
 
       if (this.verificationStatus === 'verified') {
         this.profileForm.get('barangay')?.disable();
@@ -358,13 +402,16 @@ export class ProfileSettingsComponent implements OnInit {
 
     const updates = this.profileForm.value;
 
-    // If user is currently rejected, resubmit their status to pending
-    if (this.verificationStatus === 'rejected') {
+    // If user is currently rejected or expired, resubmit their status to pending
+    if (this.verificationStatus === 'rejected' || this.verificationStatus === 'expired') {
       updates.verification_status = 'pending';
       updates.rejection_reason = null;
     }
 
     try {
+      // Also include residency_end_date if they are updating it due to expiry
+      updates.residency_end_date = this.profileForm.get('residency_end_date')?.value || null;
+
       // If they selected a new ID, upload it first
       if (this.selectedFile) {
         const filePath = `${this.currentUserId}/${Date.now()}.jpeg`;
@@ -387,7 +434,7 @@ export class ProfileSettingsComponent implements OnInit {
       this.successMsg = 'Profile updated successfully!';
       
       // Update local state if they resubmitted
-      if (this.verificationStatus === 'rejected') {
+      if (this.verificationStatus === 'rejected' || this.verificationStatus === 'expired') {
         this.verificationStatus = 'pending';
         this.rejectionReason = '';
         this.successMsg = 'Profile updated and registration resubmitted for review!';
