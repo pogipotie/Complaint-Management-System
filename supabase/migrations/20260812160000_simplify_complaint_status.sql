@@ -8,16 +8,14 @@
 --      'complaints' rows and the historical 'complaint_status_history' rows
 --      so we don't lose audit-trail semantics.
 --   2. Drop the now-obsolete 'restrict_captain_closing_complaint' trigger
---      (there is no longer a 'closed' value to gate).
---   3. Refresh the 'prevent_reverting_resolved_status' trigger to no
---      longer reference the removed enum values.
---   4. Temporarily detach every RLS policy AND view/matview/rule that
---      depends on the 'status' / 'from_status' / 'to_status' columns,
---      swap the enum type, then recreate them verbatim.
---      (PostgreSQL refuses ALTER TYPE on columns referenced by any of
---       these objects — even when their expression does not mention the
---       column directly. The dependency is recorded in pg_depend at
---       creation time.)
+--      and function (the 'closed' value no longer exists).
+--   3. Snapshot every RLS policy, view/matview, and trigger that depends
+--      on the 'status' / 'from_status' / 'to_status' columns.
+--      (PostgreSQL refuses ALTER TYPE on a column referenced by any of
+--       these — even when the body never names the column directly. The
+--       dependency is recorded in pg_depend at creation time.)
+--   4. Drop the dependent objects, swap the enum type, then recreate
+--      them verbatim from the captured snapshots.
 -- ============================================================================
 
 -- ----------------------------------------------------------------------------
@@ -49,40 +47,17 @@ SET to_status = 'resolved'
 WHERE to_status = 'closed';
 
 -- ----------------------------------------------------------------------------
--- 2. Drop the obsolete captain-closing trigger (no 'closed' value anymore)
+-- 2. Drop the obsolete captain-closing trigger and its function.
+--    'closed' is no longer a valid status value, so this guard is redundant.
 -- ----------------------------------------------------------------------------
 DROP TRIGGER IF EXISTS restrict_captain_closing_complaint_trigger ON public.complaints;
 DROP FUNCTION IF EXISTS restrict_captain_closing_complaint();
 
 -- ----------------------------------------------------------------------------
--- 3. Refresh the prevent-reverting-resolved trigger without the dropped values
+-- 3. Snapshot dependent objects BEFORE we drop them
 -- ----------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION prevent_reverting_resolved_status()
-RETURNS TRIGGER
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
-BEGIN
-  -- A 'resolved' complaint is the terminal/closed state and may not be
-  -- reverted to an earlier workflow state.
-  IF OLD.status = 'resolved' AND NEW.status IN ('pending', 'assigned', 'rejected') THEN
-    RAISE EXCEPTION 'Cannot revert a resolved complaint back to % status.', NEW.status;
-  END IF;
 
-  RETURN NEW;
-END;
-$$;
-
-DROP TRIGGER IF EXISTS prevent_reverting_resolved_status_trigger ON public.complaints;
-CREATE TRIGGER prevent_reverting_resolved_status_trigger
-BEFORE UPDATE OF status ON public.complaints
-FOR EACH ROW
-EXECUTE FUNCTION prevent_reverting_resolved_status();
-
--- ----------------------------------------------------------------------------
--- 4. Swap the enum type
--- ----------------------------------------------------------------------------
--- Snapshot every RLS policy that depends on columns we are about to retype.
+-- 3a. RLS policies
 CREATE TEMP TABLE _status_policy_snapshot (
   schemaname text,
   tablename  text,
@@ -118,8 +93,6 @@ JOIN pg_namespace n ON n.oid = c.relnamespace
 WHERE n.nspname = 'public'
   AND c.relname IN ('complaints', 'complaint_status_history')
   AND c.oid IN (
-    -- Only policies whose dependency set includes the 'status' column
-    -- (or the 'from_status'/'to_status' columns) of the same table.
     SELECT refobjid
     FROM pg_depend d
     JOIN pg_attribute a ON a.attrelid = d.refobjid AND a.attnum = d.refobjsubid
@@ -128,18 +101,11 @@ WHERE n.nspname = 'public'
       AND a.attname IN ('status', 'from_status', 'to_status')
   );
 
--- Snapshot every view/matview (and any non-policy rule) that depends on
--- columns we are about to retype. We capture the canonical definition
--- so we can recreate them byte-for-byte after the type swap, and also
--- snapshot the relation ACL so we can re-grant privileges.
---
--- Views depend on their underlying columns transitively through a
--- rewrite rule (pg_rewrite). So the join path is:
---   pg_rewrite -> pg_class (the view) + pg_depend (rule -> column)
+-- 3b. Views / materialized views
 CREATE TEMP TABLE _status_view_snapshot (
   schemaname    text,
   viewname      text,
-  relkind       char,           -- 'v' view, 'm' materialized view
+  relkind       char,
   definition    text,
   is_populated  boolean,
   relacl        aclitem[]
@@ -159,27 +125,57 @@ JOIN pg_namespace n   ON n.oid = c.relnamespace
 JOIN pg_depend d      ON d.objid = r.oid AND d.classid = 'pg_rewrite'::regclass
 JOIN pg_attribute a   ON a.attrelid = d.refobjid AND a.attnum = d.refobjsubid
 WHERE n.nspname = 'public'
-  AND c.relkind IN ('v', 'm')     -- plain view or materialized view
+  AND c.relkind IN ('v', 'm')
   AND d.refobjid IN ('public.complaints'::regclass, 'public.complaint_status_history'::regclass)
   AND a.attname IN ('status', 'from_status', 'to_status');
 
--- Drop the dependent policies
+-- 3c. Triggers on the affected tables. We capture the canonical CREATE
+--     TRIGGER text (via pg_get_triggerdef) so we can replay it verbatim
+--     after the column type is swapped. The trigger function bodies
+--     are left alone — string literals compared against NEW.status /
+--     OLD.status will be implicitly cast to the new enum type when the
+--     trigger fires, so the functions remain valid.
+CREATE TEMP TABLE _status_trigger_snapshot (
+  schemaname    text,
+  tablename     text,
+  triggername   text,
+  tgdef         text
+) ON COMMIT DROP;
+
+INSERT INTO _status_trigger_snapshot
+SELECT
+  n.nspname,
+  c.relname,
+  t.tgname,
+  pg_get_triggerdef(t.oid)
+FROM pg_trigger t
+JOIN pg_class c        ON c.oid = t.tgrelid
+JOIN pg_namespace n    ON n.oid = c.relnamespace
+WHERE n.nspname = 'public'
+  AND c.relname IN ('complaints', 'complaint_status_history')
+  AND NOT t.tgisinternal;
+
+-- ----------------------------------------------------------------------------
+-- 4. Drop the dependent objects
+-- ----------------------------------------------------------------------------
 DO $$
 DECLARE
   r record;
 BEGIN
+  -- Triggers first (they reference the trigger functions; functions are
+  -- left intact because their bodies are still valid against the new
+  -- enum type once the column is swapped)
+  FOR r IN SELECT tablename, triggername FROM _status_trigger_snapshot LOOP
+    EXECUTE format('DROP TRIGGER IF EXISTS %I ON public.%I CASCADE;', r.triggername, r.tablename);
+  END LOOP;
+
+  -- Policies
   FOR r IN SELECT tablename, policyname FROM _status_policy_snapshot LOOP
     EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I CASCADE;', r.policyname, r.tablename);
   END LOOP;
-END $$;
 
--- Drop the dependent views/materialized views (CASCADE also drops dependent
--- rules; we'll recreate everything explicitly from the snapshots).
-DO $$
-DECLARE
-  r record;
-BEGIN
-  FOR r IN SELECT viewname, relkind, is_populated FROM _status_view_snapshot LOOP
+  -- Views / materialized views
+  FOR r IN SELECT viewname, relkind FROM _status_view_snapshot LOOP
     IF r.relkind = 'm' THEN
       EXECUTE format('DROP MATERIALIZED VIEW IF EXISTS public.%I CASCADE;', r.viewname);
     ELSE
@@ -188,8 +184,9 @@ BEGIN
   END LOOP;
 END $$;
 
--- The new enum is intentionally a fresh type so we can drop the old one
--- cleanly after column conversions.
+-- ----------------------------------------------------------------------------
+-- 5. Swap the enum type
+-- ----------------------------------------------------------------------------
 CREATE TYPE public.complaint_status_new AS ENUM (
   'pending',
   'assigned',
@@ -220,8 +217,11 @@ ALTER TABLE public.complaints
 DROP TYPE public.complaint_status;
 ALTER TYPE public.complaint_status_new RENAME TO complaint_status;
 
--- Restore the views/materialized views using their captured definitions
--- and re-apply the original ACL (privileges) captured in the snapshot.
+-- ----------------------------------------------------------------------------
+-- 6. Recreate the dependent objects from the snapshots
+-- ----------------------------------------------------------------------------
+
+-- 6a. Views / materialized views + ACLs
 DO $$
 DECLARE
   r record;
@@ -238,15 +238,13 @@ BEGIN
       EXECUTE format('CREATE VIEW public.%I AS %s;', r.viewname, r.definition);
     END IF;
 
-    -- Re-apply every non-default ACL entry. The default ('=arwdDxt/owner') is
-    -- recreated automatically by CREATE VIEW / CREATE MATERIALIZED VIEW.
     IF r.relacl IS NOT NULL THEN
       FOR acl_item IN
         SELECT grantee::regrole::text AS grantee_text,
                privilege_type,
                is_grantable
         FROM aclexplode(r.relacl) a(grantor, grantee, privilege_type, is_grantable)
-        WHERE grantee <> 0   -- skip PUBLIC-equivalent (already default)
+        WHERE grantee <> 0
       LOOP
         grant_sql := format(
           'GRANT %s ON public.%I TO %s%s;',
@@ -261,7 +259,7 @@ BEGIN
   END LOOP;
 END $$;
 
--- Restore the policies using their captured qual/with_check expressions
+-- 6b. RLS policies
 DO $$
 DECLARE
   r record;
@@ -279,6 +277,19 @@ BEGIN
       COALESCE(r.qual, 'true'),
       COALESCE(r.with_check, 'true')
     );
+  END LOOP;
+END $$;
+
+-- 6c. Triggers (replayed via pg_get_triggerdef).
+--     The prevent_reverting_resolved_status function body is left intact
+--     because its string literals are compared against NEW/OLD.status and
+--     are implicitly cast to the new enum type at comparison time.
+DO $$
+DECLARE
+  r record;
+BEGIN
+  FOR r IN SELECT * FROM _status_trigger_snapshot LOOP
+    EXECUTE r.tgdef;
   END LOOP;
 END $$;
 
