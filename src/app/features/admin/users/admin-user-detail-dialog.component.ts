@@ -1,4 +1,4 @@
-import { Component, Inject } from '@angular/core';
+import { Component, Inject, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatDialogModule, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
@@ -8,6 +8,8 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatInputModule } from '@angular/material/input';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { SupabaseService } from '../../../core/services/supabase.service';
 
 @Component({
   selector: 'app-admin-user-detail-dialog',
@@ -21,7 +23,8 @@ import { MatInputModule } from '@angular/material/input';
     MatDividerModule,
     MatFormFieldModule,
     MatSelectModule,
-    MatInputModule
+    MatInputModule,
+    MatProgressSpinnerModule
   ],
   template: `
     <div class="border-4 border-gray-900 bg-white relative max-h-[90vh] flex flex-col shadow-[8px_8px_0px_0px_rgba(17,24,39,1)]">
@@ -196,11 +199,12 @@ import { MatInputModule } from '@angular/material/input';
               </h3>
               
               <div class="mt-2 border-2 border-dashed border-gray-300 rounded-sm p-2 flex flex-col items-center justify-center bg-gray-50 min-h-[200px]">
-                <img *ngIf="data.user.proof_of_residency_url" [src]="data.user.proof_of_residency_url" class="max-h-[250px] object-contain border-2 border-gray-900 shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] cursor-pointer" alt="ID Image" (click)="openImage(data.user.proof_of_residency_url)">
+                <img *ngIf="proofOfResidencyUrl" [src]="proofOfResidencyUrl" class="max-h-[250px] object-contain border-2 border-gray-900 shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] cursor-pointer" alt="ID Image" (click)="openImage(proofOfResidencyUrl)">
+                <mat-progress-spinner *ngIf="data.user.proof_of_residency_url && !proofOfResidencyUrl" mode="indeterminate" diameter="32" color="primary"></mat-progress-spinner>
                 <div *ngIf="!data.user.proof_of_residency_url" class="text-sm text-gray-400 font-medium italic">
                   No ID Uploaded
                 </div>
-                <p *ngIf="data.user.proof_of_residency_url" class="text-[10px] font-bold text-gray-500 uppercase mt-4 text-center">
+                <p *ngIf="proofOfResidencyUrl" class="text-[10px] font-bold text-gray-500 uppercase mt-4 text-center">
                   Click image to open in new tab
                 </p>
               </div>
@@ -282,10 +286,26 @@ import { MatInputModule } from '@angular/material/input';
     .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
   `]
 })
-export class AdminUserDetailDialogComponent {
+export class AdminUserDetailDialogComponent implements OnInit {
   actionMode: 'none' | 'reject' | 'ban' = 'none';
   selectedReason = '';
   customReason = '';
+
+  // Signed URL for the citizen's proof-of-residency image
+  // (citizen_ids bucket is private; resolved on dialog open).
+  proofOfResidencyUrl: string | null = null;
+
+  private supabaseService = inject(SupabaseService);
+  private cdr = inject(ChangeDetectorRef);
+
+  async ngOnInit() {
+    const stored = this.data?.user?.proof_of_residency_url;
+    if (stored) {
+      const url = await this.supabaseService.resolveSignedUrl(stored, 'citizen_ids');
+      this.proofOfResidencyUrl = url;
+      this.cdr.detectChanges();
+    }
+  }
 
   // Keep in sync with the register form's transient residency types
   private readonly TRANSIENT_RESIDENCY_TYPES = [

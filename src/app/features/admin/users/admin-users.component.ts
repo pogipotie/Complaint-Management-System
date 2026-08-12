@@ -308,24 +308,20 @@ export class AdminUsersComponent implements OnInit {
         return 0;
       });
 
-      // Securely fetch short-lived Signed URLs for the ID images
-      const pathsToSign = this.users
-        .filter(u => u.proof_of_residency_url)
-        .map(u => {
-          // If it's a legacy public URL, extract just the path
-          let path = u.proof_of_residency_url;
-          if (path.includes('citizen_ids/')) {
-            path = path.split('citizen_ids/')[1].split('?')[0];
-          }
-          return path;
-        });
-
-      const uniquePaths = [...new Set(pathsToSign)];
+      // Securely fetch short-lived Signed URLs for the ID images using
+      // the shared resolveSignedUrl helper (handles both new paths and
+      // legacy public URLs in the same row format).
+      const uniquePaths = [
+        ...new Set(
+          this.users
+            .filter(u => u.proof_of_residency_url)
+            .map(u => this.supabaseService.extractStoragePath(u.proof_of_residency_url, 'citizen_ids'))
+            .filter((p): p is string => !!p)
+        )
+      ];
 
       if (uniquePaths.length > 0) {
         // Request signed URLs that expire in 10 minutes (600 seconds)
-        // This is a highly secure window: long enough for the admin to review the page, 
-        // but short enough that leaked links become useless very quickly.
         const { data: signedUrls } = await this.supabaseService.supabase.storage
           .from('citizen_ids')
           .createSignedUrls(uniquePaths, 600);
@@ -333,15 +329,11 @@ export class AdminUsersComponent implements OnInit {
         if (signedUrls) {
           // Map the secure signed URLs back to the users array
           this.users.forEach(u => {
-            if (u.proof_of_residency_url) {
-              let path = u.proof_of_residency_url;
-              if (path.includes('citizen_ids/')) {
-                path = path.split('citizen_ids/')[1].split('?')[0];
-              }
-              const match = signedUrls.find(s => s.path === path);
-              if (match?.signedUrl) {
-                u.proof_of_residency_url = match.signedUrl;
-              }
+            if (!u.proof_of_residency_url) return;
+            const path = this.supabaseService.extractStoragePath(u.proof_of_residency_url, 'citizen_ids');
+            const match = path ? signedUrls.find(s => s.path === path) : undefined;
+            if (match?.signedUrl) {
+              u.proof_of_residency_url = match.signedUrl;
             }
           });
         }

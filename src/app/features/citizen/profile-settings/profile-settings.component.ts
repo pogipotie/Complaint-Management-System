@@ -289,16 +289,13 @@ export class ProfileSettingsComponent implements OnInit {
 
       // Fetch signed URL if an ID exists
       if (data.proof_of_residency_url) {
-        let path = data.proof_of_residency_url;
-        if (path.includes('citizen_ids/')) {
-          path = path.split('citizen_ids/')[1].split('?')[0];
-        }
-        const { data: signedUrlData } = await this.supabaseService.supabase.storage
-          .from('citizen_ids')
-          .createSignedUrl(path, 600);
-        
-        if (signedUrlData?.signedUrl) {
-          this.currentIdUrl = signedUrlData.signedUrl;
+        const url = await this.supabaseService.resolveSignedUrl(
+          data.proof_of_residency_url,
+          'citizen_ids',
+          600
+        );
+        if (url) {
+          this.currentIdUrl = url;
         }
       }
     }
