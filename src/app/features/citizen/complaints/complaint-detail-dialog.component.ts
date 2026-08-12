@@ -350,29 +350,27 @@ export class ConfirmDialogComponent {
               </div>
             </div>
 
-            <!-- Comment Input (Hidden if complaint is resolved or rejected, OR if escalated and viewed by Captain) -->
-            <div *ngIf="!(data.status === 'resolved' || data.status === 'rejected' || (data.is_escalated && currentRole === 'brgy_captain'))" class="p-3 bg-gray-50 border-t-2 border-gray-900 flex gap-2">
+            <!-- Comment Input (Hidden only when the complaint is resolved or rejected.
+                 Escalated complaints stay open for chat — including for the captain who escalated,
+                 so they can coordinate with admin. Only terminal statuses close the thread.) -->
+            <div *ngIf="!(data.status === 'resolved' || data.status === 'rejected')" class="p-3 bg-gray-50 border-t-2 border-gray-900 flex gap-2">
               <input type="text" [(ngModel)]="newComment" (keyup.enter)="postComment()"
-                     class="flex-1 rounded-sm border-2 border-gray-900 px-4 py-2 text-xs font-bold uppercase tracking-wider focus:outline-none focus:border-primary-600 focus:ring-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)] placeholder-gray-400" 
+                     class="flex-1 rounded-sm border-2 border-gray-900 px-4 py-2 text-xs font-bold uppercase tracking-wider focus:outline-none focus:border-primary-600 focus:ring-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)] placeholder-gray-400"
                      placeholder="Type a message...">
               <button mat-flat-button color="primary" (click)="postComment()" [disabled]="!newComment.trim() || postingComment" class="!min-w-[48px] !px-0 !rounded-sm !border-2 !border-gray-900 !shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] hover:!translate-y-[1px] hover:!translate-x-[1px] hover:!shadow-[1px_1px_0px_0px_rgba(17,24,39,1)] transition-all">
                 <mat-icon class="scale-90 m-0">send</mat-icon>
               </button>
             </div>
 
-            <!-- Read-only message for resolved/rejected complaints or escalated (for captain) -->
-            <div *ngIf="(data.status === 'resolved' || data.status === 'rejected' || (data.is_escalated && currentRole === 'brgy_captain'))" class="p-4 bg-gray-100 border-t-2 border-gray-900 flex items-center justify-center gap-2"
-                 [ngClass]="data.is_escalated && currentRole === 'brgy_captain' ? 'bg-red-50' : (data.status === 'rejected' ? 'bg-red-50' : 'bg-gray-100')">
-              <mat-icon class="scale-90" [ngClass]="data.is_escalated && currentRole === 'brgy_captain' ? 'text-red-600' : (data.status === 'rejected' ? 'text-red-600' : 'text-gray-600')">
-                {{ data.is_escalated && currentRole === 'brgy_captain' ? 'whatshot' : (data.status === 'rejected' ? 'lock' : 'check_circle') }}
+            <!-- Read-only message shown only when the complaint is in a terminal status.
+                 Applies uniformly to admin, captain, and citizen — the thread is closed for everyone. -->
+            <div *ngIf="(data.status === 'resolved' || data.status === 'rejected')" class="p-4 border-t-2 border-gray-900 flex items-center justify-center gap-2"
+                 [ngClass]="data.status === 'rejected' ? 'bg-red-50' : 'bg-gray-100'">
+              <mat-icon class="scale-90" [ngClass]="data.status === 'rejected' ? 'text-red-600' : 'text-gray-600'">
+                {{ data.status === 'rejected' ? 'lock' : 'check_circle' }}
               </mat-icon>
-              <span class="text-xs font-black uppercase tracking-widest" [ngClass]="data.is_escalated && currentRole === 'brgy_captain' ? 'text-red-800' : (data.status === 'rejected' ? 'text-red-800' : 'text-gray-800')">
-                <ng-container *ngIf="data.is_escalated && currentRole === 'brgy_captain'; else statusLock">
-                  Thread Locked: Escalated to Admin
-                </ng-container>
-                <ng-template #statusLock>
-                  Thread Locked: Complaint {{ data.status | titlecase }}
-                </ng-template>
+              <span class="text-xs font-black uppercase tracking-widest" [ngClass]="data.status === 'rejected' ? 'text-red-800' : 'text-gray-800'">
+                Thread Locked: Complaint {{ data.status | titlecase }}
               </span>
             </div>
           </div>
