@@ -291,6 +291,40 @@ import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config
                   </mat-form-field>
                 </div>
 
+                <div class="border-t-2 border-amber-300 pt-4 mb-2">
+                  <mat-checkbox formControlName="is_foreign_resident" color="primary" class="font-black text-amber-900 uppercase tracking-widest text-[11px]">
+                    I am a Foreign Resident (ACR I-Card Holder)
+                  </mat-checkbox>
+                </div>
+
+                <!-- Foreign Resident ACR I-Card Upload -->
+                <div *ngIf="registerForm.get('is_foreign_resident')?.value" class="space-y-3 pt-4 border-t-2 border-amber-300 mb-4 animate-fade-in">
+                  <label class="text-[11px] font-black text-amber-900 block uppercase tracking-widest flex items-center gap-1">
+                    <mat-icon class="scale-75">assignment_ind</mat-icon> ACR I-Card <span class="text-red-500">*</span>
+                  </label>
+                  <p class="text-[10px] font-bold text-amber-800 uppercase tracking-widest mb-2">As a foreign resident, please upload your ACR I-Card.</p>
+                  
+                  <div class="upload-dropzone bg-white border-amber-300" [class.has-file]="!!acrFile" [class.border-red-500]="formSubmitted && !acrFile" (click)="!acrFile ? acrInput.click() : null">
+                    <input type="file" #acrInput class="hidden" accept="image/jpeg, image/png, image/webp" (change)="onAcrSelected($event)">
+                    <ng-container *ngIf="!acrFile">
+                      <mat-icon class="upload-icon" [class.text-red-400]="formSubmitted && !acrFile">add_a_photo</mat-icon>
+                      <div class="mt-2 text-sm text-gray-600 font-medium">Upload ACR I-Card</div>
+                    </ng-container>
+                    <ng-container *ngIf="acrFile">
+                      <div class="flex items-center justify-between bg-gray-50 p-2 rounded-sm border border-gray-200">
+                        <div class="flex items-center gap-3">
+                          <img [src]="acrPreviewUrl" class="h-12 w-16 object-cover rounded-sm border border-gray-300">
+                          <span class="text-xs font-bold text-gray-700 truncate max-w-[150px] sm:max-w-[200px]">{{ acrFile.name }}</span>
+                        </div>
+                        <button mat-icon-button type="button" (click)="removeAcr($event)" color="warn" class="scale-75"><mat-icon>close</mat-icon></button>
+                      </div>
+                    </ng-container>
+                  </div>
+                  <mat-error class="text-[10px] font-bold text-red-500 uppercase tracking-widest mt-1" *ngIf="formSubmitted && !acrFile">
+                    ACR I-Card is required for foreign residents.
+                  </mat-error>
+                </div>
+
                 <div class="border-t-2 border-amber-300 pt-4">
                   <p class="text-[11px] font-black text-amber-900 uppercase tracking-widest mb-3 flex items-center gap-1">
                     <mat-icon class="scale-75 text-amber-700">contact_mail</mat-icon>
@@ -306,7 +340,7 @@ import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config
                       <input matInput formControlName="permanent_city_municipality" placeholder="e.g. Manila">
                     </mat-form-field>
                     <mat-form-field appearance="outline" class="w-full">
-                      <mat-label>Province</mat-label>
+                      <mat-label>Province / State</mat-label>
                       <input matInput formControlName="permanent_province" placeholder="e.g. Metro Manila">
                     </mat-form-field>
                   </div>
@@ -510,6 +544,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
     school_or_employer: [''],
     residency_start_date: [null],
     residency_end_date: [null],
+    is_foreign_resident: [false],
     permanent_address: [''],
     permanent_city_municipality: [''],
     permanent_province: [''],
@@ -547,6 +582,9 @@ export class RegisterComponent implements OnInit, OnDestroy {
   // File state
   selectedFile: File | null = null;
   imagePreviewUrl: string | ArrayBuffer | null = null;
+
+  acrFile: File | null = null;
+  acrPreviewUrl: string | ArrayBuffer | null = null;
 
   ngOnInit() {
     this.loadGoogleMaps();
@@ -902,10 +940,31 @@ export class RegisterComponent implements OnInit, OnDestroy {
     }
   }
 
+  async onAcrSelected(event: any) {
+    const file = event.target.files[0];
+    if (file) {
+      try {
+        const compressedFile = await this.compressImage(file);
+        this.acrFile = compressedFile;
+        const reader = new FileReader();
+        reader.onload = () => this.acrPreviewUrl = reader?.result ?? null;
+        reader.readAsDataURL(compressedFile);
+      } catch (err) {
+        this.errorMsg = 'Failed to process ACR image.';
+      }
+    }
+  }
+
   removeFile(event: Event) {
     event.stopPropagation();
     this.selectedFile = null;
     this.imagePreviewUrl = null;
+  }
+
+  removeAcr(event: Event) {
+    event.stopPropagation();
+    this.acrFile = null;
+    this.acrPreviewUrl = null;
   }
 
   compressImage(file: File): Promise<File> {
@@ -954,8 +1013,14 @@ export class RegisterComponent implements OnInit, OnDestroy {
       if (control?.invalid) isValid = false;
     });
 
+    // Check ACR requirement if foreign resident
+    const isForeign = this.registerForm.get('is_foreign_resident')?.value;
+    if (isForeign && !this.acrFile) {
+      isValid = false;
+    }
+
     if (!isValid || !this.selectedFile) {
-      this.errorMsg = 'Please complete all required fields and upload an ID.';
+      this.errorMsg = 'Please complete all required fields and upload the required ID(s).';
       return;
     }
     
@@ -1120,6 +1185,16 @@ export class RegisterComponent implements OnInit, OnDestroy {
         
       if (uploadError) throw uploadError;
 
+      // 2.5 Upload ACR I-Card (if applicable)
+      let acrFilePath: string | null = null;
+      if (formVals.is_foreign_resident && this.acrFile) {
+        acrFilePath = `${userId}/acr_${Date.now()}.jpeg`;
+        const { error: acrUploadError } = await this.supabaseService.supabase.storage
+          .from('citizen_ids')
+          .upload(acrFilePath, this.acrFile);
+        if (acrUploadError) throw acrUploadError;
+      }
+
       // 3. Create profile in public.users
       // We now save the secure filePath instead of generating a public URL
       const { error: profileError } = await this.supabaseService.supabase
@@ -1149,6 +1224,8 @@ export class RegisterComponent implements OnInit, OnDestroy {
           school_or_employer: formVals.school_or_employer || null,
           residency_start_date: formVals.residency_start_date || null,
           residency_end_date: formVals.residency_end_date || null,
+          is_foreign_resident: formVals.is_foreign_resident || false,
+          acr_icard_url: acrFilePath,
           permanent_address: formVals.permanent_address || null,
           permanent_city_municipality: formVals.permanent_city_municipality || null,
           permanent_province: formVals.permanent_province || null,

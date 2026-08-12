@@ -133,6 +133,10 @@ import { SupabaseService } from '../../../core/services/supabase.service';
                   <span class="text-xs font-bold text-gray-500 uppercase">Residency Type</span>
                   <span class="text-sm font-bold text-gray-900 flex items-center gap-2 flex-wrap">
                     {{ data.user.residency_type || 'N/A' }}
+                    <span *ngIf="data.user.is_foreign_resident" class="inline-flex items-center px-1.5 py-0.5 rounded-sm text-[9px] font-black uppercase tracking-widest border-2 border-blue-700 bg-blue-100 text-blue-900 shadow-[1px_1px_0px_0px_rgba(29,78,216,1)]">
+                      <mat-icon class="!text-[10px] !w-3 !h-3 !leading-3 -ml-0.5 mr-0.5">public</mat-icon>
+                      Foreigner
+                    </span>
                     <span *ngIf="isTransientResidency(data.user.residency_type)" class="inline-flex items-center px-1.5 py-0.5 rounded-sm text-[9px] font-black uppercase tracking-widest border-2 border-amber-700 bg-amber-100 text-amber-900 shadow-[1px_1px_0px_0px_rgba(180,83,9,1)]">
                       <mat-icon class="!text-[10px] !w-3 !h-3 !leading-3 -ml-0.5 mr-0.5">schedule</mat-icon>
                       Transient
@@ -208,6 +212,23 @@ import { SupabaseService } from '../../../core/services/supabase.service';
                   Click image to open in new tab
                 </p>
               </div>
+
+              <ng-container *ngIf="data.user.is_foreign_resident">
+                <h3 class="text-sm font-black text-blue-900 uppercase tracking-widest border-b-2 border-blue-900 pb-2 mt-6 mb-4 flex items-center gap-2">
+                  <mat-icon class="scale-75 text-blue-700">assignment_ind</mat-icon> ACR I-Card (Foreign Resident)
+                </h3>
+                
+                <div class="mt-2 border-2 border-dashed border-blue-300 rounded-sm p-2 flex flex-col items-center justify-center bg-blue-50 min-h-[200px]">
+                  <img *ngIf="acrIcardUrl" [src]="acrIcardUrl" class="max-h-[250px] object-contain border-2 border-gray-900 shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] cursor-pointer" alt="ACR I-Card" (click)="openImage(acrIcardUrl)">
+                  <mat-progress-spinner *ngIf="data.user.acr_icard_url && !acrIcardUrl" mode="indeterminate" diameter="32" color="primary"></mat-progress-spinner>
+                  <div *ngIf="!data.user.acr_icard_url" class="text-sm text-gray-400 font-medium italic">
+                    No ACR I-Card Uploaded
+                  </div>
+                  <p *ngIf="acrIcardUrl" class="text-[10px] font-bold text-gray-500 uppercase mt-4 text-center">
+                    Click image to open in new tab
+                  </p>
+                </div>
+              </ng-container>
             </div>
           </div>
           
@@ -294,6 +315,7 @@ export class AdminUserDetailDialogComponent implements OnInit {
   // Signed URL for the citizen's proof-of-residency image
   // (citizen_ids bucket is private; resolved on dialog open).
   proofOfResidencyUrl: string | null = null;
+  acrIcardUrl: string | null = null;
 
   private supabaseService = inject(SupabaseService);
   private cdr = inject(ChangeDetectorRef);
@@ -303,6 +325,13 @@ export class AdminUserDetailDialogComponent implements OnInit {
     if (stored) {
       const url = await this.supabaseService.resolveSignedUrl(stored, 'citizen_ids');
       this.proofOfResidencyUrl = url;
+      this.cdr.detectChanges();
+    }
+
+    const storedAcr = this.data?.user?.acr_icard_url;
+    if (storedAcr) {
+      const url = await this.supabaseService.resolveSignedUrl(storedAcr, 'citizen_ids');
+      this.acrIcardUrl = url;
       this.cdr.detectChanges();
     }
   }

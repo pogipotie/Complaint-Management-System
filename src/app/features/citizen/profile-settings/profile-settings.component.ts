@@ -225,6 +225,40 @@ import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config
                     </ng-container>
                   </div>
                 </div>
+
+                <!-- Foreign Resident ACR I-Card -->
+                <div *ngIf="isForeignResident" class="mt-4 border-t-2 border-gray-200 pt-4">
+                  <h4 class="text-xs font-black text-gray-900 uppercase tracking-widest mb-2 flex items-center gap-1">
+                    <mat-icon class="scale-75 text-amber-700">assignment_ind</mat-icon> ACR I-Card (Foreign Resident)
+                  </h4>
+                  <div class="border-2 border-dashed border-gray-300 rounded-sm p-2 flex flex-col items-center justify-center bg-gray-50 min-h-[200px] mb-4">
+                  <img *ngIf="currentAcrUrl" [src]="currentAcrUrl" class="max-h-[250px] object-contain border-2 border-gray-900 shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] cursor-pointer" alt="ACR I-Card" (click)="openImage(currentAcrUrl)">
+                  <div *ngIf="!currentAcrUrl" class="text-sm text-gray-400 font-medium italic">
+                    No ACR I-Card Uploaded
+                  </div>
+                  <p *ngIf="currentAcrUrl" class="text-[10px] font-bold text-gray-500 uppercase mt-4 text-center">
+                    Click image to open in new tab
+                  </p>
+                </div>
+                  
+                  <label class="block text-[11px] font-black uppercase tracking-widest text-gray-700 mb-1 mt-4">Update ACR I-Card</label>
+                  <div class="upload-dropzone bg-white" [class.has-file]="!!acrFile" (click)="!acrFile ? acrInput.click() : null">
+                    <input type="file" #acrInput class="hidden" accept="image/jpeg, image/png, image/webp" (change)="onAcrSelected($event)">
+                    <ng-container *ngIf="!acrFile">
+                      <mat-icon class="upload-icon">add_a_photo</mat-icon>
+                      <div class="mt-2 text-sm text-gray-600 font-medium">Upload new ACR I-Card</div>
+                    </ng-container>
+                    <ng-container *ngIf="acrFile">
+                      <div class="flex items-center justify-between bg-gray-50 p-2 rounded-sm border border-gray-200">
+                        <div class="flex items-center gap-3">
+                          <img [src]="acrPreviewUrl" class="h-12 w-16 object-cover rounded-sm border border-gray-300">
+                          <span class="text-xs font-bold text-gray-700 truncate max-w-[200px]">{{ acrFile.name }}</span>
+                        </div>
+                        <button mat-icon-button type="button" (click)="removeAcr($event)" color="warn" class="scale-75"><mat-icon>close</mat-icon></button>
+                      </div>
+                    </ng-container>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -268,7 +302,13 @@ export class ProfileSettingsComponent implements OnInit {
   selectedFile: File | null = null;
   imagePreviewUrl: string | ArrayBuffer | null = null;
   currentIdUrl: string | null = null;
+
+  acrFile: File | null = null;
+  acrPreviewUrl: string | ArrayBuffer | null = null;
+  currentAcrUrl: string | null = null;
+
   daysUntilExpiry: number | null = null;
+  isForeignResident = false;
 
   profileForm: FormGroup = this.fb.group({
     full_name: ['', Validators.required],
@@ -302,6 +342,7 @@ export class ProfileSettingsComponent implements OnInit {
     if (!error && data) {
       this.verificationStatus = data.verification_status;
       this.rejectionReason = data.rejection_reason;
+      this.isForeignResident = data.is_foreign_resident;
       
       this.profileForm.patchValue({
         full_name: data.full_name,
@@ -342,6 +383,18 @@ export class ProfileSettingsComponent implements OnInit {
           this.currentIdUrl = url;
         }
       }
+
+      // Fetch signed URL if an ACR I-Card exists
+      if (data.acr_icard_url) {
+        const url = await this.supabaseService.resolveSignedUrl(
+          data.acr_icard_url,
+          'citizen_ids',
+          600
+        );
+        if (url) {
+          this.currentAcrUrl = url;
+        }
+      }
     }
     this.loading = false;
   }
@@ -361,10 +414,35 @@ export class ProfileSettingsComponent implements OnInit {
     }
   }
 
+  async onAcrSelected(event: any) {
+    const file = event.target.files[0];
+    if (file) {
+      try {
+        const compressedFile = await this.compressImage(file);
+        this.acrFile = compressedFile;
+        const reader = new FileReader();
+        reader.onload = e => this.acrPreviewUrl = reader?.result ?? null;
+        reader.readAsDataURL(compressedFile);
+      } catch (err) {
+        this.errorMsg = 'Failed to process ACR image.';
+      }
+    }
+  }
+
   removeFile(event: Event) {
     event.stopPropagation();
     this.selectedFile = null;
     this.imagePreviewUrl = null;
+  }
+
+  removeAcr(event: Event) {
+    event.stopPropagation();
+    this.acrFile = null;
+    this.acrPreviewUrl = null;
+  }
+
+  openImage(url: string) {
+    window.open(url, '_blank');
   }
 
   compressImage(file: File): Promise<File> {
@@ -409,25 +487,37 @@ export class ProfileSettingsComponent implements OnInit {
     }
 
     try {
-      // Also include residency_end_date if they are updating it due to expiry
-      updates.residency_end_date = this.profileForm.get('residency_end_date')?.value || null;
+        // Also include residency_end_date if they are updating it due to expiry
+        updates.residency_end_date = this.profileForm.get('residency_end_date')?.value || null;
 
-      // If they selected a new ID, upload it first
-      if (this.selectedFile) {
-        const filePath = `${this.currentUserId}/${Date.now()}.jpeg`;
-        const { error: uploadError } = await this.supabaseService.supabase.storage
-          .from('citizen_ids')
-          .upload(filePath, this.selectedFile);
+        // If they selected a new ID, upload it first
+        if (this.selectedFile) {
+          const filePath = `${this.currentUserId}/${Date.now()}.jpeg`;
+          const { error: uploadError } = await this.supabaseService.supabase.storage
+            .from('citizen_ids')
+            .upload(filePath, this.selectedFile);
+            
+          if (uploadError) throw uploadError;
           
-        if (uploadError) throw uploadError;
-        
-        updates.proof_of_residency_url = filePath;
-      }
+          updates.proof_of_residency_url = filePath;
+        }
 
-      const { error } = await this.supabaseService.supabase
-        .from('users')
-        .update(updates)
-        .eq('id', this.currentUserId);
+        // If they selected a new ACR I-Card, upload it
+        if (this.acrFile && this.isForeignResident) {
+          const acrFilePath = `${this.currentUserId}/acr_${Date.now()}.jpeg`;
+          const { error: acrUploadError } = await this.supabaseService.supabase.storage
+            .from('citizen_ids')
+            .upload(acrFilePath, this.acrFile);
+            
+          if (acrUploadError) throw acrUploadError;
+          
+          updates.acr_icard_url = acrFilePath;
+        }
+
+        const { error } = await this.supabaseService.supabase
+          .from('users')
+          .update(updates)
+          .eq('id', this.currentUserId);
 
       if (error) throw error;
 

@@ -120,6 +120,9 @@ import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config
                   <span *ngIf="isExpired(user.residency_end_date)" class="inline-flex items-center px-1.5 py-0.5 rounded-sm text-[9px] font-black uppercase tracking-widest border-2 border-red-700 bg-red-100 text-red-900">
                     Expired
                   </span>
+                  <span *ngIf="user.is_foreign_resident" class="inline-flex items-center px-1.5 py-0.5 rounded-sm text-[9px] font-black uppercase tracking-widest border-2 border-blue-700 bg-blue-100 text-blue-900 shadow-[1px_1px_0px_0px_rgba(29,78,216,1)]">
+                    Foreigner
+                  </span>
                 </div>
               </div>
               <div class="col-span-2">
