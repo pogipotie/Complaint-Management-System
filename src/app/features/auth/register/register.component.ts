@@ -17,6 +17,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config';
 
 @Component({
@@ -37,7 +38,8 @@ import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config
     MatCheckboxModule,
     MatDatepickerModule,
     MatNativeDateModule,
-    MatDividerModule
+    MatDividerModule,
+    MatAutocompleteModule
   ],
   template: `
     <div class="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -250,7 +252,14 @@ import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config
                   <!-- Place-of-stay field: label adapts to residency type -->
                   <mat-form-field appearance="outline" class="w-full">
                     <mat-label>{{ placeOfStayLabel() }}</mat-label>
-                    <input matInput formControlName="boarding_house_name" [placeholder]="placeOfStayPlaceholder()">
+                    <input matInput formControlName="boarding_house_name" [placeholder]="placeOfStayPlaceholder()" [matAutocomplete]="auto">
+                    <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onBoardingHouseSelected($event.option.value)">
+                      <mat-option *ngFor="let house of filteredBoardingHouses" [value]="house.name">
+                        {{ house.name }}
+                        <span class="text-[10px] text-gray-500 ml-2">({{ house.street_address }})</span>
+                      </mat-option>
+                    </mat-autocomplete>
+                    <mat-hint class="text-[10px] font-bold text-amber-800 uppercase tracking-widest">Select from the list or type a new one</mat-hint>
                   </mat-form-field>
 
                   <!-- School / Employer is hidden for Institution Resident (convent/dorm) -->
@@ -530,6 +539,10 @@ export class RegisterComponent implements OnInit, OnDestroy {
   markerPosition: google.maps.LatLngLiteral | null = null;
 
   barangays = MUNICIPALITY_CONFIG.barangays;
+  
+  // Boarding house registry state
+  approvedBoardingHouses: any[] = [];
+  filteredBoardingHouses: any[] = [];
 
   // File state
   selectedFile: File | null = null;
@@ -537,6 +550,11 @@ export class RegisterComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.loadGoogleMaps();
+
+    // Listen to boarding house name changes for autocomplete filtering
+    this.registerForm.get('boarding_house_name')?.valueChanges.subscribe(value => {
+      this.filterBoardingHouses(value);
+    });
   }
 
   ngOnDestroy() {
@@ -662,6 +680,10 @@ export class RegisterComponent implements OnInit, OnDestroy {
   }
 
   onBarangayChange(barangay: string) {
+    if (barangay) {
+      this.loadApprovedBoardingHouses(barangay);
+    }
+
     if (!this.mapLoaded || !barangay) return;
 
     // Create a Geocoder instance to find the exact coordinates of the selected Barangay
@@ -683,6 +705,42 @@ export class RegisterComponent implements OnInit, OnDestroy {
         console.warn('Geocode was not successful for the following reason: ' + status);
       }
     });
+  }
+
+  async loadApprovedBoardingHouses(barangay: string) {
+    const { data, error } = await this.supabaseService.supabase
+      .from('boarding_houses')
+      .select('name, street_address, owner_name, owner_contact')
+      .eq('barangay', barangay)
+      .eq('is_approved', true)
+      .order('name');
+
+    if (!error && data) {
+      this.approvedBoardingHouses = data;
+      this.filterBoardingHouses(this.registerForm.get('boarding_house_name')?.value || '');
+    } else {
+      this.approvedBoardingHouses = [];
+      this.filteredBoardingHouses = [];
+    }
+  }
+
+  filterBoardingHouses(value: string) {
+    const filterValue = value.toLowerCase();
+    this.filteredBoardingHouses = this.approvedBoardingHouses.filter(house => 
+      house.name.toLowerCase().includes(filterValue) || 
+      house.street_address.toLowerCase().includes(filterValue)
+    );
+  }
+
+  onBoardingHouseSelected(houseName: string) {
+    const house = this.approvedBoardingHouses.find(h => h.name === houseName);
+    if (house) {
+      // Auto-fill the landlord/contact based on the registry
+      this.registerForm.patchValue({
+        guardian_or_landlord_name: house.owner_name,
+        guardian_or_landlord_contact: house.owner_contact
+      });
+    }
   }
 
   /**
