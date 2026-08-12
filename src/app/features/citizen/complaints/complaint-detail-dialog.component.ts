@@ -85,9 +85,7 @@ export class ConfirmDialogComponent {
                     [ngClass]="{
                       'bg-yellow-200 text-yellow-900': data.status === 'pending',
                       'bg-blue-200 text-blue-900': data.status === 'assigned',
-                      'bg-primary-200 text-primary-900': data.status === 'in_progress',
                       'bg-green-200 text-green-900': data.status === 'resolved',
-                      'bg-gray-200 text-gray-900': data.status === 'closed',
                       'bg-red-200 text-red-900': data.status === 'rejected'
                     }">
                 STATUS: {{ data.status.replace('_', ' ') }}
@@ -241,8 +239,8 @@ export class ConfirmDialogComponent {
             </p>
           </div>
 
-          <!-- Rating & Feedback Section (Only shown if resolved/closed and viewed by Citizen) -->
-          <div *ngIf="(data.status === 'resolved' || data.status === 'closed')" class="bg-primary-50 border-2 border-primary-600 p-5 rounded-sm shadow-[2px_2px_0px_0px_rgba(17,24,39,1)]">
+          <!-- Rating & Feedback Section (Only shown if resolved and viewed by Citizen) -->
+          <div *ngIf="data.status === 'resolved'" class="bg-primary-50 border-2 border-primary-600 p-5 rounded-sm shadow-[2px_2px_0px_0px_rgba(17,24,39,1)]">
             <h4 class="text-sm font-black text-primary-900 mb-3 uppercase tracking-tight flex items-center" style="font-family: 'Arial Black', Impact, sans-serif;">
               <mat-icon class="scale-75 mr-1 -ml-1 text-primary-600">star</mat-icon>
               Resolution Rating
@@ -352,8 +350,8 @@ export class ConfirmDialogComponent {
               </div>
             </div>
 
-            <!-- Comment Input (Hidden if complaint is rejected or closed, OR if escalated and viewed by Captain) -->
-            <div *ngIf="!(data.status === 'rejected' || data.status === 'closed' || (data.is_escalated && currentRole === 'brgy_captain'))" class="p-3 bg-gray-50 border-t-2 border-gray-900 flex gap-2">
+            <!-- Comment Input (Hidden if complaint is resolved or rejected, OR if escalated and viewed by Captain) -->
+            <div *ngIf="!(data.status === 'resolved' || data.status === 'rejected' || (data.is_escalated && currentRole === 'brgy_captain'))" class="p-3 bg-gray-50 border-t-2 border-gray-900 flex gap-2">
               <input type="text" [(ngModel)]="newComment" (keyup.enter)="postComment()"
                      class="flex-1 rounded-sm border-2 border-gray-900 px-4 py-2 text-xs font-bold uppercase tracking-wider focus:outline-none focus:border-primary-600 focus:ring-0 shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)] placeholder-gray-400" 
                      placeholder="Type a message...">
@@ -362,11 +360,11 @@ export class ConfirmDialogComponent {
               </button>
             </div>
 
-            <!-- Read-only message for rejected/closed complaints or escalated (for captain) -->
-            <div *ngIf="(data.status === 'rejected' || data.status === 'closed' || (data.is_escalated && currentRole === 'brgy_captain'))" class="p-4 bg-gray-100 border-t-2 border-gray-900 flex items-center justify-center gap-2"
+            <!-- Read-only message for resolved/rejected complaints or escalated (for captain) -->
+            <div *ngIf="(data.status === 'resolved' || data.status === 'rejected' || (data.is_escalated && currentRole === 'brgy_captain'))" class="p-4 bg-gray-100 border-t-2 border-gray-900 flex items-center justify-center gap-2"
                  [ngClass]="data.is_escalated && currentRole === 'brgy_captain' ? 'bg-red-50' : (data.status === 'rejected' ? 'bg-red-50' : 'bg-gray-100')">
               <mat-icon class="scale-90" [ngClass]="data.is_escalated && currentRole === 'brgy_captain' ? 'text-red-600' : (data.status === 'rejected' ? 'text-red-600' : 'text-gray-600')">
-                {{ data.is_escalated && currentRole === 'brgy_captain' ? 'whatshot' : 'lock' }}
+                {{ data.is_escalated && currentRole === 'brgy_captain' ? 'whatshot' : (data.status === 'rejected' ? 'lock' : 'check_circle') }}
               </mat-icon>
               <span class="text-xs font-black uppercase tracking-widest" [ngClass]="data.is_escalated && currentRole === 'brgy_captain' ? 'text-red-800' : (data.status === 'rejected' ? 'text-red-800' : 'text-gray-800')">
                 <ng-container *ngIf="data.is_escalated && currentRole === 'brgy_captain'; else statusLock">
@@ -385,7 +383,7 @@ export class ConfirmDialogComponent {
       <!-- Actions -->
       <mat-dialog-actions align="end" class="!px-6 sm:!px-8 !pb-6 !pt-4 border-t-2 border-gray-900 m-0 bg-gray-50 rounded-b-sm flex-wrap gap-2">
         
-        <button *ngIf="!isCitizen && !data.is_escalated && currentRole === 'brgy_captain' && data.status !== 'closed' && data.status !== 'resolved' && data.status !== 'rejected'" mat-flat-button color="warn" class="h-10 px-4 mr-auto font-black uppercase tracking-wider text-[10px] !rounded-sm !border-2 !border-gray-900 !shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] hover:!translate-y-[1px] hover:!translate-x-[1px] hover:!shadow-[1px_1px_0px_0px_rgba(17,24,39,1)] transition-all" (click)="escalateComplaint()" [disabled]="escalating">
+        <button *ngIf="!isCitizen && !data.is_escalated && currentRole === 'brgy_captain' && data.status !== 'resolved' && data.status !== 'rejected'" mat-flat-button color="warn" class="h-10 px-4 mr-auto font-black uppercase tracking-wider text-[10px] !rounded-sm !border-2 !border-gray-900 !shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] hover:!translate-y-[1px] hover:!translate-x-[1px] hover:!shadow-[1px_1px_0px_0px_rgba(17,24,39,1)] transition-all" (click)="escalateComplaint()" [disabled]="escalating">
           <mat-icon>whatshot</mat-icon>
           {{ escalating ? 'Escalating...' : 'Escalate to Admin' }}
         </button>
@@ -693,8 +691,8 @@ export class ComplaintDetailDialogComponent implements OnInit, AfterViewChecked 
   }
 
   async escalateComplaint() {
-    if (this.data.status === 'closed' || this.data.status === 'resolved' || this.data.status === 'rejected') {
-      alert('Cannot escalate a complaint that is already closed, resolved, or rejected.');
+    if (this.data.status === 'resolved' || this.data.status === 'rejected') {
+      alert('Cannot escalate a complaint that is already resolved or rejected.');
       return;
     }
 

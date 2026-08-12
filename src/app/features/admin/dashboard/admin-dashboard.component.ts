@@ -251,19 +251,19 @@ export class AdminDashboardComponent implements OnInit {
       if (data && !error) {
         this.totalComplaints = data.length;
         this.pendingComplaints = data.filter((c: any) => c.status === 'pending').length;
-        this.inProgressComplaints = data.filter((c: any) => c.status === 'in_progress' || c.status === 'assigned').length;
-        this.resolvedComplaints = data.filter((c: any) => c.status === 'resolved' || c.status === 'closed').length;
+        this.inProgressComplaints = data.filter((c: any) => c.status === 'assigned').length;
+        this.resolvedComplaints = data.filter((c: any) => c.status === 'resolved').length;
         this.escalatedComplaints = data.filter((c: any) => c.is_escalated === true).length;
 
         // Status Chart
-        const statuses = ['pending', 'assigned', 'in_progress', 'resolved', 'closed', 'rejected'];
+        const statuses = ['pending', 'assigned', 'resolved', 'rejected'];
         const statusCounts = statuses.map(s => data.filter((c: any) => c.status === s).length);
         this.statusChartData = {
-          labels: ['Pending', 'Assigned', 'In Progress', 'Resolved', 'Closed', 'Rejected'],
+          labels: ['Pending', 'Assigned', 'Resolved', 'Rejected'],
           datasets: [{ 
             data: statusCounts,
-            backgroundColor: ['#fde047', '#93c5fd', '#4ade80', '#22c55e', '#16a34a', '#f87171'],
-            hoverBackgroundColor: ['#facc15', '#60a5fa', '#22c55e', '#16a34a', '#15803d', '#ef4444'],
+            backgroundColor: ['#fde047', '#93c5fd', '#22c55e', '#f87171'],
+            hoverBackgroundColor: ['#facc15', '#60a5fa', '#16a34a', '#ef4444'],
             borderWidth: 2,
             hoverOffset: 4
           }]

@@ -334,7 +334,7 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
   getStatusColor(status: string): string {
     switch (status.toUpperCase()) {
       case 'PENDING': return 'bg-yellow-200 text-yellow-900';
-      case 'IN PROGRESS': return 'bg-primary-200 text-primary-900';
+      case 'ASSIGNED': return 'bg-blue-200 text-blue-900';
       case 'RESOLVED': return 'bg-green-200 text-green-900';
       case 'REJECTED': return 'bg-red-200 text-red-900';
       default: return 'bg-gray-200 text-gray-900';

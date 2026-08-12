@@ -35,7 +35,7 @@ A highly specialized, localized, and secure ticketing system designed for munici
 
 ### 🛡️ Admin & Staff Dashboard
 * **User Verification System:** Dedicated queue to review citizen IDs (via secure 10-minute Signed URLs). Admins can Approve, Reject (with mandatory reasoning), or Permanently Ban users.
-* **Complaint Management:** Update complaint statuses (`Pending` -> `Assigned` -> `In Progress` -> `Resolved` -> `Closed`). Resolving complaints requires mandatory "After" photo proof.
+* **Complaint Management:** Update complaint statuses (`Pending` -> `Assigned` -> `Resolved`). Resolving complaints requires mandatory "After" photo proof and the `resolved` state is terminal (acts as the closed state — no further action is required by the admin).
 * **Advanced Filtering:** Multi-criteria data tables allowing instant filtering by Barangay, Category, Priority, and Status.
 * **Analytics Dashboard:** Real-time visual data (Doughnut & Bar charts) tracking complaint volume across 25 Barangays and status distribution.
 * **Data Export:** Generate and download `.csv` files of complaint data for official government reporting.

@@ -204,8 +204,8 @@ export class TransparencyDashboardComponent implements OnInit {
   processData(data: any[]) {
     this.totalComplaints = data.length;
     
-    const statuses = ['pending', 'assigned', 'in_progress', 'resolved', 'closed'];
-    const counts: Record<string, number> = { pending: 0, assigned: 0, in_progress: 0, resolved: 0, closed: 0 };
+    const statuses = ['pending', 'assigned', 'resolved'];
+    const counts: Record<string, number> = { pending: 0, assigned: 0, resolved: 0 };
     const barangayCounts: Record<string, number> = {};
 
     data.forEach(c => {
@@ -215,18 +215,18 @@ export class TransparencyDashboardComponent implements OnInit {
       barangayCounts[brgy] = (barangayCounts[brgy] || 0) + 1;
     });
 
-    this.resolvedComplaints = counts['resolved'] + counts['closed'];
+    this.resolvedComplaints = counts['resolved'];
     this.resolutionRate = this.totalComplaints > 0 
       ? Math.round((this.resolvedComplaints / this.totalComplaints) * 100) 
       : 0;
 
     // Status Chart
     this.statusChartData = {
-      labels: ['Pending', 'Assigned', 'In Progress', 'Resolved', 'Closed'],
+      labels: ['Pending', 'Assigned', 'Resolved'],
       datasets: [{ 
-        data: [counts['pending'], counts['assigned'], counts['in_progress'], counts['resolved'], counts['closed']],
-        backgroundColor: ['#facc15', '#93c5fd', '#4ade80', '#22c55e', '#16a34a'],
-        hoverBackgroundColor: ['#eab308', '#60a5fa', '#22c55e', '#16a34a', '#15803d'],
+        data: [counts['pending'], counts['assigned'], counts['resolved']],
+        backgroundColor: ['#facc15', '#93c5fd', '#22c55e'],
+        hoverBackgroundColor: ['#eab308', '#60a5fa', '#16a34a'],
         borderWidth: 2,
         hoverOffset: 4
       }]

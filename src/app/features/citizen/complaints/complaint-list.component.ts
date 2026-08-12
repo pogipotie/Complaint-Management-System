@@ -70,9 +70,7 @@ import { ComplaintDeleteDialogComponent } from './complaint-delete-dialog.compon
                   [ngClass]="{
                     'bg-yellow-200': complaint.status === 'pending',
                     'bg-blue-200': complaint.status === 'assigned',
-                    'bg-primary-200': complaint.status === 'in_progress',
                     'bg-green-200': complaint.status === 'resolved',
-                    'bg-gray-200': complaint.status === 'closed',
                     'bg-red-200': complaint.status === 'rejected'
                   }">
                   {{ complaint.status.replace('_', ' ') }}

@@ -121,9 +121,7 @@ import { DescriptionDialogComponent } from '../../../shared/components/descripti
               <option value="">ALL STATUSES</option>
               <option value="pending">PENDING</option>
               <option value="assigned">ASSIGNED</option>
-              <option value="in_progress">IN PROGRESS</option>
               <option value="resolved">RESOLVED</option>
-              <option value="closed">CLOSED</option>
               <option value="rejected">REJECTED</option>
               <option value="escalated">ESCALATED ONLY</option>
             </select>
@@ -202,9 +200,7 @@ import { DescriptionDialogComponent } from '../../../shared/components/descripti
                     [ngClass]="{
                       'bg-yellow-200 text-yellow-900': complaint.status === 'pending',
                       'bg-blue-200 text-blue-900': complaint.status === 'assigned',
-                      'bg-primary-200 text-primary-900': complaint.status === 'in_progress',
                       'bg-green-200 text-green-900': complaint.status === 'resolved',
-                      'bg-gray-200 text-gray-900': complaint.status === 'closed',
                       'bg-red-200 text-red-900': complaint.status === 'rejected'
                     }">
                     {{ complaint.status.replace('_', ' ') }}
@@ -221,16 +217,14 @@ import { DescriptionDialogComponent } from '../../../shared/components/descripti
                       <mat-icon>visibility</mat-icon>
                     </button>
                     
-                    <ng-container *ngIf="complaint.status !== 'closed' && complaint.status !== 'rejected'">
+                    <ng-container *ngIf="complaint.status !== 'resolved' && complaint.status !== 'rejected'">
                       <div class="relative inline-block w-36" (click)="$event.stopPropagation()">
                         <select #statusSelect class="w-full appearance-none bg-white border-2 border-gray-900 rounded-sm pl-3 pr-8 py-1.5 text-xs font-black uppercase tracking-wider text-gray-900 shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] focus:outline-none focus:ring-0 focus:border-primary-600 cursor-pointer"
                                 [value]="complaint.status" 
                                 (change)="updateStatus(complaint, statusSelect.value, statusSelect)">
                           <option value="pending" [disabled]="complaint.status === 'resolved'">PENDING</option>
                           <option value="assigned" [disabled]="complaint.status === 'resolved'">ASSIGNED</option>
-                          <option value="in_progress" [disabled]="complaint.status === 'resolved'">IN PROGRESS</option>
                           <option value="resolved">RESOLVED</option>
-                          <option value="closed">CLOSED</option>
                           <option value="rejected" [disabled]="complaint.status === 'resolved'">REJECTED</option>
                         </select>
                         <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-900">
@@ -239,10 +233,10 @@ import { DescriptionDialogComponent } from '../../../shared/components/descripti
                       </div>
                     </ng-container>
 
-                    <ng-container *ngIf="complaint.status === 'closed' || complaint.status === 'rejected'">
+                    <ng-container *ngIf="complaint.status === 'resolved' || complaint.status === 'rejected'">
                       <div class="w-36 px-3 py-1.5 border-2 border-gray-900 rounded-sm text-xs font-black uppercase tracking-wider text-center flex items-center justify-center gap-1 shadow-[1px_1px_0px_0px_rgba(17,24,39,1)]"
-                           [ngClass]="complaint.status === 'rejected' ? 'bg-red-100 text-red-900' : 'bg-gray-100 text-gray-900'">
-                        <mat-icon class="scale-75 -ml-1">lock</mat-icon>
+                           [ngClass]="complaint.status === 'rejected' ? 'bg-red-100 text-red-900' : 'bg-green-100 text-green-900'">
+                        <mat-icon class="scale-75 -ml-1">{{ complaint.status === 'rejected' ? 'lock' : 'check_circle' }}</mat-icon>
                         {{ complaint.status }}
                       </div>
                     </ng-container>

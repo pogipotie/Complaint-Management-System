@@ -60,9 +60,8 @@ import { environment } from '../../../../environments/environment';
                       [ngClass]="{
                         'bg-yellow-200 text-yellow-900': selectedComplaint.status === 'pending',
                         'bg-blue-200 text-blue-900': selectedComplaint.status === 'assigned',
-                        'bg-primary-200 text-primary-900': selectedComplaint.status === 'in_progress',
                         'bg-green-200 text-green-900': selectedComplaint.status === 'resolved',
-                        'bg-gray-200 text-gray-900': selectedComplaint.status === 'closed'
+                        'bg-red-200 text-red-900': selectedComplaint.status === 'rejected'
                       }">
                   {{ selectedComplaint.status.replace('_', ' ') }}
                 </span>
@@ -148,8 +147,8 @@ import { environment } from '../../../../environments/environment';
                         [ngClass]="{
                           'bg-yellow-200 text-yellow-900': complaint.status === 'pending',
                           'bg-blue-200 text-blue-900': complaint.status === 'assigned',
-                          'bg-primary-200 text-primary-900': complaint.status === 'in_progress',
-                          'bg-green-200 text-green-900': complaint.status === 'resolved'
+                          'bg-green-200 text-green-900': complaint.status === 'resolved',
+                          'bg-red-200 text-red-900': complaint.status === 'rejected'
                         }">
                     {{ complaint.status.replace('_', ' ') }}
                   </span>
