@@ -64,11 +64,6 @@ import { Subject, Observable } from 'rxjs';
             <span matListItemTitle class="font-bold uppercase tracking-wider text-[11px]">Citizens</span>
           </a>
 
-          <a mat-list-item routerLink="/captain/boarding-houses" routerLinkActive="bg-primary-100 text-primary-900 border-2 border-gray-900 shadow-[2px_2px_0px_0px_rgba(17,24,39,1)]" class="hover:bg-gray-50 transition-all rounded-sm mb-2">
-            <mat-icon matListItemIcon [color]="router.url.includes('/boarding-houses') ? 'primary' : ''" class="text-gray-900">home_work</mat-icon>
-            <span matListItemTitle class="font-bold uppercase tracking-wider text-[11px]">Boarding Houses</span>
-          </a>
-
           <a mat-list-item routerLink="/captain/chat" routerLinkActive="bg-primary-100 text-primary-900 border-2 border-gray-900 shadow-[2px_2px_0px_0px_rgba(17,24,39,1)]" class="hover:bg-gray-50 transition-all rounded-sm mb-2">
             <mat-icon matListItemIcon [color]="router.url.includes('/chat') ? 'primary' : ''" class="text-gray-900">forum</mat-icon>
             <span matListItemTitle class="font-bold uppercase tracking-wider text-[11px]">Official Chat</span>
@@ -340,6 +335,10 @@ export class CaptainLayoutComponent implements OnInit, OnDestroy {
   getPageTitle(): string {
     if (this.router.url.includes('/captain/dashboard')) return 'Dashboard';
     if (this.router.url.includes('/captain/complaints')) return 'Barangay Complaints';
+    if (this.router.url.includes('/captain/announcements')) return 'Announcements';
+    if (this.router.url.includes('/captain/users')) return 'Citizens';
+    if (this.router.url.includes('/captain/chat')) return 'Official Chat';
+    if (this.router.url.includes('/captain/profile')) return 'Captain Profile';
     return 'Barangay Captain';
   }
 
