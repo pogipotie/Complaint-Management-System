@@ -120,6 +120,23 @@ export class ConfirmDialogComponent {
             </div>
           </div>
 
+          <!-- Video Section (Citizen-submitted video evidence) -->
+          <div *ngIf="data.video_url" class="rounded-sm overflow-hidden border-2 border-gray-900 bg-gray-100 shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)] relative mt-4">
+            <div class="w-full relative">
+              <span class="absolute top-2 left-2 bg-gray-900 text-white text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-sm shadow-[1px_1px_0px_0px_rgba(255,255,255,0.3)] z-20 border border-gray-700 flex items-center gap-1">
+                <mat-icon class="!text-[12px] !h-3 !w-3 !leading-3 -ml-0.5">videocam</mat-icon>
+                Before Video (Citizen Report)
+              </span>
+              <video
+                [src]="data.video_url"
+                controls
+                playsinline
+                preload="metadata"
+                class="w-full max-h-80 object-contain bg-black relative z-10"
+              ></video>
+            </div>
+          </div>
+
           <!-- Resolution Image Section (Before & After Proof) -->
           <div *ngIf="data.resolution_images && data.resolution_images.length > 0" class="rounded-sm overflow-hidden border-2 border-green-600 bg-green-50 flex justify-center shadow-[inset_0_2px_4px_rgba(0,0,0,0.1)] relative mt-4">
             <div class="w-full relative">
@@ -428,6 +445,12 @@ export class ConfirmDialogComponent {
       <div *ngIf="data.image_url || (data.evidence_paths && data.evidence_paths.length > 0)" style="margin-bottom: 30px; page-break-inside: avoid;">
         <h3 style="margin: 0 0 10px 0; font-size: 16px; border-bottom: 1px solid #eee; padding-bottom: 5px;">Evidence Photo (Before)</h3>
         <img [src]="data.image_url || data.evidence_paths[0]" style="max-width: 100%; max-height: 400px; object-fit: contain; border: 1px solid #ccc; padding: 5px;" crossorigin="anonymous">
+      </div>
+
+      <div *ngIf="data.video_url" style="margin-bottom: 30px; page-break-inside: avoid;">
+        <h3 style="margin: 0 0 10px 0; font-size: 16px; border-bottom: 1px solid #eee; padding-bottom: 5px;">Evidence Video (Before)</h3>
+        <p style="font-size: 13px; color: #555; margin: 0 0 8px 0;">A video was attached to this report. Open the original complaint record to play it.</p>
+        <a [href]="data.video_url" target="_blank" rel="noopener" style="display: inline-block; font-size: 13px; color: #1d4ed8; text-decoration: underline; word-break: break-all;">{{ data.video_url }}</a>
       </div>
 
       <div *ngIf="data.resolution_images && data.resolution_images.length > 0" style="margin-bottom: 30px; page-break-inside: avoid;">
