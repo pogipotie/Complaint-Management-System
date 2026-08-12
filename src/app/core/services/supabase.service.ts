@@ -76,19 +76,43 @@ export class SupabaseService {
   }
 
   /**
-   * Extract the object path from either a legacy public URL
-   * (https://.../storage/v1/object/public/{bucket}/{path})
-   * or a path stored directly in the database.
+   * Extract the object path from any of the URL forms Supabase may
+   * emit for a storage object:
+   *   * Public URL  : https://<host>/storage/v1/object/public/{bucket}/{path}
+   *   * Signed URL  : https://<host>/storage/v1/object/sign/{bucket}/{path}?token=...
+   *   * Render URL  : https://<host>/storage/v1/object/{bucket}/{path}
+   *                  (used by the browser to actually download a signed URL)
+   *   * Or a bare relative path stored directly in the database.
+   *
+   * In every case we want to return the *relative* object path
+   * (e.g. `{userId}/proof.jpg`) so the caller can hand it back to
+   * createSignedUrl() — never the full URL, which would otherwise get
+   * concatenated onto the bucket and produce a doubled-up path like
+   *   citizen_ids/https://.../citizen_ids/<userId>/proof.jpg
    */
   extractStoragePath(stored: string | null | undefined, bucket: string): string | null {
     if (!stored) return null;
-    const marker = `/storage/v1/object/public/${bucket}/`;
-    const idx = stored.indexOf(marker);
-    if (idx !== -1) {
-      return stored.substring(idx + marker.length);
+
+    // Normalize: strip any query string / fragment that may have been
+    // appended to a signed URL.
+    const cleaned = stored.split('?')[0].split('#')[0];
+
+    // Try each known path layout. Order matters: signed > public > render.
+    const markers: string[] = [
+      `/storage/v1/object/sign/${bucket}/`,
+      `/storage/v1/object/public/${bucket}/`,
+      `/storage/v1/object/${bucket}/`,
+    ];
+
+    for (const marker of markers) {
+      const idx = cleaned.indexOf(marker);
+      if (idx !== -1) {
+        return cleaned.substring(idx + marker.length);
+      }
     }
+
     // Already a relative path, or a path passed in directly
-    return stored;
+    return cleaned;
   }
 
   /**
