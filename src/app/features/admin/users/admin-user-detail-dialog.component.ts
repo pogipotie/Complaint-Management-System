@@ -128,11 +128,64 @@ import { MatInputModule } from '@angular/material/input';
                 </div>
                 <div class="grid grid-cols-2 gap-2">
                   <span class="text-xs font-bold text-gray-500 uppercase">Residency Type</span>
-                  <span class="text-sm font-bold text-gray-900">{{ data.user.residency_type || 'N/A' }}</span>
+                  <span class="text-sm font-bold text-gray-900 flex items-center gap-2 flex-wrap">
+                    {{ data.user.residency_type || 'N/A' }}
+                    <span *ngIf="isTransientResidency(data.user.residency_type)" class="inline-flex items-center px-1.5 py-0.5 rounded-sm text-[9px] font-black uppercase tracking-widest border-2 border-amber-700 bg-amber-100 text-amber-900 shadow-[1px_1px_0px_0px_rgba(180,83,9,1)]">
+                      <mat-icon class="!text-[10px] !w-3 !h-3 !leading-3 -ml-0.5 mr-0.5">schedule</mat-icon>
+                      Transient
+                    </span>
+                  </span>
                 </div>
                 <div class="grid grid-cols-2 gap-2">
                   <span class="text-xs font-bold text-gray-500 uppercase">Years Residing</span>
                   <span class="text-sm font-bold text-gray-900">{{ data.user.years_of_residency ? data.user.years_of_residency + ' Years' : 'N/A' }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Transient residency details (only shown for boarders, dormers, migrants) -->
+            <div *ngIf="isTransientResidency(data.user.residency_type)" class="bg-amber-50 border-2 border-amber-500 rounded-sm p-4 shadow-[2px_2px_0px_0px_rgba(180,83,9,1)]">
+              <h3 class="text-sm font-black text-amber-900 uppercase tracking-widest border-b-2 border-amber-300 pb-2 mb-4 flex items-center gap-2">
+                <mat-icon class="scale-75 text-amber-700">schedule</mat-icon> Transient Residency Details
+              </h3>
+              <div class="space-y-3">
+                <div *ngIf="data.user.boarding_house_name" class="grid grid-cols-2 gap-2">
+                  <span class="text-xs font-bold text-amber-800 uppercase">Boarding House / Institution</span>
+                  <span class="text-sm font-bold text-amber-900">{{ data.user.boarding_house_name }}</span>
+                </div>
+                <div *ngIf="data.user.school_or_employer" class="grid grid-cols-2 gap-2">
+                  <span class="text-xs font-bold text-amber-800 uppercase">School / Employer</span>
+                  <span class="text-sm font-bold text-amber-900">{{ data.user.school_or_employer }}</span>
+                </div>
+                <div *ngIf="data.user.guardian_or_landlord_name" class="grid grid-cols-2 gap-2">
+                  <span class="text-xs font-bold text-amber-800 uppercase">Guardian / Landlord</span>
+                  <span class="text-sm font-bold text-amber-900">
+                    {{ data.user.guardian_or_landlord_name }}
+                    <span *ngIf="data.user.guardian_or_landlord_contact" class="text-amber-700 text-[11px] font-bold block">
+                      {{ data.user.guardian_or_landlord_contact }}
+                    </span>
+                  </span>
+                </div>
+                <div *ngIf="data.user.residency_start_date || data.user.residency_end_date" class="grid grid-cols-2 gap-2">
+                  <span class="text-xs font-bold text-amber-800 uppercase">Stay Period</span>
+                  <span class="text-sm font-bold text-amber-900">
+                    {{ data.user.residency_start_date | date:'mediumDate' || '?' }}
+                    <span class="text-amber-700 mx-1">→</span>
+                    <span [class.text-red-700]="isExpired(data.user.residency_end_date)">
+                      {{ data.user.residency_end_date | date:'mediumDate' || 'Open-ended' }}
+                    </span>
+                    <span *ngIf="isExpired(data.user.residency_end_date)" class="ml-2 inline-flex items-center px-1.5 py-0.5 rounded-sm text-[9px] font-black uppercase tracking-widest border-2 border-red-700 bg-red-100 text-red-900">
+                      Expired
+                    </span>
+                  </span>
+                </div>
+                <div *ngIf="data.user.permanent_address || data.user.permanent_city_municipality" class="grid grid-cols-2 gap-2 pt-2 border-t-2 border-amber-300">
+                  <span class="text-xs font-bold text-amber-800 uppercase">Permanent Address (on ID)</span>
+                  <span class="text-sm font-bold text-amber-900">
+                    <span *ngIf="data.user.permanent_address">{{ data.user.permanent_address }},</span>
+                    {{ data.user.permanent_city_municipality }}
+                    <span *ngIf="data.user.permanent_province" class="text-amber-700">, {{ data.user.permanent_province }}</span>
+                  </span>
                 </div>
               </div>
             </div>
@@ -233,6 +286,22 @@ export class AdminUserDetailDialogComponent {
   actionMode: 'none' | 'reject' | 'ban' = 'none';
   selectedReason = '';
   customReason = '';
+
+  // Keep in sync with the register form's transient residency types
+  private readonly TRANSIENT_RESIDENCY_TYPES = [
+    'Boarding House Tenant',
+    'Institution Resident',
+    'Migrant Worker'
+  ];
+
+  isTransientResidency(type: string | null | undefined): boolean {
+    return !!type && this.TRANSIENT_RESIDENCY_TYPES.includes(type);
+  }
+
+  isExpired(endDate: string | null | undefined): boolean {
+    if (!endDate) return false;
+    return new Date(endDate) < new Date(new Date().toDateString());
+  }
 
   rejectReasons = [
     'Invalid or unreadable ID',

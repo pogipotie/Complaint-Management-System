@@ -219,10 +219,13 @@ import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config
 
                 <mat-form-field appearance="outline" class="w-full">
                   <mat-label>Type of Residency</mat-label>
-                  <mat-select formControlName="residency_type">
+                  <mat-select formControlName="residency_type" (selectionChange)="onResidencyTypeChange($event.value)">
                     <mat-option value="Homeowner">Homeowner</mat-option>
                     <mat-option value="Renter">Renter</mat-option>
                     <mat-option value="Living with relatives">Living with relatives</mat-option>
+                    <mat-option value="Boarding House Tenant">Boarding House Tenant</mat-option>
+                    <mat-option value="Institution Resident">Institution Resident (dorm, convent, etc.)</mat-option>
+                    <mat-option value="Migrant Worker">Migrant Worker / On Assignment</mat-option>
                   </mat-select>
                 </mat-form-field>
 
@@ -230,6 +233,73 @@ import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config
                   <mat-label>Years of Residency</mat-label>
                   <input matInput type="number" formControlName="years_of_residency" placeholder="e.g. 5">
                 </mat-form-field>
+              </div>
+
+              <!-- Transient residency details (students, boarders, migrants, dormers) -->
+              <div *ngIf="isTransientResidency()" class="mb-8 p-5 bg-amber-50 border-2 border-amber-500 rounded-sm shadow-[2px_2px_0px_0px_rgba(180,83,9,1)] space-y-5 animate-fade-in">
+                <div class="flex items-start gap-3">
+                  <mat-icon class="text-amber-700 scale-110 mt-0.5">info</mat-icon>
+                  <div>
+                    <h4 class="text-sm font-black text-amber-900 uppercase tracking-tight" style="font-family: 'Arial Black', Impact, sans-serif;">Transient / Non-Permanent Residency</h4>
+                    <p class="text-[11px] font-bold text-amber-800 mt-1 uppercase tracking-wider leading-relaxed">
+                      Please provide additional details so the Barangay Captain can verify your stay. Your account will be auto-disabled once the residency end date passes.
+                    </p>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <mat-form-field appearance="outline" class="w-full">
+                    <mat-label>Boarding House / Institution Name</mat-label>
+                    <input matInput formControlName="boarding_house_name" placeholder="e.g. Doña Maria's Boarding House">
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="w-full">
+                    <mat-label>School / Employer (Optional)</mat-label>
+                    <input matInput formControlName="school_or_employer" placeholder="e.g. University of Baguio / ABC Corp.">
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="w-full">
+                    <mat-label>Guardian / Landlord Name</mat-label>
+                    <input matInput formControlName="guardian_or_landlord_name" placeholder="Full name">
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="w-full">
+                    <mat-label>Guardian / Landlord Contact</mat-label>
+                    <input matInput formControlName="guardian_or_landlord_contact" placeholder="09xx-xxx-xxxx">
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="w-full">
+                    <mat-label>Residency Start Date</mat-label>
+                    <input matInput type="date" formControlName="residency_start_date">
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="w-full">
+                    <mat-label>Expected End Date</mat-label>
+                    <input matInput type="date" formControlName="residency_end_date">
+                    <mat-hint class="text-[10px] font-bold text-amber-800 uppercase tracking-widest">When do you expect to leave?</mat-hint>
+                  </mat-form-field>
+                </div>
+
+                <div class="border-t-2 border-amber-300 pt-4">
+                  <p class="text-[11px] font-black text-amber-900 uppercase tracking-widest mb-3 flex items-center gap-1">
+                    <mat-icon class="scale-75 text-amber-700">contact_mail</mat-icon>
+                    Permanent Address (on your Valid ID) <span class="text-amber-700 font-bold">— Optional</span>
+                  </p>
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <mat-form-field appearance="outline" class="w-full md:col-span-1">
+                      <mat-label>Street / House No.</mat-label>
+                      <input matInput formControlName="permanent_address" placeholder="e.g. 45 Mabini St.">
+                    </mat-form-field>
+                    <mat-form-field appearance="outline" class="w-full">
+                      <mat-label>City / Municipality</mat-label>
+                      <input matInput formControlName="permanent_city_municipality" placeholder="e.g. Manila">
+                    </mat-form-field>
+                    <mat-form-field appearance="outline" class="w-full">
+                      <mat-label>Province</mat-label>
+                      <input matInput formControlName="permanent_province" placeholder="e.g. Metro Manila">
+                    </mat-form-field>
+                  </div>
+                </div>
               </div>
 
               <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -422,6 +492,16 @@ export class RegisterComponent implements OnInit, OnDestroy {
     street_address: ['', Validators.required],
     residency_type: [''],
     years_of_residency: [null],
+    // Transient residency fields (boarders, dormers, migrant workers)
+    boarding_house_name: [''],
+    guardian_or_landlord_name: [''],
+    guardian_or_landlord_contact: [''],
+    school_or_employer: [''],
+    residency_start_date: [null],
+    residency_end_date: [null],
+    permanent_address: [''],
+    permanent_city_municipality: [''],
+    permanent_province: [''],
     latitude: [null, Validators.required],
     longitude: [null, Validators.required],
     otp: ['', [Validators.pattern('^[0-9]{6}$')]]
@@ -581,11 +661,11 @@ export class RegisterComponent implements OnInit, OnDestroy {
 
   onBarangayChange(barangay: string) {
     if (!this.mapLoaded || !barangay) return;
-    
+
     // Create a Geocoder instance to find the exact coordinates of the selected Barangay
     const geocoder = new google.maps.Geocoder();
     const address = `Barangay ${barangay}, Gonzaga, Cagayan, Philippines`;
-    
+
     this.locating = true;
     geocoder.geocode({ address: address }, (results, status) => {
       this.locating = false;
@@ -601,6 +681,36 @@ export class RegisterComponent implements OnInit, OnDestroy {
         console.warn('Geocode was not successful for the following reason: ' + status);
       }
     });
+  }
+
+  /**
+   * Residency types that should reveal the "transient / non-permanent"
+   * details section (boarding house, institution, migrant, etc.).
+   */
+  private readonly TRANSIENT_RESIDENCY_TYPES = [
+    'Boarding House Tenant',
+    'Institution Resident',
+    'Migrant Worker'
+  ];
+
+  onResidencyTypeChange(type: string) {
+    // Clear the transient fields when the user switches back to a permanent type
+    // so the submitted profile stays clean.
+    if (!this.isTransientResidency()) {
+      this.registerForm.patchValue({
+        boarding_house_name: '',
+        guardian_or_landlord_name: '',
+        guardian_or_landlord_contact: '',
+        school_or_employer: '',
+        residency_start_date: null,
+        residency_end_date: null
+      });
+    }
+  }
+
+  isTransientResidency(): boolean {
+    const type = this.registerForm.get('residency_type')?.value;
+    return this.TRANSIENT_RESIDENCY_TYPES.includes(type);
   }
 
   getCurrentLocation() {
@@ -892,6 +1002,16 @@ export class RegisterComponent implements OnInit, OnDestroy {
           is_pwd: formVals.is_pwd,
           emergency_contact_name: formVals.emergency_contact_name,
           emergency_contact_number: formVals.emergency_contact_number,
+          // Transient residency fields (NULL for permanent residents)
+          boarding_house_name: formVals.boarding_house_name || null,
+          guardian_or_landlord_name: formVals.guardian_or_landlord_name || null,
+          guardian_or_landlord_contact: formVals.guardian_or_landlord_contact || null,
+          school_or_employer: formVals.school_or_employer || null,
+          residency_start_date: formVals.residency_start_date || null,
+          residency_end_date: formVals.residency_end_date || null,
+          permanent_address: formVals.permanent_address || null,
+          permanent_city_municipality: formVals.permanent_city_municipality || null,
+          permanent_province: formVals.permanent_province || null,
           proof_of_residency_url: filePath
         });
 

@@ -87,7 +87,15 @@ import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config
               </div>
               <div>
                 <span class="text-xs font-bold text-gray-500 uppercase">Residency</span>
-                <div class="font-medium text-gray-900">{{ user.residency_type || 'N/A' }}</div>
+                <div class="font-medium text-gray-900 flex items-center gap-2 flex-wrap">
+                  {{ user.residency_type || 'N/A' }}
+                  <span *ngIf="isTransientResidency(user.residency_type)" class="inline-flex items-center px-1.5 py-0.5 rounded-sm text-[9px] font-black uppercase tracking-widest border-2 border-amber-700 bg-amber-100 text-amber-900 shadow-[1px_1px_0px_0px_rgba(180,83,9,1)]">
+                    Transient
+                  </span>
+                  <span *ngIf="isExpired(user.residency_end_date)" class="inline-flex items-center px-1.5 py-0.5 rounded-sm text-[9px] font-black uppercase tracking-widest border-2 border-red-700 bg-red-100 text-red-900">
+                    Expired
+                  </span>
+                </div>
               </div>
               <div class="col-span-2">
                 <span class="text-xs font-bold text-gray-500 uppercase">Address</span>
@@ -167,10 +175,26 @@ export class CaptainUsersComponent implements OnInit {
   private supabaseService = inject(SupabaseService);
   private dialog = inject(MatDialog);
 
+  // Keep in sync with the register form's transient residency types
+  private readonly TRANSIENT_RESIDENCY_TYPES = [
+    'Boarding House Tenant',
+    'Institution Resident',
+    'Migrant Worker'
+  ];
+
+  isTransientResidency(type: string | null | undefined): boolean {
+    return !!type && this.TRANSIENT_RESIDENCY_TYPES.includes(type);
+  }
+
+  isExpired(endDate: string | null | undefined): boolean {
+    if (!endDate) return false;
+    return new Date(endDate) < new Date(new Date().toDateString());
+  }
+
   users: any[] = [];
   filteredUsers: any[] = [];
   paginatedUsers: any[] = [];
-  
+
   loading = true;
   processingId: string | null = null;
 
