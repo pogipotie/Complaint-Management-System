@@ -27,6 +27,10 @@ export const CAPTAIN_ROUTES: Routes = [
         loadComponent: () => import('./users/captain-users.component').then(m => m.CaptainUsersComponent)
       },
       { 
+        path: 'boarding-houses', 
+        loadComponent: () => import('./boarding-houses/captain-boarding-houses.component').then(m => m.CaptainBoardingHousesComponent)
+      },
+      { 
         path: 'chat', 
         loadComponent: () => import('../shared/official-chat/official-chat.component').then(m => m.OfficialChatComponent)
       },
