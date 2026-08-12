@@ -543,11 +543,10 @@ export class AdminComplaintsComponent implements OnInit, OnDestroy {
             .upload(filePath, result.resolutionFile);
             
           if (!uploadError) {
-            const { data: publicUrlData } = this.supabaseService.supabase.storage
-              .from('complaint_images')
-              .getPublicUrl(filePath);
-            
-            uploadedPaths.push(publicUrlData.publicUrl);
+            // Store the storage path (not a public URL) so the bucket's RLS
+            // policy can authorize the view, and the detail dialog can sign
+            // it on demand.
+            uploadedPaths.push(filePath);
           } else {
             console.error('Failed to upload resolution photo', uploadError);
           }

@@ -1040,7 +1040,7 @@ export class ComplaintCreateComponent implements OnInit, OnDestroy {
       const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
       const filePath = `${user.id}/${fileName}`;
 
-      const { url, error } = await this.supabaseService.uploadFile('complaint_images', filePath, this.selectedFile);
+      const { path, error } = await this.supabaseService.uploadFile('complaint_images', filePath, this.selectedFile);
 
       if (error) {
         this.loading = false;
@@ -1050,10 +1050,12 @@ export class ComplaintCreateComponent implements OnInit, OnDestroy {
         return;
       }
 
+      // Store the storage path, not a public URL. The bucket is private and
+      // the detail dialog will resolve this path to a signed URL on demand.
       if (isVideo) {
-        video_url = url;
+        video_url = path;
       } else {
-        image_url = url;
+        image_url = path;
       }
     }
 

@@ -654,16 +654,18 @@ export class ComplaintEditDialogComponent {
       const fileExt = this.selectedFile.name.split('.').pop();
       const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
       const filePath = `${this.data.created_by}/${fileName}`;
-      
-      const { url, error } = await this.supabaseService.uploadFile('complaint_images', filePath, this.selectedFile);
-      
+
+      // Store the storage path, not a public URL. The bucket is private and
+      // the detail dialog will resolve this path to a signed URL on demand.
+      const { path, error } = await this.supabaseService.uploadFile('complaint_images', filePath, this.selectedFile);
+
       if (error) {
         this.isSaving = false;
         this.errorMsg = 'Failed to upload image: ' + error.message;
         return;
       }
-      
-      finalImageUrl = url;
+
+      finalImageUrl = path;
     }
 
     const updates = {

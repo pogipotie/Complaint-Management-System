@@ -41,16 +41,64 @@ export class SupabaseService {
     return this.currentUser.value;
   }
 
-  async uploadFile(bucket: string, path: string, file: File): Promise<{ url: string | null; error: any }> {
+  async uploadFile(bucket: string, path: string, file: File): Promise<{ path: string | null; error: any }> {
     const { data, error } = await this.supabase.storage.from(bucket).upload(path, file, {
       upsert: true,
     });
 
     if (error) {
-      return { url: null, error };
+      return { path: null, error };
     }
 
-    const { data: publicUrlData } = this.supabase.storage.from(bucket).getPublicUrl(path);
-    return { url: publicUrlData.publicUrl, error: null };
+    // Return the storage path (relative to the bucket), not a public URL.
+    // The complaint_images bucket is private, so callers must resolve the
+    // path to a signed URL via getSignedUrl() before displaying.
+    return { path: data?.path ?? path, error: null };
+  }
+
+  /**
+   * Generate a time-limited signed URL for a private bucket object.
+   * @param bucket The storage bucket id
+   * @param path The object path inside the bucket
+   * @param expiresIn Expiration in seconds (default: 1 hour)
+   */
+  async getSignedUrl(bucket: string, path: string, expiresIn: number = 3600): Promise<string | null> {
+    if (!path) return null;
+    const { data, error } = await this.supabase.storage
+      .from(bucket)
+      .createSignedUrl(path, expiresIn);
+
+    if (error || !data?.signedUrl) {
+      console.error('Failed to create signed URL:', error);
+      return null;
+    }
+    return data.signedUrl;
+  }
+
+  /**
+   * Extract the object path from either a legacy public URL
+   * (https://.../storage/v1/object/public/{bucket}/{path})
+   * or a path stored directly in the database.
+   */
+  extractStoragePath(stored: string | null | undefined, bucket: string): string | null {
+    if (!stored) return null;
+    const marker = `/storage/v1/object/public/${bucket}/`;
+    const idx = stored.indexOf(marker);
+    if (idx !== -1) {
+      return stored.substring(idx + marker.length);
+    }
+    // Already a relative path, or a path passed in directly
+    return stored;
+  }
+
+  /**
+   * Convenience helper: resolve whatever is stored in the DB
+   * (legacy full URL or new path) to a fresh signed URL.
+   * Returns null if the value is empty or signing fails.
+   */
+  async resolveSignedUrl(stored: string | null | undefined, bucket: string, expiresIn: number = 3600): Promise<string | null> {
+    const path = this.extractStoragePath(stored, bucket);
+    if (!path) return null;
+    return this.getSignedUrl(bucket, path, expiresIn);
   }
 }
