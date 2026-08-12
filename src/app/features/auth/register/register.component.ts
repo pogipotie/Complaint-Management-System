@@ -234,46 +234,49 @@ import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config
                 </mat-form-field>
               </div>
 
-              <!-- Transient residency details (students, boarders, migrants, dormers) -->
+              <!-- Transient residency details (separate fields per type) -->
               <div *ngIf="isTransientResidency()" class="mb-8 p-5 bg-amber-50 border-2 border-amber-500 rounded-sm shadow-[2px_2px_0px_0px_rgba(180,83,9,1)] space-y-5 animate-fade-in">
                 <div class="flex items-start gap-3">
                   <mat-icon class="text-amber-700 scale-110 mt-0.5">info</mat-icon>
                   <div>
-                    <h4 class="text-sm font-black text-amber-900 uppercase tracking-tight" style="font-family: 'Arial Black', Impact, sans-serif;">Transient / Non-Permanent Residency</h4>
+                    <h4 class="text-sm font-black text-amber-900 uppercase tracking-tight" style="font-family: 'Arial Black', Impact, sans-serif;">{{ transientHeading() }}</h4>
                     <p class="text-[11px] font-bold text-amber-800 mt-1 uppercase tracking-wider leading-relaxed">
-                      Please provide additional details so the Barangay Captain can verify your stay. Your account will be auto-disabled once the residency end date passes.
+                      {{ transientSubtext() }}
                     </p>
                   </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <!-- Place-of-stay field: label adapts to residency type -->
                   <mat-form-field appearance="outline" class="w-full">
-                    <mat-label>Boarding House / Institution Name</mat-label>
-                    <input matInput formControlName="boarding_house_name" placeholder="e.g. Doña Maria's Boarding House">
+                    <mat-label>{{ placeOfStayLabel() }}</mat-label>
+                    <input matInput formControlName="boarding_house_name" [placeholder]="placeOfStayPlaceholder()">
                   </mat-form-field>
 
-                  <mat-form-field appearance="outline" class="w-full">
-                    <mat-label>School / Employer (Optional)</mat-label>
-                    <input matInput formControlName="school_or_employer" placeholder="e.g. University of Baguio / ABC Corp.">
+                  <!-- School / Employer is hidden for Institution Resident (convent/dorm) -->
+                  <mat-form-field *ngIf="residency_type !== 'Institution Resident'" appearance="outline" class="w-full">
+                    <mat-label>{{ schoolOrEmployerLabel() }}</mat-label>
+                    <input matInput formControlName="school_or_employer" [placeholder]="schoolOrEmployerPlaceholder()">
                   </mat-form-field>
 
+                  <!-- Primary contact at the stay location (landlord / dorm head / host supervisor) -->
                   <mat-form-field appearance="outline" class="w-full">
-                    <mat-label>Guardian / Landlord Name</mat-label>
+                    <mat-label>{{ primaryContactLabel() }}</mat-label>
                     <input matInput formControlName="guardian_or_landlord_name" placeholder="Full name">
                   </mat-form-field>
 
                   <mat-form-field appearance="outline" class="w-full">
-                    <mat-label>Guardian / Landlord Contact</mat-label>
+                    <mat-label>{{ primaryContactLabel() }} Contact</mat-label>
                     <input matInput formControlName="guardian_or_landlord_contact" placeholder="09xx-xxx-xxxx">
                   </mat-form-field>
 
                   <mat-form-field appearance="outline" class="w-full">
-                    <mat-label>Residency Start Date</mat-label>
+                    <mat-label>{{ stayStartLabel() }}</mat-label>
                     <input matInput type="date" formControlName="residency_start_date">
                   </mat-form-field>
 
                   <mat-form-field appearance="outline" class="w-full">
-                    <mat-label>Expected End Date</mat-label>
+                    <mat-label>{{ stayEndLabel() }}</mat-label>
                     <input matInput type="date" formControlName="residency_end_date">
                     <mat-hint class="text-[10px] font-bold text-amber-800 uppercase tracking-widest">When do you expect to leave?</mat-hint>
                   </mat-form-field>
@@ -710,6 +713,86 @@ export class RegisterComponent implements OnInit, OnDestroy {
   isTransientResidency(): boolean {
     const type = this.registerForm.get('residency_type')?.value;
     return this.TRANSIENT_RESIDENCY_TYPES.includes(type);
+  }
+
+  /** Convenience getter so the template can use *ngIf="residency_type === '…'". */
+  get residency_type(): string {
+    return this.registerForm.get('residency_type')?.value || '';
+  }
+
+  // ----- Transient-form copy (adapts per residency type) -----
+
+  transientHeading(): string {
+    switch (this.residency_type) {
+      case 'Boarding House Tenant': return 'Boarding House Stay Details';
+      case 'Institution Resident':  return 'Institution / Dormitory Stay Details';
+      case 'Migrant Worker':        return 'Assignment / Host Site Details';
+      default:                      return 'Transient / Non-Permanent Residency';
+    }
+  }
+
+  transientSubtext(): string {
+    switch (this.residency_type) {
+      case 'Boarding House Tenant': return 'Provide your boarding house info and landlord contact so the Barangay Captain can verify your stay.';
+      case 'Institution Resident':  return 'Provide your dormitory / institution info and the head / warden contact.';
+      case 'Migrant Worker':        return 'Provide your host employer / agency info and the supervisor contact at the worksite.';
+      default: return 'Please provide additional details so the Barangay Captain can verify your stay. Your account will be auto-disabled once the residency end date passes.';
+    }
+  }
+
+  placeOfStayLabel(): string {
+    switch (this.residency_type) {
+      case 'Boarding House Tenant': return 'Boarding House Name';
+      case 'Institution Resident':  return 'Institution / Dormitory Name';
+      case 'Migrant Worker':        return 'Host Site / Company Housing Name';
+      default: return 'Place of Stay';
+    }
+  }
+
+  placeOfStayPlaceholder(): string {
+    switch (this.residency_type) {
+      case 'Boarding House Tenant': return "e.g. Doña Maria's Boarding House";
+      case 'Institution Resident':  return 'e.g. St. Scholastica Dormitory';
+      case 'Migrant Worker':        return 'e.g. ABC Corp. Staff House';
+      default: return '';
+    }
+  }
+
+  schoolOrEmployerLabel(): string {
+    if (this.residency_type === 'Migrant Worker') return 'Employer / Sending Agency';
+    return 'School (Optional)';
+  }
+
+  schoolOrEmployerPlaceholder(): string {
+    if (this.residency_type === 'Migrant Worker') return 'e.g. ABC Manpower Agency';
+    return 'e.g. University of Baguio';
+  }
+
+  primaryContactLabel(): string {
+    switch (this.residency_type) {
+      case 'Boarding House Tenant': return 'Landlord';
+      case 'Institution Resident':  return 'Dormitory Head / Warden';
+      case 'Migrant Worker':        return 'Host Site Supervisor';
+      default: return 'Primary Contact';
+    }
+  }
+
+  stayStartLabel(): string {
+    switch (this.residency_type) {
+      case 'Boarding House Tenant': return 'Lease Start Date';
+      case 'Institution Resident':  return 'Stay Start Date';
+      case 'Migrant Worker':        return 'Assignment Start Date';
+      default: return 'Residency Start Date';
+    }
+  }
+
+  stayEndLabel(): string {
+    switch (this.residency_type) {
+      case 'Boarding House Tenant': return 'Lease End Date';
+      case 'Institution Resident':  return 'Expected Departure Date';
+      case 'Migrant Worker':        return 'Assignment End Date';
+      default: return 'Expected End Date';
+    }
   }
 
   getCurrentLocation() {
