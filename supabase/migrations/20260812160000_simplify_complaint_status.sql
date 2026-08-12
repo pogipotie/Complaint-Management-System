@@ -58,6 +58,13 @@ DROP FUNCTION IF EXISTS restrict_captain_closing_complaint();
 -- ----------------------------------------------------------------------------
 
 -- 3a. RLS policies
+--     A policy registers a pg_depend entry on every column it references —
+--     including columns reached transitively through a subquery (e.g. a
+--     policy on complaint_status_history that selects from complaints.c.id
+--     is also recorded as depending on the complaints.status column).
+--     Therefore we must look at ALL policies on the two affected tables
+--     AND check whether ANY of their dependencies point to a status
+--     column on complaints or complaint_status_history.
 CREATE TEMP TABLE _status_policy_snapshot (
   schemaname text,
   tablename  text,
@@ -88,16 +95,27 @@ SELECT
     WHERE oid = ANY (p.polroles)
   )         AS roles
 FROM pg_policy p
-JOIN pg_class c ON c.oid = p.polrelid
+JOIN pg_class c     ON c.oid = p.polrelid
 JOIN pg_namespace n ON n.oid = c.relnamespace
 WHERE n.nspname = 'public'
   AND c.relname IN ('complaints', 'complaint_status_history')
-  AND c.oid IN (
-    SELECT refobjid
+  AND EXISTS (
+    -- The policy has at least one dependency on a 'status' /
+    -- 'from_status' / 'to_status' column on either of the two
+    -- tables we're about to retype. The dependency may be on the
+    -- policy's own table or on a table the policy references in
+    -- a subquery.
+    SELECT 1
     FROM pg_depend d
-    JOIN pg_attribute a ON a.attrelid = d.refobjid AND a.attnum = d.refobjsubid
+    JOIN pg_attribute a
+      ON a.attrelid = d.refobjid
+     AND a.attnum  = d.refobjsubid
     WHERE d.classid = 'pg_policy'::regclass
-      AND d.refobjid = c.oid
+      AND d.objid   = p.oid
+      AND d.refobjid IN (
+        'public.complaints'::regclass,
+        'public.complaint_status_history'::regclass
+      )
       AND a.attname IN ('status', 'from_status', 'to_status')
   );
 
