@@ -278,23 +278,69 @@ BEGIN
 END $$;
 
 -- 6b. RLS policies
+--
+-- Two extra concerns when replaying the captured expressions:
+--
+--   (a) `array_agg(rolname) WHERE oid = ANY (p.polroles)` returns NULL
+--       when the policy was created without a `TO` clause (i.e. applies
+--       to PUBLIC, stored as oid 0). We must therefore omit the `TO`
+--       clause entirely in that case rather than emitting `TO  USING ...`.
+--
+--   (b) The captured qual/with_check text can contain string literals
+--       typed against the OLD enum, e.g. `'closed'::complaint_status`
+--       or `'in_progress'::complaint_status`. Those casts would fail at
+--       parse time against the new enum. We rewrite them in-place to
+--       the merged equivalents so the expressions are still valid
+--       ('closed' -> 'resolved', 'in_progress' -> 'assigned').
 DO $$
 DECLARE
   r record;
   roles_csv text;
+  fixed_qual text;
+  fixed_check text;
 BEGIN
   FOR r IN SELECT * FROM _status_policy_snapshot LOOP
     roles_csv := array_to_string(r.roles, ', ');
 
-    EXECUTE format(
-      'CREATE POLICY %I ON public.%I FOR %s TO %s USING (%s) WITH CHECK (%s);',
-      r.policyname,
-      r.tablename,
-      r.cmd,
-      roles_csv,
-      COALESCE(r.qual, 'true'),
-      COALESCE(r.with_check, 'true')
-    );
+    -- Rewrite references to the dropped enum values. We replace both the
+    -- type-cast and the bare string-literal forms so the expression
+    -- remains semantically equivalent.
+    fixed_qual := r.qual;
+    fixed_check := r.with_check;
+
+    -- 'closed' -> 'resolved' (the merge target)
+    fixed_qual  := REPLACE(fixed_qual,  '''closed''::complaint_status',       '''resolved''::complaint_status');
+    fixed_check := REPLACE(fixed_check, '''closed''::complaint_status',       '''resolved''::complaint_status');
+    fixed_qual  := REPLACE(fixed_qual,  '''closed''',                        '''resolved''');
+    fixed_check := REPLACE(fixed_check, '''closed''',                        '''resolved''');
+
+    -- 'in_progress' -> 'assigned' (the merge target)
+    fixed_qual  := REPLACE(fixed_qual,  '''in_progress''::complaint_status',  '''assigned''::complaint_status');
+    fixed_check := REPLACE(fixed_check, '''in_progress''::complaint_status',  '''assigned''::complaint_status');
+    fixed_qual  := REPLACE(fixed_qual,  '''in_progress''',                   '''assigned''');
+    fixed_check := REPLACE(fixed_check, '''in_progress''',                   '''assigned''');
+
+    IF roles_csv IS NULL OR roles_csv = '' THEN
+      -- Public policy: omit the TO clause
+      EXECUTE format(
+        'CREATE POLICY %I ON public.%I FOR %s USING (%s) WITH CHECK (%s);',
+        r.policyname,
+        r.tablename,
+        r.cmd,
+        COALESCE(fixed_qual, 'true'),
+        COALESCE(fixed_check, 'true')
+      );
+    ELSE
+      EXECUTE format(
+        'CREATE POLICY %I ON public.%I FOR %s TO %s USING (%s) WITH CHECK (%s);',
+        r.policyname,
+        r.tablename,
+        r.cmd,
+        roles_csv,
+        COALESCE(fixed_qual, 'true'),
+        COALESCE(fixed_check, 'true')
+      );
+    END IF;
   END LOOP;
 END $$;
 
