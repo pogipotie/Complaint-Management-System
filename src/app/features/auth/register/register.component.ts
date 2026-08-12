@@ -221,7 +221,6 @@ import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config
                   <mat-label>Type of Residency</mat-label>
                   <mat-select formControlName="residency_type" (selectionChange)="onResidencyTypeChange($event.value)">
                     <mat-option value="Homeowner">Homeowner</mat-option>
-                    <mat-option value="Renter">Renter</mat-option>
                     <mat-option value="Living with relatives">Living with relatives</mat-option>
                     <mat-option value="Boarding House Tenant">Boarding House Tenant</mat-option>
                     <mat-option value="Institution Resident">Institution Resident (dorm, convent, etc.)</mat-option>
