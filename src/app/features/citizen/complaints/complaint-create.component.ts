@@ -225,14 +225,14 @@ import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config
           </mat-card>
         </div>
 
-        <!-- STEP 3: Additional Details & Photo -->
+        <!-- STEP 3: Additional Details & Evidence -->
         <div [class.hidden]="currentStep !== 3" class="animate-fade-in">
           <mat-card class="modern-card">
             <div class="section-header">
               <div class="section-icon"><mat-icon>description</mat-icon></div>
               <div>
                 <h2 class="section-title">Additional Details</h2>
-                <p class="section-subtitle">Add more information about the complaint</p>
+                <p class="section-subtitle">Add more information and visual evidence about the complaint</p>
               </div>
             </div>
             <mat-card-content class="card-content">
@@ -244,27 +244,38 @@ import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config
               </mat-form-field>
 
               <div class="space-y-3">
-                <label class="text-sm font-medium text-gray-700 block">Attach a Photo <span class="text-red-500">*</span></label>
+                <label class="text-sm font-medium text-gray-700 block">Attach a Photo or Video <span class="text-red-500">*</span></label>
                 <div class="upload-dropzone" [class.has-file]="!!selectedFile" [class.border-red-500]="formSubmitted && !selectedFile" (click)="!selectedFile ? fileInput.click() : null">
-                  <input type="file" #fileInput class="hidden" accept="image/jpeg, image/png, image/webp" capture="environment" (change)="onFileSelected($event)">
+                  <input type="file" #fileInput class="hidden" accept="image/jpeg, image/png, image/webp, image/gif, video/mp4, video/webm, video/quicktime, video/3gpp" capture="environment" (change)="onFileSelected($event)">
                   <ng-container *ngIf="!selectedFile">
                     <mat-icon class="upload-icon" [class.text-red-400]="formSubmitted && !selectedFile">add_a_photo</mat-icon>
-                    <div class="mt-2 text-sm text-gray-600 font-medium">Take a photo or upload an image</div>
-                    <div class="text-xs text-gray-400 mt-1">PNG, JPG, WEBP (Will be compressed automatically)</div>
+                    <div class="mt-2 text-sm text-gray-600 font-medium">Take a photo, upload an image, or attach a short video</div>
+                    <div class="text-xs text-gray-400 mt-1">Photos: PNG, JPG, WEBP (auto-compressed) &nbsp;•&nbsp; Videos: MP4, WEBM, MOV, 3GP (max 50MB)</div>
                   </ng-container>
                   <ng-container *ngIf="selectedFile">
                     <div class="file-preview">
-                      <img [src]="imagePreviewUrl" class="preview-img" alt="Preview">
+                      <!-- Image preview -->
+                      <img *ngIf="!isVideoFile()" [src]="imagePreviewUrl" class="preview-img" alt="Preview">
+                      <!-- Video preview -->
+                      <video *ngIf="isVideoFile()" [src]="imagePreviewUrl" class="preview-img" controls playsinline muted></video>
                       <div class="file-info">
-                        <span class="file-name">{{ selectedFile.name }}</span>
+                        <div class="flex flex-col min-w-0">
+                          <span class="file-name">{{ selectedFile.name }}</span>
+                          <span class="text-[10px] font-black uppercase tracking-widest text-gray-500 mt-0.5">
+                            {{ isVideoFile() ? 'Video' : 'Photo' }} • {{ formatFileSize(selectedFile.size) }}
+                          </span>
+                        </div>
                         <button mat-icon-button type="button" (click)="removeFile($event)" color="warn" class="remove-btn"><mat-icon>close</mat-icon></button>
                       </div>
                     </div>
                   </ng-container>
                 </div>
                 <mat-error class="text-xs mt-1" *ngIf="formSubmitted && !selectedFile">
-                  A photo of the issue is required to submit a complaint.
+                  A photo or video of the issue is required to submit a complaint.
                 </mat-error>
+                <p class="text-[11px] text-red-600 font-bold uppercase tracking-wider mt-1" *ngIf="fileErrorMsg">
+                  {{ fileErrorMsg }}
+                </p>
               </div>
             </mat-card-content>
           </mat-card>
@@ -623,8 +634,16 @@ export class ComplaintCreateComponent implements OnInit, OnDestroy {
   selectedFile: File | null = null;
   imagePreviewUrl: string | ArrayBuffer | null = null;
   formSubmitted = false;
+  fileErrorMsg = '';
   locating = false;
   geocoder: google.maps.Geocoder | null = null;
+
+  /** Max upload size in bytes for video evidence (50MB). */
+  readonly MAX_VIDEO_SIZE_BYTES = 50 * 1024 * 1024;
+  /** Allowed image MIME types for the file input. */
+  readonly IMAGE_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+  /** Allowed video MIME types for the file input. */
+  readonly VIDEO_MIME_TYPES = ['video/mp4', 'video/webm', 'video/quicktime', 'video/3gpp'];
 
   ngOnInit() {
     this.checkVerificationStatus();
@@ -676,7 +695,7 @@ export class ComplaintCreateComponent implements OnInit, OnDestroy {
     switch(this.currentStep) {
       case 1: return 'Basic Information';
       case 2: return 'Location Details';
-      case 3: return 'Additional Details & Photo';
+      case 3: return 'Additional Details & Evidence';
       default: return '';
     }
   }
@@ -870,20 +889,62 @@ export class ComplaintCreateComponent implements OnInit, OnDestroy {
   }
 
   async onFileSelected(event: any) {
-    const file = event.target.files[0];
-    if (file) {
-      try {
+    const file: File = event.target.files[0];
+    this.fileErrorMsg = '';
+
+    if (!file) {
+      return;
+    }
+
+    // Reset the input so the same file can be re-selected later
+    event.target.value = '';
+
+    const isImage = this.IMAGE_MIME_TYPES.includes(file.type);
+    const isVideo = this.VIDEO_MIME_TYPES.includes(file.type);
+
+    if (!isImage && !isVideo) {
+      this.fileErrorMsg = 'Unsupported file type. Please upload a JPG/PNG/WEBP/GIF image or an MP4/WEBM/MOV/3GP video.';
+      return;
+    }
+
+    if (isVideo && file.size > this.MAX_VIDEO_SIZE_BYTES) {
+      this.fileErrorMsg = `Video is too large (${this.formatFileSize(file.size)}). Maximum allowed size is 50MB.`;
+      return;
+    }
+
+    try {
+      if (isImage) {
+        // Keep the existing compression flow for photos
         const compressedFile = await this.compressImage(file);
         this.selectedFile = compressedFile;
-        
-        const reader = new FileReader();
-        reader.onload = e => this.imagePreviewUrl = reader?.result ?? null;
-        reader.readAsDataURL(compressedFile);
-      } catch (err) {
-        this.errorMsg = 'Failed to process image.';
-        console.error(err);
+      } else {
+        // Videos are uploaded as-is (no in-browser compression)
+        this.selectedFile = file;
       }
+
+      const reader = new FileReader();
+      reader.onload = e => this.imagePreviewUrl = reader?.result ?? null;
+      reader.readAsDataURL(this.selectedFile);
+    } catch (err) {
+      this.fileErrorMsg = 'Failed to process the selected file.';
+      console.error(err);
     }
+  }
+
+  isVideoFile(): boolean {
+    return !!this.selectedFile && this.VIDEO_MIME_TYPES.includes(this.selectedFile.type);
+  }
+
+  formatFileSize(bytes: number): string {
+    if (!bytes) return '0 B';
+    const units = ['B', 'KB', 'MB', 'GB'];
+    let size = bytes;
+    let unitIndex = 0;
+    while (size >= 1024 && unitIndex < units.length - 1) {
+      size /= 1024;
+      unitIndex++;
+    }
+    return `${size.toFixed(unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
   }
 
   /**
@@ -952,13 +1013,14 @@ export class ComplaintCreateComponent implements OnInit, OnDestroy {
     event.stopPropagation();
     this.selectedFile = null;
     this.imagePreviewUrl = null;
+    this.fileErrorMsg = '';
   }
 
   async onSubmit() {
     this.formSubmitted = true;
 
     if (this.complaintForm.invalid || !this.selectedFile) {
-      // Form is invalid or missing the mandatory photo
+      // Form is invalid or missing the mandatory photo/video
       return;
     }
 
@@ -969,28 +1031,37 @@ export class ComplaintCreateComponent implements OnInit, OnDestroy {
 
     if (!user) return;
 
-    let image_url = null;
+    let image_url: string | null = null;
+    let video_url: string | null = null;
 
     if (this.selectedFile) {
+      const isVideo = this.isVideoFile();
       const fileExt = this.selectedFile.name.split('.').pop();
       const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
       const filePath = `${user.id}/${fileName}`;
-      
+
       const { url, error } = await this.supabaseService.uploadFile('complaint_images', filePath, this.selectedFile);
-      
+
       if (error) {
         this.loading = false;
-        this.errorMsg = 'Failed to upload image: ' + error.message;
+        this.errorMsg = isVideo
+          ? 'Failed to upload video: ' + error.message
+          : 'Failed to upload image: ' + error.message;
         return;
       }
-      
-      image_url = url;
+
+      if (isVideo) {
+        video_url = url;
+      } else {
+        image_url = url;
+      }
     }
 
     const payload = {
       ...this.complaintForm.getRawValue(),
       created_by: user.id,
-      image_url: image_url
+      image_url: image_url,
+      video_url: video_url
     };
 
     this.complaintsService.createComplaint(payload).subscribe({

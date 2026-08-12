@@ -13,6 +13,8 @@ export interface Complaint {
   latitude?: number;
   longitude?: number;
   location_text?: string;
+  image_url?: string | null;
+  video_url?: string | null;
   evidence_paths?: string[];
   status?: string;
   created_at?: string;
