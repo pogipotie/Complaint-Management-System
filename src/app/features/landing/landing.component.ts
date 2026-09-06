@@ -43,8 +43,8 @@ import { LegalDialogComponent } from '../../shared/components/legal-dialog/legal
           <!-- Background image of municipality -->
           <div class="absolute inset-0 z-0">
             <img src="homapage/municipality.png" alt="Municipality Building" class="w-full h-full object-cover">
-            <!-- Soft white overlay for readability -->
-            <div class="absolute inset-0 bg-gradient-to-r from-white/95 via-white/80 to-white/30"></div>
+            <!-- Soft overlay only at edges for text readability -->
+            <div class="absolute inset-0 bg-gradient-to-r from-white/90 via-white/40 to-transparent"></div>
           </div>
 
           <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-24 lg:pt-24 lg:pb-32">
@@ -75,7 +75,7 @@ import { LegalDialogComponent } from '../../shared/components/legal-dialog/legal
               <!-- Official Seal / Logo -->
               <div class="lg:w-1/2 flex justify-center lg:justify-end">
                 <div class="relative">
-                  <img src="homapage/logo.webp" alt="Bayan ng Gonzaga Seal" class="h-56 w-56 sm:h-64 sm:w-64 lg:h-80 lg:w-80 object-contain drop-shadow-2xl">
+                  <img src="homapage/logo.webp" alt="Bayan ng Gonzaga Seal" class="h-32 w-32 sm:h-36 sm:w-36 lg:h-40 lg:w-40 object-contain drop-shadow-xl">
                 </div>
               </div>
 
