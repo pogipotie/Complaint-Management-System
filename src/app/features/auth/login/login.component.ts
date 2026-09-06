@@ -31,6 +31,26 @@ import { ForgotPasswordComponent } from '../forgot-password/forgot-password.comp
              style="background-image: radial-gradient(circle, #fde047 22%, transparent 23%); background-size: 28px 28px;">
         </div>
 
+        <!-- Pineapple leaves / crown at the top -->
+        <svg class="absolute top-0 left-1/2 -translate-x-1/2 -mt-1 w-48 h-28 opacity-90 pointer-events-none" viewBox="0 0 240 140" preserveAspectRatio="xMidYMin meet">
+          <!-- Outer leaves (darker green) -->
+          <path d="M120 140 C 80 110 40 90 10 30 C 60 50 95 80 120 130 Z" fill="#15803d"/>
+          <path d="M120 140 C 160 110 200 90 230 30 C 180 50 145 80 120 130 Z" fill="#15803d"/>
+          <!-- Mid leaves -->
+          <path d="M120 140 C 95 100 75 60 55 5 C 95 40 115 80 120 130 Z" fill="#16a34a"/>
+          <path d="M120 140 C 145 100 165 60 185 5 C 145 40 125 80 120 130 Z" fill="#16a34a"/>
+          <!-- Inner leaves (lighter green) -->
+          <path d="M120 140 C 108 90 100 50 90 0 C 110 30 118 70 120 130 Z" fill="#22c55e"/>
+          <path d="M120 140 C 132 90 140 50 150 0 C 130 30 122 70 120 130 Z" fill="#22c55e"/>
+          <!-- Center leaf -->
+          <path d="M120 140 C 114 90 112 50 115 5 C 122 50 124 90 120 130 Z" fill="#4ade80"/>
+          <!-- Leaf veins (subtle highlights) -->
+          <path d="M120 135 Q 90 80 30 40" stroke="#bbf7d0" stroke-width="1" fill="none" opacity="0.6"/>
+          <path d="M120 135 Q 150 80 210 40" stroke="#bbf7d0" stroke-width="1" fill="none" opacity="0.6"/>
+          <path d="M120 135 Q 105 70 80 10" stroke="#bbf7d0" stroke-width="1" fill="none" opacity="0.5"/>
+          <path d="M120 135 Q 135 70 160 10" stroke="#bbf7d0" stroke-width="1" fill="none" opacity="0.5"/>
+        </svg>
+
         <div class="relative z-10 flex flex-col items-center">
           <div class="inline-flex items-center justify-center w-28 h-28 rounded-full bg-white border-2 border-gray-900 shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] mb-6 p-2">
             <img src="homapage/logo.png" alt="Bayan ng Gonzaga Seal" class="w-full h-full object-contain">
