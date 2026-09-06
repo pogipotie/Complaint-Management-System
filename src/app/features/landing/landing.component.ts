@@ -47,7 +47,7 @@ import { LegalDialogComponent } from '../../shared/components/legal-dialog/legal
             <div class="absolute inset-0 bg-gradient-to-r from-white/90 via-white/40 to-transparent"></div>
           </div>
 
-          <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-24 lg:pt-24 lg:pb-32">
+          <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-32 lg:pt-24 lg:pb-48">
             <div class="flex flex-col lg:flex-row items-center gap-8">
 
               <!-- Text Content -->
@@ -84,7 +84,7 @@ import { LegalDialogComponent } from '../../shared/components/legal-dialog/legal
         </section>
 
         <!-- Hero Image Section -->
-        <section class="relative z-20 pb-16">
+        <section class="relative z-20 -mt-24 lg:-mt-32 pb-16">
           <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="relative rounded-2xl overflow-hidden shadow-2xl border border-gray-100">
               <img src="Hero.png" alt="Complaint Management System" class="w-full h-auto object-cover">
