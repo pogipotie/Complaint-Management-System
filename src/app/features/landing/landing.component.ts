@@ -73,9 +73,9 @@ import { LegalDialogComponent } from '../../shared/components/legal-dialog/legal
               </div>
 
               <!-- Official Seal / Logo -->
-              <div class="lg:w-1/2 flex justify-center lg:justify-end">
+              <div class="lg:w-1/2 flex justify-center lg:justify-end lg:items-start pt-0 lg:-mt-8">
                 <div class="relative">
-                  <img src="homapage/logo.png" alt="Bayan ng Gonzaga Seal" class="h-32 w-32 sm:h-36 sm:w-36 lg:h-40 lg:w-40 object-contain drop-shadow-xl">
+                  <img src="homapage/logo.png" alt="Bayan ng Gonzaga Seal" class="h-20 w-20 sm:h-24 sm:w-24 lg:h-28 lg:w-28 object-contain drop-shadow-xl">
                 </div>
               </div>
 
