@@ -120,7 +120,21 @@ import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config
         </div>
 
         <!-- Step Indicators -->
-        <div class="flex items-center justify-center mb-8 max-w-2xl mx-auto">
+        <!-- Mobile: compact "Step X of 4 · StepName" header -->
+        <div class="lg:hidden mb-4 text-center">
+          <p class="text-[10px] font-black text-primary-600 uppercase tracking-widest">
+            Step {{ currentStep }} of 4
+          </p>
+          <h3 class="text-xl font-black text-gray-900 uppercase tracking-tight mt-1" style="font-family: 'Arial Black', Impact, sans-serif;">
+            {{ currentStep === 1 ? 'Account Details' : (currentStep === 2 ? 'Personal Info' : (currentStep === 3 ? 'Residency' : 'Verify Email')) }}
+          </h3>
+          <div class="w-full bg-gray-200 h-1.5 mt-3 rounded-sm overflow-hidden border border-gray-900">
+            <div class="h-full bg-primary-600 transition-all duration-300" [style.width.%]="currentStep * 25"></div>
+          </div>
+        </div>
+
+        <!-- Desktop: 4 step circles with labels -->
+        <div class="hidden lg:flex items-center justify-center mb-8 max-w-2xl mx-auto">
           <div class="flex items-center" *ngFor="let step of [1, 2, 3, 4]; let isLast = last">
             <div class="flex flex-col items-center">
               <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-colors duration-300 border-2 border-gray-900"
@@ -131,11 +145,11 @@ import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config
                 <mat-icon *ngIf="currentStep > step" class="scale-75">check</mat-icon>
                 <span *ngIf="currentStep <= step">{{ step }}</span>
               </div>
-              <span class="text-xs font-medium mt-2 hidden sm:block" [ngClass]="{'text-primary-600': currentStep >= step, 'text-gray-500': currentStep < step}">
+              <span class="text-xs font-medium mt-2" [ngClass]="{'text-primary-600': currentStep >= step, 'text-gray-500': currentStep < step}">
                 {{ step === 1 ? 'Account' : (step === 2 ? 'Personal Info' : (step === 3 ? 'Residency' : 'Verify')) }}
               </span>
             </div>
-            <div *ngIf="!isLast" class="w-8 sm:w-12 h-1 mx-1 sm:mx-2 rounded transition-colors duration-300 -mt-5 sm:-mt-6"
+            <div *ngIf="!isLast" class="w-12 h-1 mx-2 rounded transition-colors duration-300 -mt-6"
               [ngClass]="{'bg-primary-600': currentStep > step, 'bg-gray-200': currentStep <= step}">
             </div>
           </div>
