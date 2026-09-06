@@ -1,12 +1,13 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, Router } from '@angular/router';
+import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { SupabaseService } from '../../core/services/supabase.service';
+import { LoginComponent } from '../auth/login/login.component';
 import { LegalDialogComponent } from '../../shared/components/legal-dialog/legal-dialog.component';
 
 @Component({
@@ -28,7 +29,7 @@ import { LegalDialogComponent } from '../../shared/components/legal-dialog/legal
 
           <!-- Actions -->
           <div class="flex items-center gap-3">
-            <a mat-button routerLink="/auth/login" class="text-gray-900 font-semibold text-base">Log in</a>
+            <button mat-button (click)="openLoginModal()" class="text-gray-900 font-semibold text-base">Log in</button>
             <a mat-flat-button color="primary" routerLink="/auth/register" class="!rounded-full !px-7 !py-1 !font-semibold !text-base !bg-primary-600">Sign up</a>
           </div>
 
@@ -65,9 +66,9 @@ import { LegalDialogComponent } from '../../shared/components/legal-dialog/legal
                     Report an Issue
                     <mat-icon iconPositionEnd class="ml-1">arrow_forward</mat-icon>
                   </a>
-                  <a mat-stroked-button routerLink="/auth/login" class="!h-14 !px-8 !text-base !rounded-full bg-white text-gray-800 !border-gray-300 hover:bg-gray-50 !font-semibold">
+                  <button mat-stroked-button (click)="openLoginModal()" class="!h-14 !px-8 !text-base !rounded-full bg-white text-gray-800 !border-gray-300 hover:bg-gray-50 !font-semibold">
                     Track Existing Complaint
-                  </a>
+                  </button>
                 </div>
               </div>
 
@@ -222,12 +223,27 @@ import { LegalDialogComponent } from '../../shared/components/legal-dialog/legal
 export class LandingComponent implements OnInit {
   private supabaseService = inject(SupabaseService);
   private dialog = inject(MatDialog);
+  private route = inject(ActivatedRoute);
   private router = inject(Router);
 
   announcements: any[] = [];
   loadingAnnouncements = true;
 
   async ngOnInit() {
+    // Check if we need to auto-open the login modal (e.g. returning from registration)
+    this.route.queryParams.subscribe(params => {
+      if (params['action'] === 'login') {
+        setTimeout(() => {
+          this.openLoginModal();
+          this.router.navigate([], {
+            queryParams: { action: null },
+            queryParamsHandling: 'merge',
+            replaceUrl: true
+          });
+        }, 100);
+      }
+    });
+
     this.loadingAnnouncements = true;
     const { data, error } = await this.supabaseService.supabase
       .from('announcements')
@@ -239,6 +255,15 @@ export class LandingComponent implements OnInit {
       this.announcements = data;
     }
     this.loadingAnnouncements = false;
+  }
+
+  openLoginModal() {
+    this.dialog.open(LoginComponent, {
+      width: '95vw',
+      maxWidth: '900px',
+      panelClass: 'modern-dialog',
+      autoFocus: false
+    });
   }
 
   openLegal(type: 'privacy' | 'terms') {
