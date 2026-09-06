@@ -42,47 +42,108 @@ import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config
     MatAutocompleteModule
   ],
   template: `
-    <div class="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div class="max-w-4xl mx-auto space-y-8">
-        
-        <!-- Header & Progress -->
-        <div class="text-center">
-          <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary-100 border-2 border-gray-900 shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] mb-4">
-            <mat-icon color="primary" class="scale-150">how_to_reg</mat-icon>
+    <div class="min-h-screen bg-gray-50 flex flex-col lg:flex-row">
+      <!-- Left Side / Pineapple Branding (Visible on lg+) -->
+      <div class="hidden lg:flex lg:w-5/12 bg-primary-600 p-8 flex-col justify-center relative overflow-hidden text-center">
+        <!-- Pineapple body pattern: diamond grid with star-burst scales -->
+        <div class="absolute inset-0 opacity-50 pointer-events-none"
+             style="background-image: url(&quot;data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'><g fill='none' stroke='%23fbbf24' stroke-width='0.7' opacity='0.7'><path d='M20 0 L40 20 L20 40 L0 20 Z'/><path d='M0 0 L20 20 L40 0'/><path d='M0 40 L20 20 L40 40'/></g><g fill='%23fde047'><path d='M20 20 L17 12 L23 12 Z'/><path d='M20 20 L28 17 L28 23 Z'/><path d='M20 20 L23 28 L17 28 Z'/><path d='M20 20 L12 23 L12 17 Z'/><circle cx='20' cy='20' r='1.4' fill='%23a16207'/></g></svg>&quot;); background-size: 40px 40px;">
+        </div>
+
+        <!-- Pineapple leaves / crown at the top -->
+        <svg class="absolute top-0 left-1/2 -translate-x-1/2 -mt-1 w-56 h-32 opacity-90 pointer-events-none" viewBox="0 0 240 140" preserveAspectRatio="xMidYMin meet">
+          <path d="M120 140 C 80 110 40 90 10 30 C 60 50 95 80 120 130 Z" fill="#15803d"/>
+          <path d="M120 140 C 160 110 200 90 230 30 C 180 50 145 80 120 130 Z" fill="#15803d"/>
+          <path d="M120 140 C 95 100 75 60 55 5 C 95 40 115 80 120 130 Z" fill="#16a34a"/>
+          <path d="M120 140 C 145 100 165 60 185 5 C 145 40 125 80 120 130 Z" fill="#16a34a"/>
+          <path d="M120 140 C 108 90 100 50 90 0 C 110 30 118 70 120 130 Z" fill="#22c55e"/>
+          <path d="M120 140 C 132 90 140 50 150 0 C 130 30 122 70 120 130 Z" fill="#22c55e"/>
+          <path d="M120 140 C 114 90 112 50 115 5 C 122 50 124 90 120 130 Z" fill="#4ade80"/>
+          <path d="M120 135 Q 90 80 30 40" stroke="#bbf7d0" stroke-width="1" fill="none" opacity="0.6"/>
+          <path d="M120 135 Q 150 80 210 40" stroke="#bbf7d0" stroke-width="1" fill="none" opacity="0.6"/>
+          <path d="M120 135 Q 105 70 80 10" stroke="#bbf7d0" stroke-width="1" fill="none" opacity="0.5"/>
+          <path d="M120 135 Q 135 70 160 10" stroke="#bbf7d0" stroke-width="1" fill="none" opacity="0.5"/>
+        </svg>
+
+        <div class="relative z-10 flex flex-col items-center">
+          <div class="inline-flex items-center justify-center w-32 h-32 rounded-full bg-white border-2 border-gray-900 shadow-[4px_4px_0px_0px_rgba(17,24,39,1)] mb-6 p-2">
+            <img src="homapage/logo.png" alt="Bayan ng Gonzaga Seal" class="w-full h-full object-contain">
           </div>
+          <h2 class="text-4xl font-black text-white uppercase tracking-tight mb-4" style="font-family: 'Arial Black', Impact, sans-serif; text-shadow: 2px 2px 0 #14532d, -2px 2px 0 #14532d, 2px -2px 0 #14532d, -2px -2px 0 #14532d, 0 4px 6px rgba(0,0,0,0.5);">
+            Join Our Community
+          </h2>
+          <p class="text-white text-base leading-relaxed font-black uppercase tracking-wider px-4 py-3 border-2 border-yellow-300 bg-green-900/40 rounded-sm backdrop-blur-sm" style="font-family: 'Arial Black', Impact, sans-serif; text-shadow: 1px 1px 0 #14532d, -1px 1px 0 #14532d, 1px -1px 0 #14532d, -1px -1px 0 #14532d, 0 2px 4px rgba(0,0,0,0.5);">
+            Create an account to be heard, report issues, and stay updated with your municipality.
+          </p>
+        </div>
+      </div>
+
+      <!-- Right Side / Form -->
+      <div class="w-full lg:w-7/12 p-6 sm:p-10 flex flex-col justify-center bg-white">
+
+        <!-- Mobile Pineapple Branding Header (Visible on mobile only) -->
+        <div class="lg:hidden relative overflow-hidden bg-primary-600 border-2 border-gray-900 rounded-sm shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] mb-6">
+          <div class="absolute inset-0 opacity-50 pointer-events-none"
+               style="background-image: url(&quot;data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'><g fill='none' stroke='%23fbbf24' stroke-width='0.7' opacity='0.7'><path d='M20 0 L40 20 L20 40 L0 20 Z'/><path d='M0 0 L20 20 L40 0'/><path d='M0 40 L20 20 L40 40'/></g><g fill='%23fde047'><path d='M20 20 L17 12 L23 12 Z'/><path d='M20 20 L28 17 L28 23 Z'/><path d='M20 20 L23 28 L17 28 Z'/><path d='M20 20 L12 23 L12 17 Z'/><circle cx='20' cy='20' r='1.4' fill='%23a16207'/></g></svg>&quot;); background-size: 40px 40px;">
+          </div>
+          <svg class="absolute top-0 left-1/2 -translate-x-1/2 -mt-1 w-32 h-16 opacity-90 pointer-events-none" viewBox="0 0 240 140" preserveAspectRatio="xMidYMin meet">
+            <path d="M120 140 C 80 110 40 90 10 30 C 60 50 95 80 120 130 Z" fill="#15803d"/>
+            <path d="M120 140 C 160 110 200 90 230 30 C 180 50 145 80 120 130 Z" fill="#15803d"/>
+            <path d="M120 140 C 95 100 75 60 55 5 C 95 40 115 80 120 130 Z" fill="#16a34a"/>
+            <path d="M120 140 C 145 100 165 60 185 5 C 145 40 125 80 120 130 Z" fill="#16a34a"/>
+            <path d="M120 140 C 108 90 100 50 90 0 C 110 30 118 70 120 130 Z" fill="#22c55e"/>
+            <path d="M120 140 C 132 90 140 50 150 0 C 130 30 122 70 120 130 Z" fill="#22c55e"/>
+            <path d="M120 140 C 114 90 112 50 115 5 C 122 50 124 90 120 130 Z" fill="#4ade80"/>
+            <path d="M120 135 Q 90 80 30 40" stroke="#bbf7d0" stroke-width="1" fill="none" opacity="0.6"/>
+            <path d="M120 135 Q 150 80 210 40" stroke="#bbf7d0" stroke-width="1" fill="none" opacity="0.6"/>
+            <path d="M120 135 Q 105 70 80 10" stroke="#bbf7d0" stroke-width="1" fill="none" opacity="0.5"/>
+            <path d="M120 135 Q 135 70 160 10" stroke="#bbf7d0" stroke-width="1" fill="none" opacity="0.5"/>
+          </svg>
+          <div class="relative z-10 flex flex-col items-center px-4 pt-10 pb-5">
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white border-2 border-gray-900 shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] p-1">
+              <img src="homapage/logo.png" alt="Bayan ng Gonzaga Seal" class="w-full h-full object-contain">
+            </div>
+            <h2 class="text-lg font-extrabold text-white uppercase tracking-wider mt-3" style="font-family: 'Arial Black', Impact, sans-serif; text-shadow: 1px 1px 0 #14532d, -1px 1px 0 #14532d, 1px -1px 0 #14532d, -1px -1px 0 #14532d;">
+              Citizen Registration
+            </h2>
+          </div>
+        </div>
+
+        <!-- Header & Progress (Visible on lg+) -->
+        <div class="hidden lg:block text-center mb-6">
           <h2 class="text-3xl font-black text-gray-900 uppercase tracking-tight" style="font-family: 'Arial Black', Impact, sans-serif;">
             Citizen Registration
           </h2>
           <p class="mt-2 text-sm font-bold text-gray-600 uppercase tracking-wider">
             Create an account to report issues and stay updated with the municipality.
           </p>
+        </div>
 
-          <!-- Step Indicators -->
-          <div class="flex items-center justify-center mt-8 max-w-3xl mx-auto">
-            <div class="flex items-center" *ngFor="let step of [1, 2, 3, 4]; let isLast = last">
-              <div class="flex flex-col items-center">
-                <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-colors duration-300 border-2 border-gray-900"
-                  [ngClass]="{
-                    'bg-primary-600 text-white shadow-[2px_2px_0px_0px_rgba(17,24,39,1)]': currentStep >= step,
-                    'bg-gray-100 text-gray-500': currentStep < step
-                  }">
-                  <mat-icon *ngIf="currentStep > step" class="scale-75">check</mat-icon>
-                  <span *ngIf="currentStep <= step">{{ step }}</span>
-                </div>
-                <span class="text-xs font-medium mt-2" [ngClass]="{'text-primary-600': currentStep >= step, 'text-gray-500': currentStep < step}">
-                  {{ step === 1 ? 'Account' : (step === 2 ? 'Personal Info' : (step === 3 ? 'Residency' : 'Verify Email')) }}
-                </span>
+        <!-- Step Indicators -->
+        <div class="flex items-center justify-center mb-8 max-w-2xl mx-auto">
+          <div class="flex items-center" *ngFor="let step of [1, 2, 3, 4]; let isLast = last">
+            <div class="flex flex-col items-center">
+              <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-colors duration-300 border-2 border-gray-900"
+                [ngClass]="{
+                  'bg-primary-600 text-white shadow-[2px_2px_0px_0px_rgba(17,24,39,1)]': currentStep >= step,
+                  'bg-gray-100 text-gray-500': currentStep < step
+                }">
+                <mat-icon *ngIf="currentStep > step" class="scale-75">check</mat-icon>
+                <span *ngIf="currentStep <= step">{{ step }}</span>
               </div>
-              <div *ngIf="!isLast" class="w-10 sm:w-16 h-1 mx-2 rounded transition-colors duration-300 -mt-6"
-                [ngClass]="{'bg-primary-600': currentStep > step, 'bg-gray-200': currentStep <= step}">
-              </div>
+              <span class="text-xs font-medium mt-2 hidden sm:block" [ngClass]="{'text-primary-600': currentStep >= step, 'text-gray-500': currentStep < step}">
+                {{ step === 1 ? 'Account' : (step === 2 ? 'Personal Info' : (step === 3 ? 'Residency' : 'Verify')) }}
+              </span>
+            </div>
+            <div *ngIf="!isLast" class="w-8 sm:w-12 h-1 mx-1 sm:mx-2 rounded transition-colors duration-300 -mt-5 sm:-mt-6"
+              [ngClass]="{'bg-primary-600': currentStep > step, 'bg-gray-200': currentStep <= step}">
             </div>
           </div>
         </div>
 
         <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="bg-white rounded-sm overflow-hidden border-2 border-gray-900 shadow-[4px_4px_0px_0px_rgba(17,24,39,1)]">
-          
-          <div class="p-8 sm:p-10">
+
+          <div class="p-6 sm:p-10">
             <!-- Step 1: Account Details -->
             <div *ngIf="currentStep === 1" class="animate-fade-in-up">
               <div class="border-b-2 border-gray-900 pb-4 mb-6">
@@ -169,13 +230,13 @@ import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config
                   <mat-label>Occupation</mat-label>
                   <input matInput formControlName="occupation" placeholder="e.g. Teacher, Unemployed, etc.">
                 </mat-form-field>
-                
+
                 <div class="md:col-span-2 flex items-center pt-2 pb-4">
                   <mat-checkbox formControlName="is_pwd" color="primary">
                     Check if you are a Person with Disability (PWD)
                   </mat-checkbox>
                 </div>
-                
+
                 <mat-divider class="md:col-span-2 my-2"></mat-divider>
                 <div class="md:col-span-2 mt-2">
                   <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Emergency Contact (Optional)</h4>
@@ -203,7 +264,7 @@ import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config
                   Residency & Verification
                 </h3>
               </div>
-              
+
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                 <mat-form-field appearance="outline" class="w-full">
                   <mat-label>Barangay</mat-label>
@@ -303,7 +364,7 @@ import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config
                     <mat-icon class="scale-75">assignment_ind</mat-icon> ACR I-Card <span class="text-red-500">*</span>
                   </label>
                   <p class="text-[10px] font-bold text-amber-800 uppercase tracking-widest mb-2">As a foreign resident, please upload your ACR I-Card.</p>
-                  
+
                   <div class="upload-dropzone bg-white border-amber-300" [class.has-file]="!!acrFile" [class.border-red-500]="formSubmitted && !acrFile" (click)="!acrFile ? acrInput.click() : null">
                     <input type="file" #acrInput class="hidden" accept="image/jpeg, image/png, image/webp" (change)="onAcrSelected($event)">
                     <ng-container *ngIf="!acrFile">
@@ -356,7 +417,7 @@ import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config
                       <mat-icon>my_location</mat-icon> Use GPS
                     </button>
                   </div>
-                  
+
                   <div *ngIf="mapLoaded" class="h-[200px] w-full rounded-sm border-2 border-gray-900 overflow-hidden relative shadow-[4px_4px_0px_0px_rgba(17,24,39,1)]">
                     <google-map height="100%" width="100%" [center]="mapCenter" [zoom]="15" (mapClick)="onMapClick($event)" [options]="{disableDefaultUI: true, zoomControl: true}">
                       <map-marker *ngIf="markerPosition" [position]="markerPosition" [options]="{draggable: true}" (mapDragend)="onMarkerDragEnd($event)"></map-marker>
@@ -375,7 +436,7 @@ import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config
                   <label class="text-sm font-medium text-gray-700">Upload Valid ID (Proof of Residency) <span class="text-red-500">*</span></label>
                   <div class="upload-dropzone h-[200px] flex flex-col justify-center border-2 border-dashed border-gray-900 shadow-[4px_4px_0px_0px_rgba(17,24,39,1)] bg-gray-50 hover:bg-primary-50 hover:border-primary-600 transition-colors" [class.has-file]="!!selectedFile" [class.border-red-500]="formSubmitted && !selectedFile" (click)="!selectedFile ? fileInput.click() : null">
                     <input type="file" #fileInput class="hidden" accept="image/jpeg, image/png, image/webp" capture="environment" (change)="onFileSelected($event)">
-                    
+
                     <ng-container *ngIf="!selectedFile">
                       <mat-icon class="upload-icon mx-auto" [class.text-red-400]="formSubmitted && !selectedFile">cloud_upload</mat-icon>
                       <div class="mt-4 text-sm text-gray-600 font-medium">Take a photo or upload ID</div>
@@ -411,12 +472,12 @@ import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config
                   Verify Your Email
                 </h3>
               </div>
-              
+
               <div class="bg-primary-50 border-2 border-gray-900 p-6 rounded-sm shadow-[4px_4px_0px_0px_rgba(17,24,39,1)] text-center max-w-md mx-auto">
                 <mat-icon class="scale-[2] text-primary-600 mb-4 mt-2">mark_email_unread</mat-icon>
                 <h4 class="text-lg font-black text-gray-900 uppercase tracking-tight mb-2">Check Your Inbox</h4>
                 <p class="text-sm font-bold text-gray-700 mb-6">We've sent a 6-digit verification code to <span class="text-primary-700">{{ registerForm.get('email')?.value }}</span>. Enter it below to complete your registration.</p>
-                
+
                 <mat-form-field appearance="outline" class="w-full max-w-[250px] mx-auto text-center otp-input">
                   <mat-label>6-Digit Code</mat-label>
                   <input matInput formControlName="otp" type="text" placeholder="123456" maxlength="6" class="text-center text-2xl font-black tracking-[0.5em] text-primary-600">
@@ -434,7 +495,7 @@ import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config
           </div>
 
           <!-- Wizard Navigation -->
-          <div class="bg-gray-50 px-8 py-6 border-t-2 border-gray-900 flex items-center justify-between">
+          <div class="bg-gray-50 px-6 sm:px-8 py-6 border-t-2 border-gray-900 flex items-center justify-between">
             <button *ngIf="currentStep > 1 && currentStep < 4" type="button" mat-stroked-button color="primary" (click)="prevStep()" class="!px-6 !rounded-sm !border-2 !border-gray-900 !shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] hover:!translate-y-[1px] hover:!translate-x-[1px] hover:!shadow-[1px_1px_0px_0px_rgba(17,24,39,1)] transition-all font-black uppercase tracking-wider">
               <mat-icon>arrow_back</mat-icon> Back
             </button>
@@ -457,14 +518,14 @@ import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config
 
         </form>
 
-        <div class="text-red-500 text-sm font-medium bg-red-50 p-3 rounded-sm border border-red-100 shadow-sm flex items-start gap-2" *ngIf="errorMsg">
+        <div class="text-red-500 text-sm font-medium bg-red-50 p-3 rounded-sm border border-red-100 shadow-sm flex items-start gap-2 mt-4" *ngIf="errorMsg">
           <mat-icon class="scale-75 text-red-500 shrink-0">error</mat-icon> <span class="mt-0.5">{{ errorMsg }}</span>
         </div>
-        <div class="text-green-600 text-sm font-medium bg-green-50 p-3 rounded-sm border border-green-100 shadow-sm flex items-start gap-2" *ngIf="successMsg">
+        <div class="text-green-600 text-sm font-medium bg-green-50 p-3 rounded-sm border border-green-100 shadow-sm flex items-start gap-2 mt-4" *ngIf="successMsg">
           <mat-icon class="scale-75 text-green-500 shrink-0">check_circle</mat-icon> <span class="mt-0.5">{{ successMsg }}</span>
         </div>
 
-        <div class="text-sm text-center pb-8">
+        <div class="text-sm text-center pt-6 pb-2">
           <button type="button" (click)="closeAndReturnToLogin()" class="font-medium text-gray-900 hover:text-primary-600 bg-white py-2 px-6 rounded-sm shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] border-2 border-gray-900 inline-block uppercase tracking-wider text-[11px] font-black transition-colors">
             Already have an account? Sign in
           </button>
