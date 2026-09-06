@@ -23,7 +23,7 @@ import { LegalDialogComponent } from '../../shared/components/legal-dialog/legal
 
           <!-- Logo -->
           <div class="flex items-center gap-3 cursor-pointer" routerLink="/">
-            <img src="homapage/logo.webp" alt="Municipality Logo" class="h-12 w-12 object-contain">
+            <img src="homapage/logo.png" alt="Municipality Logo" class="h-12 w-12 object-contain">
             <span class="text-xl font-bold text-gray-900 tracking-tight hidden sm:block">Complaint Management System</span>
           </div>
 
@@ -75,7 +75,7 @@ import { LegalDialogComponent } from '../../shared/components/legal-dialog/legal
               <!-- Official Seal / Logo -->
               <div class="lg:w-1/2 flex justify-center lg:justify-end">
                 <div class="relative">
-                  <img src="homapage/logo.webp" alt="Bayan ng Gonzaga Seal" class="h-32 w-32 sm:h-36 sm:w-36 lg:h-40 lg:w-40 object-contain drop-shadow-xl">
+                  <img src="homapage/logo.png" alt="Bayan ng Gonzaga Seal" class="h-32 w-32 sm:h-36 sm:w-36 lg:h-40 lg:w-40 object-contain drop-shadow-xl">
                 </div>
               </div>
 
@@ -184,7 +184,7 @@ import { LegalDialogComponent } from '../../shared/components/legal-dialog/legal
       <footer class="bg-gray-900 text-white py-10 mt-auto">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-6">
           <div class="flex items-center gap-2">
-            <img src="homapage/logo.webp" alt="Logo" class="h-8 w-8 object-contain">
+            <img src="homapage/logo.png" alt="Logo" class="h-8 w-8 object-contain">
             <span class="text-lg font-bold tracking-tight">Complaint Management System</span>
           </div>
           <p class="text-gray-400 text-sm">
