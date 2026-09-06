@@ -64,12 +64,36 @@ import { ForgotPasswordComponent } from '../forgot-password/forgot-password.comp
       <!-- Right Side / Form -->
       <div class="w-full sm:w-7/12 p-6 sm:p-10 flex flex-col justify-center bg-white">
 
-        <!-- Mobile Logo Header (Only visible on small screens) -->
-        <div class="sm:hidden flex flex-col items-center mb-8 pt-4">
-          <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white mb-3 shadow-sm border-2 border-gray-900 p-1">
-            <img src="homapage/logo.png" alt="Bayan ng Gonzaga Seal" class="w-full h-full object-contain">
+        <!-- Mobile Branding Header (Only visible on small screens) -->
+        <div class="sm:hidden relative overflow-hidden bg-primary-600 border-2 border-gray-900 rounded-sm shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] mb-6 -mt-2">
+          <!-- Pineapple body pattern -->
+          <div class="absolute inset-0 opacity-50 pointer-events-none"
+               style="background-image: url(&quot;data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'><g fill='none' stroke='%23fbbf24' stroke-width='0.7' opacity='0.7'><path d='M20 0 L40 20 L20 40 L0 20 Z'/><path d='M0 0 L20 20 L40 0'/><path d='M0 40 L20 20 L40 40'/></g><g fill='%23fde047'><path d='M20 20 L17 12 L23 12 Z'/><path d='M20 20 L28 17 L28 23 Z'/><path d='M20 20 L23 28 L17 28 Z'/><path d='M20 20 L12 23 L12 17 Z'/><circle cx='20' cy='20' r='1.4' fill='%23a16207'/></g></svg>&quot;); background-size: 40px 40px;">
           </div>
-          <h2 class="text-xl font-bold text-gray-900 tracking-tight">Municipality Portal</h2>
+
+          <!-- Pineapple leaves / crown -->
+          <svg class="absolute top-0 left-1/2 -translate-x-1/2 -mt-1 w-32 h-16 opacity-90 pointer-events-none" viewBox="0 0 240 140" preserveAspectRatio="xMidYMin meet">
+            <path d="M120 140 C 80 110 40 90 10 30 C 60 50 95 80 120 130 Z" fill="#15803d"/>
+            <path d="M120 140 C 160 110 200 90 230 30 C 180 50 145 80 120 130 Z" fill="#15803d"/>
+            <path d="M120 140 C 95 100 75 60 55 5 C 95 40 115 80 120 130 Z" fill="#16a34a"/>
+            <path d="M120 140 C 145 100 165 60 185 5 C 145 40 125 80 120 130 Z" fill="#16a34a"/>
+            <path d="M120 140 C 108 90 100 50 90 0 C 110 30 118 70 120 130 Z" fill="#22c55e"/>
+            <path d="M120 140 C 132 90 140 50 150 0 C 130 30 122 70 120 130 Z" fill="#22c55e"/>
+            <path d="M120 140 C 114 90 112 50 115 5 C 122 50 124 90 120 130 Z" fill="#4ade80"/>
+            <path d="M120 135 Q 90 80 30 40" stroke="#bbf7d0" stroke-width="1" fill="none" opacity="0.6"/>
+            <path d="M120 135 Q 150 80 210 40" stroke="#bbf7d0" stroke-width="1" fill="none" opacity="0.6"/>
+            <path d="M120 135 Q 105 70 80 10" stroke="#bbf7d0" stroke-width="1" fill="none" opacity="0.5"/>
+            <path d="M120 135 Q 135 70 160 10" stroke="#bbf7d0" stroke-width="1" fill="none" opacity="0.5"/>
+          </svg>
+
+          <div class="relative z-10 flex flex-col items-center px-4 pt-10 pb-5">
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white border-2 border-gray-900 shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] p-1">
+              <img src="homapage/logo.png" alt="Bayan ng Gonzaga Seal" class="w-full h-full object-contain">
+            </div>
+            <h2 class="text-lg font-extrabold text-white uppercase tracking-wider mt-3" style="font-family: 'Arial Black', Impact, sans-serif; text-shadow: 1px 1px 0 #14532d, -1px 1px 0 #14532d, 1px -1px 0 #14532d, -1px -1px 0 #14532d;">
+              Municipality Portal
+            </h2>
+          </div>
         </div>
 
         <div class="mb-6 sm:mb-8 text-center sm:text-left border-b-2 border-gray-900 pb-4">
