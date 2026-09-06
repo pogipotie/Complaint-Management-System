@@ -26,9 +26,10 @@ import { ForgotPasswordComponent } from '../forgot-password/forgot-password.comp
 
       <!-- Left Side / Branding (Hidden on small mobile) -->
       <div class="hidden sm:flex sm:w-5/12 bg-primary-600 p-8 flex-col justify-center relative overflow-hidden text-center">
-        <!-- Decorative blobs -->
-        <div class="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full bg-primary-500 opacity-50 blur-xl"></div>
-        <div class="absolute bottom-0 left-0 -ml-8 -mb-8 w-40 h-40 rounded-full bg-primary-700 opacity-50 blur-xl"></div>
+        <!-- Pineapple polka dot pattern (yellow dots on green) -->
+        <div class="absolute inset-0 opacity-30 pointer-events-none"
+             style="background-image: radial-gradient(circle, #fde047 22%, transparent 23%); background-size: 28px 28px;">
+        </div>
 
         <div class="relative z-10 flex flex-col items-center">
           <div class="inline-flex items-center justify-center w-28 h-28 rounded-full bg-white border-2 border-gray-900 shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] mb-6 p-2">
