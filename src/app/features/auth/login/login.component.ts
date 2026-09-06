@@ -55,7 +55,7 @@ import { ForgotPasswordComponent } from '../forgot-password/forgot-password.comp
           <div class="inline-flex items-center justify-center w-28 h-28 rounded-full bg-white border-2 border-gray-900 shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] mb-6 p-2">
             <img src="homapage/logo.png" alt="Bayan ng Gonzaga Seal" class="w-full h-full object-contain">
           </div>
-          <p class="text-white text-lg leading-relaxed font-black uppercase tracking-wider" style="font-family: 'Arial Black', Impact, sans-serif;">
+          <p class="text-white text-base sm:text-lg leading-relaxed font-black uppercase tracking-wider px-4 py-3 border-2 border-yellow-300 bg-green-900/40 rounded-sm backdrop-blur-sm" style="font-family: 'Arial Black', Impact, sans-serif; text-shadow: 1px 1px 0 #14532d, -1px 1px 0 #14532d, 1px -1px 0 #14532d, -1px -1px 0 #14532d, 0 2px 4px rgba(0,0,0,0.5);">
             Sign in to track your reported issues, communicate with local officials, and stay updated with your community.
           </p>
         </div>
