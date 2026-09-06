@@ -26,9 +26,9 @@ import { ForgotPasswordComponent } from '../forgot-password/forgot-password.comp
 
       <!-- Left Side / Branding (Hidden on small mobile) -->
       <div class="hidden sm:flex sm:w-5/12 bg-primary-600 p-8 flex-col justify-center relative overflow-hidden text-center">
-        <!-- Pineapple polka dot pattern (yellow dots on green) -->
-        <div class="absolute inset-0 opacity-30 pointer-events-none"
-             style="background-image: radial-gradient(circle, #fde047 22%, transparent 23%); background-size: 28px 28px;">
+        <!-- Pineapple body pattern: diamond grid with star-burst scales -->
+        <div class="absolute inset-0 opacity-50 pointer-events-none"
+             style="background-image: url(&quot;data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'><g fill='none' stroke='%23fbbf24' stroke-width='0.7' opacity='0.7'><path d='M20 0 L40 20 L20 40 L0 20 Z'/><path d='M0 0 L20 20 L40 0'/><path d='M0 40 L20 20 L40 40'/></g><g fill='%23fde047'><path d='M20 20 L17 12 L23 12 Z'/><path d='M20 20 L28 17 L28 23 Z'/><path d='M20 20 L23 28 L17 28 Z'/><path d='M20 20 L12 23 L12 17 Z'/><circle cx='20' cy='20' r='1.4' fill='%23a16207'/></g></svg>&quot;); background-size: 40px 40px;">
         </div>
 
         <!-- Pineapple leaves / crown at the top -->
