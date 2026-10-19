@@ -5,11 +5,12 @@ import { SupabaseService } from '../../../core/services/supabase.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
+import { CaptainAvatarComponent } from '../../../shared/components/captain-avatar.component';
 
 @Component({
   selector: 'app-official-chat',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatIconModule, MatButtonModule],
+  imports: [CommonModule, FormsModule, MatIconModule, MatButtonModule, CaptainAvatarComponent],
   template: `
     <div class="h-[calc(100vh-140px)] flex flex-col bg-white border-4 border-gray-900 shadow-[8px_8px_0px_0px_rgba(17,24,39,1)] rounded-sm">
       <!-- Header -->
@@ -40,7 +41,9 @@ import { MatButtonModule } from '@angular/material/button';
           <!-- Avatar -->
           <div class="w-10 h-10 rounded-sm border-2 border-gray-900 flex-shrink-0 flex items-center justify-center text-gray-900 text-sm font-black shadow-[2px_2px_0px_0px_rgba(17,24,39,1)]"
                [ngClass]="msg.user_role === 'brgy_captain' ? 'bg-orange-200' : 'bg-primary-200'">
-            {{ msg.user_full_name ? msg.user_full_name.charAt(0).toUpperCase() : 'U' }}
+            <app-captain-avatar *ngIf="msg.user_role === 'brgy_captain'; else officialInitial"
+                                [path]="msg.user_photo_path" [userId]="msg.user_id" [name]="msg.user_full_name"></app-captain-avatar>
+            <ng-template #officialInitial>{{ msg.user_full_name ? msg.user_full_name.charAt(0).toUpperCase() : 'U' }}</ng-template>
           </div>
           
           <!-- Message Body -->
@@ -131,7 +134,7 @@ export class OfficialChatComponent implements OnInit, OnDestroy, AfterViewChecke
     this.loading = true;
     const { data, error } = await this.supabaseService.supabase
       .from('official_messages')
-      .select('*, users!official_messages_user_id_fkey(full_name, role, barangay)')
+      .select('*, users!official_messages_user_id_fkey(full_name, role, barangay, profile_picture_path)')
       .order('created_at', { ascending: false })
       .limit(100);
 
@@ -140,7 +143,8 @@ export class OfficialChatComponent implements OnInit, OnDestroy, AfterViewChecke
         ...m,
         user_full_name: m.users?.full_name,
         user_role: m.users?.role,
-        user_barangay: m.users?.barangay
+        user_barangay: m.users?.barangay,
+        user_photo_path: m.users?.profile_picture_path
       })).reverse();
       this.shouldScroll = true;
     }
@@ -156,7 +160,7 @@ export class OfficialChatComponent implements OnInit, OnDestroy, AfterViewChecke
           // Fetch user details for the new message
           const { data: userData } = await this.supabaseService.supabase
             .from('users')
-            .select('full_name, role, barangay')
+            .select('full_name, role, barangay, profile_picture_path')
             .eq('id', payload.new.user_id)
             .single();
 
@@ -164,7 +168,8 @@ export class OfficialChatComponent implements OnInit, OnDestroy, AfterViewChecke
             ...payload.new,
             user_full_name: userData?.full_name,
             user_role: userData?.role,
-            user_barangay: userData?.barangay
+            user_barangay: userData?.barangay,
+            user_photo_path: userData?.profile_picture_path
           };
 
           if (!this.messages.find(m => m.id === newMsg.id)) {
@@ -198,7 +203,7 @@ export class OfficialChatComponent implements OnInit, OnDestroy, AfterViewChecke
         user_id: this.currentUserId,
         body: text
       })
-      .select('*, users!official_messages_user_id_fkey(full_name, role, barangay)')
+      .select('*, users!official_messages_user_id_fkey(full_name, role, barangay, profile_picture_path)')
       .single();
 
     if (!error && data) {
@@ -206,7 +211,8 @@ export class OfficialChatComponent implements OnInit, OnDestroy, AfterViewChecke
         ...data,
         user_full_name: data.users?.full_name,
         user_role: data.users?.role,
-        user_barangay: data.users?.barangay
+        user_barangay: data.users?.barangay,
+        user_photo_path: data.users?.profile_picture_path
       };
       
       if (!this.messages.find(m => m.id === newMsg.id)) {

@@ -47,6 +47,13 @@ A highly specialized, localized, and secure ticketing system designed for munici
 * **Audit Logging:** Database triggers automatically log all status changes and updates into an `audit_logs` table.
 * **Real-time Notifications:** Automated system notifications when complaints are updated, users are verified/rejected, or citizens submit ratings.
 
+### Captain Profile Pictures
+* Captains upload, preview, replace, and remove their own photo in **Captain Profile > Profile Settings**. Photo changes save separately from personal information.
+* JPG, PNG, and WebP files are accepted up to 2 MB. Photos appear in the captain account menu, admin captain cards, and official chat.
+* The private `captain_photos` bucket uses signed URLs. Only signed-in officials can view photos; storage policies and a database trigger restrict photo changes to the captain who owns the account, including when an admin edits other profile fields.
+* Apply `supabase/migrations/20261019000000_captain_profile_pictures.sql` before deploying the frontend. It adds `users.profile_picture_path`, creates the bucket, and installs ownership checks. Existing accounts keep their initials until they upload a photo.
+* Replacement files use unique paths. A failed profile save removes the new upload; a successful replacement removes the old photo. Storage cleanup failures are logged without undoing a saved profile.
+
 ---
 
 ## 📂 Project Structure

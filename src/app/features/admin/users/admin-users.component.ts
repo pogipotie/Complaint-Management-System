@@ -17,6 +17,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { AdminUserDetailDialogComponent } from './admin-user-detail-dialog.component';
 import { AdminCreateCaptainDialogComponent } from './admin-create-captain-dialog.component';
 import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config';
+import { CaptainAvatarComponent } from '../../../shared/components/captain-avatar.component';
 
 @Component({
   selector: 'app-admin-users',
@@ -34,7 +35,8 @@ import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config
     MatSelectModule,
     MatPaginatorModule,
     MatTabsModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    CaptainAvatarComponent
   ],
   template: `
     <div class="p-6 max-w-7xl mx-auto pb-20">
@@ -135,7 +137,7 @@ import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config
             <div *ngIf="user.role === 'brgy_captain'" class="grid grid-cols-1 gap-2 text-sm text-center py-4">
                <div class="flex flex-col items-center justify-center">
                  <div class="h-16 w-16 bg-gray-200 border-2 border-gray-900 rounded-full flex items-center justify-center shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] mb-3 overflow-hidden">
-                   <mat-icon class="text-gray-500 scale-150">person</mat-icon>
+                   <app-captain-avatar [path]="user.profile_picture_path" [userId]="user.id" [name]="user.full_name"></app-captain-avatar>
                  </div>
                  <span class="text-xs font-bold text-gray-500 uppercase">Account Type</span>
                  <div class="font-medium text-gray-900">Official Local Government Unit</div>

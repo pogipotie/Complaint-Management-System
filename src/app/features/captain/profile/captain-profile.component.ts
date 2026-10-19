@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -9,6 +9,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
 import { SupabaseService } from '../../../core/services/supabase.service';
 import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config';
+import { CaptainPhotosService } from '../../../core/services/captain-photos.service';
+import { CaptainAvatarComponent } from '../../../shared/components/captain-avatar.component';
 
 @Component({
   selector: 'app-captain-profile',
@@ -21,7 +23,8 @@ import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config
     MatInputModule,
     MatButtonModule,
     MatIconModule,
-    MatSelectModule
+    MatSelectModule,
+    CaptainAvatarComponent
   ],
   template: `
     <div class="max-w-3xl mx-auto space-y-6 pb-12">
@@ -41,6 +44,42 @@ import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config
       </div>
 
       <ng-container *ngIf="!loading">
+        <section class="bg-white border-2 border-gray-900 rounded-sm shadow-[4px_4px_0px_0px_rgba(17,24,39,1)] overflow-hidden" aria-labelledby="photo-heading">
+          <div class="border-b-2 border-gray-900 bg-primary-50 p-4">
+            <h3 id="photo-heading" class="font-black uppercase tracking-widest flex items-center gap-2">
+              <mat-icon>photo_camera</mat-icon> Profile Picture
+            </h3>
+          </div>
+          <div class="p-6 flex flex-col sm:flex-row items-center gap-6">
+            <div class="h-28 w-28 shrink-0 border-2 border-gray-900 rounded-sm bg-primary-100 overflow-hidden text-3xl font-black shadow-[3px_3px_0px_0px_rgba(17,24,39,1)]">
+              <img *ngIf="photoPreview; else savedPhoto" [src]="photoPreview" alt="Selected profile picture preview" class="h-full w-full object-cover">
+              <ng-template #savedPhoto>
+                <app-captain-avatar [path]="photoPath" [userId]="currentUserId" [name]="profileForm.get('full_name')?.value"></app-captain-avatar>
+              </ng-template>
+            </div>
+            <div class="space-y-3 flex-1 min-w-0">
+              <p class="text-sm font-bold text-gray-700">Use your own photo so other officials can recognize you.</p>
+              <p id="photo-help" class="text-xs text-gray-500">JPG, PNG, or WebP. Maximum 2 MB. Photos are visible to signed-in officials.</p>
+              <input #photoInput type="file" accept="image/jpeg,image/png,image/webp" class="sr-only" tabindex="-1"
+                     aria-label="Choose your profile picture" aria-describedby="photo-help" (change)="selectPhoto($event)" [disabled]="photoBusy">
+              <div class="flex flex-wrap gap-2">
+                <button mat-stroked-button type="button" (click)="photoInput.click()" [disabled]="photoBusy" class="!border-2 !border-gray-900 !rounded-sm">
+                  <mat-icon>upload</mat-icon> {{ photoPath ? 'Replace Photo' : 'Choose Photo' }}
+                </button>
+                <button *ngIf="selectedPhoto" mat-flat-button color="primary" type="button" (click)="uploadPhoto()" [disabled]="photoBusy">
+                  {{ photoBusy ? 'Uploading...' : 'Save Photo' }}
+                </button>
+                <button *ngIf="selectedPhoto" mat-button type="button" (click)="discardPhoto()" [disabled]="photoBusy">Cancel</button>
+                <button *ngIf="photoPath && !selectedPhoto" mat-button color="warn" type="button" (click)="removePhoto()" [disabled]="photoBusy">
+                  {{ photoBusy ? 'Removing...' : 'Remove Photo' }}
+                </button>
+              </div>
+              <p *ngIf="selectedPhoto" class="text-xs text-gray-600 truncate">{{ selectedPhoto.name }}</p>
+              <p *ngIf="photoError" role="alert" class="text-sm font-bold text-red-700">{{ photoError }}</p>
+              <p *ngIf="photoSuccess" role="status" class="text-sm font-bold text-green-700">{{ photoSuccess }}</p>
+            </div>
+          </div>
+        </section>
         <form [formGroup]="profileForm" (ngSubmit)="onSubmit()" class="space-y-6">
           
           <div class="relative group">
@@ -142,9 +181,74 @@ import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config
     mat-form-field { width: 100%; }
   `]
 })
-export class CaptainProfileComponent implements OnInit {
+export class CaptainProfileComponent implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
   private supabaseService = inject(SupabaseService);
+  private photos = inject(CaptainPhotosService);
+
+  photoPath: string | null = null;
+  photoPreview: string | null = null;
+  selectedPhoto: File | null = null;
+  photoBusy = false;
+  photoError = '';
+  photoSuccess = '';
+
+  selectPhoto(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file || this.photoBusy) return;
+    this.photoError = '';
+    this.photoSuccess = '';
+    try {
+      this.photos.validate(file);
+      this.discardPhoto();
+      this.selectedPhoto = file;
+      this.photoPreview = URL.createObjectURL(file);
+    } catch (err: any) {
+      this.photoError = err.message;
+    }
+  }
+
+  discardPhoto() {
+    if (this.photoPreview) URL.revokeObjectURL(this.photoPreview);
+    this.photoPreview = null;
+    this.selectedPhoto = null;
+  }
+
+  async uploadPhoto() {
+    if (!this.selectedPhoto || this.photoBusy) return;
+    this.photoBusy = true;
+    this.photoError = '';
+    this.photoSuccess = '';
+    try {
+      this.photoPath = await this.photos.upload(this.selectedPhoto, this.photoPath);
+      this.discardPhoto();
+      this.photoSuccess = 'Profile picture saved.';
+    } catch (err: any) {
+      this.photoError = err.message || 'Could not upload your photo. Please try again.';
+    } finally {
+      this.photoBusy = false;
+    }
+  }
+
+  async removePhoto() {
+    if (!this.photoPath || this.photoBusy) return;
+    this.photoBusy = true;
+    this.photoError = '';
+    this.photoSuccess = '';
+    try {
+      await this.photos.remove(this.photoPath);
+      this.photoPath = null;
+      this.photoSuccess = 'Profile picture removed.';
+    } catch (err: any) {
+      this.photoError = err.message || 'Could not remove your photo.';
+    } finally {
+      this.photoBusy = false;
+    }
+  }
+
+  ngOnDestroy() { this.discardPhoto(); }
 
   loading = true;
   saving = false;
@@ -172,6 +276,9 @@ export class CaptainProfileComponent implements OnInit {
     if (user) {
       this.currentUserId = user.id;
       this.loadProfile();
+    } else {
+      this.loading = false;
+      this.errorMsg = 'Sign in again to manage your profile.';
     }
   }
 
@@ -185,6 +292,7 @@ export class CaptainProfileComponent implements OnInit {
       .single();
 
     if (!error && data) {
+      this.photoPath = data.profile_picture_path ?? null;
       this.verificationStatus = data.verification_status;
       this.rejectionReason = data.rejection_reason;
       

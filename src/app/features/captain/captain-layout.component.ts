@@ -13,6 +13,8 @@ import { NotificationsService, Notification } from '../../core/services/notifica
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { filter, takeUntil } from 'rxjs/operators';
 import { Subject, Observable } from 'rxjs';
+import { SupabaseService } from '../../core/services/supabase.service';
+import { CaptainAvatarComponent } from '../../shared/components/captain-avatar.component';
 
 @Component({
   selector: 'app-captain-layout',
@@ -27,7 +29,8 @@ import { Subject, Observable } from 'rxjs';
     MatIconModule,
     MatButtonModule,
     MatMenuModule,
-    MatBadgeModule
+    MatBadgeModule,
+    CaptainAvatarComponent
   ],
   template: `
     <mat-sidenav-container class="h-screen w-full bg-gray-50">
@@ -173,9 +176,9 @@ import { Subject, Observable } from 'rxjs';
               </div>
             </mat-menu>
 
-            <button mat-icon-button [matMenuTriggerFor]="userMenu">
+            <button mat-icon-button [matMenuTriggerFor]="userMenu" aria-label="Open captain account menu">
               <div class="h-8 w-8 rounded-sm border-2 border-gray-900 bg-primary-600 flex items-center justify-center text-white font-black shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] text-sm">
-                C
+                <app-captain-avatar [path]="photoPath" [userId]="userId" [name]="fullName"></app-captain-avatar>
               </div>
             </button>
             <mat-menu #userMenu="matMenu" class="retro-menu">
@@ -252,6 +255,9 @@ export class CaptainLayoutComponent implements OnInit, OnDestroy {
   private authService = inject(AuthService);
   private breakpointObserver = inject(BreakpointObserver);
   private notificationsService = inject(NotificationsService);
+  private supabaseService = inject(SupabaseService);
+  photoPath: string | null = null;
+  fullName = '';
 
   isMobile = false;
   private destroy$ = new Subject<void>();
@@ -263,6 +269,7 @@ export class CaptainLayoutComponent implements OnInit, OnDestroy {
   ngOnInit() {
     if (this.authService.user) {
       this.userId = this.authService.user.id;
+      void this.loadAccountPhoto(this.userId);
       this.notificationsService.loadNotifications(this.userId);
       this.notificationsService.subscribeToNotifications(this.userId);
     }
@@ -283,6 +290,15 @@ export class CaptainLayoutComponent implements OnInit, OnDestroy {
     this.destroy$.next();
     this.destroy$.complete();
     this.notificationsService.unsubscribe();
+  }
+
+  private async loadAccountPhoto(userId: string) {
+    const { data } = await this.supabaseService.supabase.from('users')
+      .select('full_name, profile_picture_path').eq('id', userId).single();
+    if (data) {
+      this.photoPath = data.profile_picture_path;
+      this.fullName = data.full_name;
+    }
   }
 
   extractStatus(body: string): { prefix: string, status: string | null } {

@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { SupabaseService } from './supabase.service';
-import { BehaviorSubject, from, Observable } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 import { RealtimeChannel } from '@supabase/supabase-js';
 
 export interface Notification {
@@ -30,6 +30,7 @@ export class NotificationsService {
   private channel: RealtimeChannel | null = null;
 
   async loadNotifications(userId: string) {
+    const existingIds = new Set(this.notificationsSubject.value.map(note => note.id));
     const { data, error } = await this.supabaseService.supabase
       .from('notifications')
       .select('*, complaint:complaints(id, title, status, location_text, barangay, created_at, category:complaint_categories(name))')
@@ -38,8 +39,11 @@ export class NotificationsService {
       .limit(20);
 
     if (!error && data) {
-      this.notificationsSubject.next(data);
-      this.updateUnreadCount(data);
+      // Keep live inserts that arrived while the initial request was in flight.
+      const liveNotifications = this.notificationsSubject.value.filter(note =>
+        note.user_id === userId && !existingIds.has(note.id)
+      );
+      this.publishNotifications([...liveNotifications, ...data]);
     }
   }
 
@@ -65,9 +69,7 @@ export class NotificationsService {
 
           const newNotification = (data || payload.new) as Notification;
           const current = this.notificationsSubject.value;
-          const updated = [newNotification, ...current].slice(0, 20); // Keep last 20
-          this.notificationsSubject.next(updated);
-          this.updateUnreadCount(updated);
+          this.publishNotifications([newNotification, ...current]);
         }
       )
       .subscribe();
@@ -122,6 +124,20 @@ export class NotificationsService {
       this.notificationsSubject.next([]);
       this.unreadCountSubject.next(0);
     }
+  }
+
+  private publishNotifications(notifications: Notification[]) {
+    const unique = new Map<string, Notification>();
+    for (const note of notifications) {
+      if (!unique.has(note.id)) unique.set(note.id, note);
+    }
+
+    // Detail requests can finish out of order; timestamps determine recency.
+    const sorted = [...unique.values()]
+      .sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at))
+      .slice(0, 20);
+    this.notificationsSubject.next(sorted);
+    this.updateUnreadCount(sorted);
   }
 
   private updateUnreadCount(notifications: Notification[]) {
