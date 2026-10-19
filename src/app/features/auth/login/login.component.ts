@@ -14,8 +14,8 @@ import { ForgotPasswordComponent } from '../forgot-password/forgot-password.comp
   selector: 'app-login',
   standalone: true,
   imports: [
-    CommonModule, 
-    ReactiveFormsModule, 
+    CommonModule,
+    ReactiveFormsModule,
     RouterModule,
     MatButtonModule,
     MatIconModule,
@@ -23,18 +23,39 @@ import { ForgotPasswordComponent } from '../forgot-password/forgot-password.comp
   ],
   template: `
     <div class="relative bg-white rounded-sm overflow-hidden border-2 border-gray-900 shadow-[4px_4px_0px_0px_rgba(17,24,39,1)] flex flex-col sm:flex-row w-full max-w-4xl mx-auto">
-      
+
       <!-- Left Side / Branding (Hidden on small mobile) -->
       <div class="hidden sm:flex sm:w-5/12 bg-primary-600 p-8 flex-col justify-center relative overflow-hidden text-center">
-        <!-- Decorative blobs -->
-        <div class="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full bg-primary-500 opacity-50 blur-xl"></div>
-        <div class="absolute bottom-0 left-0 -ml-8 -mb-8 w-40 h-40 rounded-full bg-primary-700 opacity-50 blur-xl"></div>
-        
+        <!-- Pineapple body pattern: diamond grid with star-burst scales -->
+        <div class="absolute inset-0 opacity-50 pointer-events-none"
+             style="background-image: url(&quot;data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'><g fill='none' stroke='%23fbbf24' stroke-width='0.7' opacity='0.7'><path d='M20 0 L40 20 L20 40 L0 20 Z'/><path d='M0 0 L20 20 L40 0'/><path d='M0 40 L20 20 L40 40'/></g><g fill='%23fde047'><path d='M20 20 L17 12 L23 12 Z'/><path d='M20 20 L28 17 L28 23 Z'/><path d='M20 20 L23 28 L17 28 Z'/><path d='M20 20 L12 23 L12 17 Z'/><circle cx='20' cy='20' r='1.4' fill='%23a16207'/></g></svg>&quot;); background-size: 40px 40px;">
+        </div>
+
+        <!-- Pineapple leaves / crown at the top -->
+        <svg class="absolute top-0 left-1/2 -translate-x-1/2 -mt-1 w-48 h-28 opacity-90 pointer-events-none" viewBox="0 0 240 140" preserveAspectRatio="xMidYMin meet">
+          <!-- Outer leaves (darker green) -->
+          <path d="M120 140 C 80 110 40 90 10 30 C 60 50 95 80 120 130 Z" fill="#15803d"/>
+          <path d="M120 140 C 160 110 200 90 230 30 C 180 50 145 80 120 130 Z" fill="#15803d"/>
+          <!-- Mid leaves -->
+          <path d="M120 140 C 95 100 75 60 55 5 C 95 40 115 80 120 130 Z" fill="#16a34a"/>
+          <path d="M120 140 C 145 100 165 60 185 5 C 145 40 125 80 120 130 Z" fill="#16a34a"/>
+          <!-- Inner leaves (lighter green) -->
+          <path d="M120 140 C 108 90 100 50 90 0 C 110 30 118 70 120 130 Z" fill="#22c55e"/>
+          <path d="M120 140 C 132 90 140 50 150 0 C 130 30 122 70 120 130 Z" fill="#22c55e"/>
+          <!-- Center leaf -->
+          <path d="M120 140 C 114 90 112 50 115 5 C 122 50 124 90 120 130 Z" fill="#4ade80"/>
+          <!-- Leaf veins (subtle highlights) -->
+          <path d="M120 135 Q 90 80 30 40" stroke="#bbf7d0" stroke-width="1" fill="none" opacity="0.6"/>
+          <path d="M120 135 Q 150 80 210 40" stroke="#bbf7d0" stroke-width="1" fill="none" opacity="0.6"/>
+          <path d="M120 135 Q 105 70 80 10" stroke="#bbf7d0" stroke-width="1" fill="none" opacity="0.5"/>
+          <path d="M120 135 Q 135 70 160 10" stroke="#bbf7d0" stroke-width="1" fill="none" opacity="0.5"/>
+        </svg>
+
         <div class="relative z-10 flex flex-col items-center">
-          <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary-100 border-2 border-gray-900 shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] mb-6">
-            <mat-icon class="text-primary-600 scale-150">domain</mat-icon>
+          <div class="inline-flex items-center justify-center w-28 h-28 rounded-full bg-white border-2 border-gray-900 shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] mb-6 p-2">
+            <img src="homapage/logo.png" alt="Bayan ng Gonzaga Seal" class="w-full h-full object-contain">
           </div>
-          <p class="text-white text-lg leading-relaxed font-black uppercase tracking-wider" style="font-family: 'Arial Black', Impact, sans-serif;">
+          <p class="text-white text-base sm:text-lg leading-relaxed font-black uppercase tracking-wider px-4 py-3 border-2 border-yellow-300 bg-green-900/40 rounded-sm backdrop-blur-sm" style="font-family: 'Arial Black', Impact, sans-serif; text-shadow: 1px 1px 0 #14532d, -1px 1px 0 #14532d, 1px -1px 0 #14532d, -1px -1px 0 #14532d, 0 2px 4px rgba(0,0,0,0.5);">
             Sign in to track your reported issues, communicate with local officials, and stay updated with your community.
           </p>
         </div>
@@ -42,13 +63,37 @@ import { ForgotPasswordComponent } from '../forgot-password/forgot-password.comp
 
       <!-- Right Side / Form -->
       <div class="w-full sm:w-7/12 p-6 sm:p-10 flex flex-col justify-center bg-white">
-        
-        <!-- Mobile Logo Header (Only visible on small screens) -->
-        <div class="sm:hidden flex flex-col items-center mb-8 pt-4">
-          <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary-50 mb-3 shadow-sm border border-primary-100">
-            <mat-icon class="text-primary-600 scale-110">domain</mat-icon>
+
+        <!-- Mobile Branding Header (Only visible on small screens) -->
+        <div class="sm:hidden relative overflow-hidden bg-primary-600 border-2 border-gray-900 rounded-sm shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] mb-6 -mt-2">
+          <!-- Pineapple body pattern -->
+          <div class="absolute inset-0 opacity-50 pointer-events-none"
+               style="background-image: url(&quot;data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'><g fill='none' stroke='%23fbbf24' stroke-width='0.7' opacity='0.7'><path d='M20 0 L40 20 L20 40 L0 20 Z'/><path d='M0 0 L20 20 L40 0'/><path d='M0 40 L20 20 L40 40'/></g><g fill='%23fde047'><path d='M20 20 L17 12 L23 12 Z'/><path d='M20 20 L28 17 L28 23 Z'/><path d='M20 20 L23 28 L17 28 Z'/><path d='M20 20 L12 23 L12 17 Z'/><circle cx='20' cy='20' r='1.4' fill='%23a16207'/></g></svg>&quot;); background-size: 40px 40px;">
           </div>
-          <h2 class="text-xl font-bold text-gray-900 tracking-tight">Municipality Portal</h2>
+
+          <!-- Pineapple leaves / crown -->
+          <svg class="absolute top-0 left-1/2 -translate-x-1/2 -mt-1 w-32 h-16 opacity-90 pointer-events-none" viewBox="0 0 240 140" preserveAspectRatio="xMidYMin meet">
+            <path d="M120 140 C 80 110 40 90 10 30 C 60 50 95 80 120 130 Z" fill="#15803d"/>
+            <path d="M120 140 C 160 110 200 90 230 30 C 180 50 145 80 120 130 Z" fill="#15803d"/>
+            <path d="M120 140 C 95 100 75 60 55 5 C 95 40 115 80 120 130 Z" fill="#16a34a"/>
+            <path d="M120 140 C 145 100 165 60 185 5 C 145 40 125 80 120 130 Z" fill="#16a34a"/>
+            <path d="M120 140 C 108 90 100 50 90 0 C 110 30 118 70 120 130 Z" fill="#22c55e"/>
+            <path d="M120 140 C 132 90 140 50 150 0 C 130 30 122 70 120 130 Z" fill="#22c55e"/>
+            <path d="M120 140 C 114 90 112 50 115 5 C 122 50 124 90 120 130 Z" fill="#4ade80"/>
+            <path d="M120 135 Q 90 80 30 40" stroke="#bbf7d0" stroke-width="1" fill="none" opacity="0.6"/>
+            <path d="M120 135 Q 150 80 210 40" stroke="#bbf7d0" stroke-width="1" fill="none" opacity="0.6"/>
+            <path d="M120 135 Q 105 70 80 10" stroke="#bbf7d0" stroke-width="1" fill="none" opacity="0.5"/>
+            <path d="M120 135 Q 135 70 160 10" stroke="#bbf7d0" stroke-width="1" fill="none" opacity="0.5"/>
+          </svg>
+
+          <div class="relative z-10 flex flex-col items-center px-4 pt-10 pb-5">
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white border-2 border-gray-900 shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] p-1">
+              <img src="homapage/logo.png" alt="Bayan ng Gonzaga Seal" class="w-full h-full object-contain">
+            </div>
+            <h2 class="text-lg font-extrabold text-white uppercase tracking-wider mt-3" style="font-family: 'Arial Black', Impact, sans-serif; text-shadow: 1px 1px 0 #14532d, -1px 1px 0 #14532d, 1px -1px 0 #14532d, -1px -1px 0 #14532d;">
+              Municipality Portal
+            </h2>
+          </div>
         </div>
 
         <div class="mb-6 sm:mb-8 text-center sm:text-left border-b-2 border-gray-900 pb-4">
@@ -57,7 +102,7 @@ import { ForgotPasswordComponent } from '../forgot-password/forgot-password.comp
         </div>
 
         <form class="space-y-4 sm:space-y-5" [formGroup]="loginForm" (ngSubmit)="onSubmit()">
-          
+
           <div class="space-y-4">
             <div>
               <label class="block text-[11px] font-black uppercase tracking-widest text-gray-700 mb-1">Email Address</label>
@@ -107,7 +152,7 @@ import { ForgotPasswordComponent } from '../forgot-password/forgot-password.comp
             <mat-icon *ngIf="loading" class="animate-spin mr-2">autorenew</mat-icon>
             {{ loading ? 'Signing in...' : 'Sign In' }}
           </button>
-          
+
         </form>
 
         <div class="mt-8 text-center pb-4 sm:pb-0">
@@ -171,13 +216,12 @@ export class LoginComponent {
     if (this.loginForm.invalid) return;
     this.loading = true;
     this.errorMsg = '';
-    
+
     const { email, password } = this.loginForm.value;
     this.authService.signIn(email, password).subscribe({
       next: async ({ data, error }) => {
         if (error) {
           this.loading = false;
-          // Handle 'Email not confirmed' specifically
           if (error.message.toLowerCase().includes('email not confirmed')) {
             this.errorMsg = 'Your email address is not verified. Please check your inbox or register again to receive a new OTP.';
           } else {
@@ -187,8 +231,8 @@ export class LoginComponent {
           try {
             const profile = await this.authService.getUserProfile(data.user.id);
             this.loading = false;
-            
-            this.closeDialog(); // Close modal on success
+
+            this.closeDialog();
 
             if (profile) {
               if (profile.role === 'admin') {
@@ -201,9 +245,8 @@ export class LoginComponent {
             }
           } catch (profileError) {
             this.loading = false;
-            // Provide a better error if the profile is missing entirely
             this.errorMsg = 'Your profile data could not be found. Please contact support.';
-            this.authService.signOut(); // Ensure they don't stay in a broken state
+            this.authService.signOut();
           }
         }
       },
