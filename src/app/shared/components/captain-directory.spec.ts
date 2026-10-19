@@ -6,7 +6,7 @@ import { Subject } from 'rxjs';
 import { CaptainDirectoryService } from '../../core/services/captain-directory.service';
 import { CaptainPhotosService } from '../../core/services/captain-photos.service';
 import { CaptainDirectoryEditorComponent } from './captain-directory-editor.component';
-import { CaptainDirectoryComponent } from '../../features/shared/captain-directory.component';
+import { routes } from '../../app.routes';
 import { AdminCaptainProfileDialogComponent } from '../../features/admin/users/admin-captain-profile-dialog.component';
 
 describe('Captain directory workflow', () => {
@@ -25,7 +25,7 @@ describe('Captain directory workflow', () => {
       publicProfiles: jasmine.createSpy().and.resolveTo([published])
     };
     await TestBed.configureTestingModule({
-      imports: [CaptainDirectoryEditorComponent, CaptainDirectoryComponent, AdminCaptainProfileDialogComponent],
+      imports: [CaptainDirectoryEditorComponent, AdminCaptainProfileDialogComponent],
       providers: [
         provideNoopAnimations(), provideRouter([]),
         { provide: CaptainDirectoryService, useValue: directory },
@@ -69,27 +69,11 @@ describe('Captain directory workflow', () => {
     expect(editor.form.controls.consent.value).toBeFalse();
   });
 
-  it('renders only public fields and filters by barangay', async () => {
-    const fixture = TestBed.createComponent(CaptainDirectoryComponent);
-    fixture.detectChanges();
-    await fixture.whenStable();
-    fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('Office number');
-    expect(fixture.nativeElement.textContent).not.toContain('Private phone');
-    fixture.componentInstance.search = 'test barangay';
-    expect(fixture.componentInstance.filtered.length).toBe(1);
-    fixture.componentInstance.search = 'other barangay';
-    expect(fixture.componentInstance.filtered.length).toBe(0);
-    expect(directory.loadSubmission).not.toHaveBeenCalled();
-  });
-
-  it('shows a load error without retaining stale public cards', async () => {
-    directory.publicProfiles.and.rejectWith(new Error('Unavailable'));
-    const page = TestBed.createComponent(CaptainDirectoryComponent).componentInstance;
-    page.profiles = [published];
-    await page.load();
-    expect(page.profiles).toEqual([]);
-    expect(page.error).toContain('Could not load');
+  it('redirects the removed public directory to home', () => {
+    const route = routes.find(route => route.path === 'barangay-captains');
+    expect(route?.redirectTo).toBe('');
+    expect(route?.loadComponent).toBeUndefined();
+    expect(route?.pathMatch).toBe('full');
   });
 
   it('shows private details only in admin review and preserves one Close button', async () => {

@@ -3,7 +3,8 @@ import { Routes } from '@angular/router';
 export const routes: Routes = [
   {
     path: 'barangay-captains',
-    loadComponent: () => import('./features/shared/captain-directory.component').then(m => m.CaptainDirectoryComponent)
+    redirectTo: '',
+    pathMatch: 'full'
   },
   {
     path: 'auth',

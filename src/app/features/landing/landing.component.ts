@@ -29,7 +29,6 @@ import { LegalDialogComponent } from '../../shared/components/legal-dialog/legal
 
           <!-- Actions -->
           <div class="flex items-center gap-3">
-            <a mat-button routerLink="/barangay-captains" class="!text-sm">Captains</a>
             <button mat-button (click)="openLoginModal()" class="text-gray-900 font-semibold text-base">Log in</button>
             <a mat-flat-button color="primary" routerLink="/auth/register" class="!rounded-full !px-7 !py-1 !font-semibold !text-base !bg-primary-600">Sign up</a>
           </div>
