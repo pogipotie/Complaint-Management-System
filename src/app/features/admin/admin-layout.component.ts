@@ -346,8 +346,10 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
       this.notificationsService.markAsRead(note.id);
     }
     
-    // Navigate based on notification type/content
-    if (note.title.includes('Registration Resubmitted') || note.type === 'system') {
+    // Escalations and ratings also use "system"; the complaint link takes priority.
+    if (note.complaint_id || note.complaint?.id) {
+      this.router.navigate(['/admin/complaints']);
+    } else if (note.title.includes('Registration Resubmitted') || note.type === 'system') {
       this.router.navigate(['/admin/users']);
     } else {
       this.router.navigate(['/admin/complaints']);

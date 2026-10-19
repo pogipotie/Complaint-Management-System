@@ -327,7 +327,10 @@ export class CaptainLayoutComponent implements OnInit, OnDestroy {
       this.notificationsService.markAsRead(note.id);
     }
     
-    if (note.title.includes('Registration Resubmitted') || note.type === 'system') {
+    // Complaint-related system events must not be mistaken for account notices.
+    if (note.complaint_id || note.complaint?.id) {
+      this.router.navigate(['/captain/complaints']);
+    } else if (note.title.includes('Registration Resubmitted') || note.type === 'system') {
       this.router.navigate(['/captain/users']);
     } else {
       this.router.navigate(['/captain/complaints']);
