@@ -18,6 +18,7 @@ import { AdminUserDetailDialogComponent } from './admin-user-detail-dialog.compo
 import { AdminCreateCaptainDialogComponent } from './admin-create-captain-dialog.component';
 import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config';
 import { CaptainAvatarComponent } from '../../../shared/components/captain-avatar.component';
+import { AdminCaptainProfileDialogComponent } from './admin-captain-profile-dialog.component';
 
 @Component({
   selector: 'app-admin-users',
@@ -155,6 +156,9 @@ import { CaptainAvatarComponent } from '../../../shared/components/captain-avata
           </div>
 
           <div class="border-t-2 border-gray-900 bg-gray-50 p-4 flex flex-col gap-3 mt-auto">
+            <button *ngIf="user.role === 'brgy_captain'" mat-stroked-button color="primary" (click)="viewCaptainProfile(user)">
+              <mat-icon>visibility</mat-icon> Profile & Publication Review
+            </button>
             <button *ngIf="user.role === 'citizen'" mat-stroked-button color="primary" class="w-full !rounded-sm !border-2 !border-gray-900 !shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] hover:!translate-y-[1px] hover:!translate-x-[1px] hover:!shadow-[1px_1px_0px_0px_rgba(17,24,39,1)] transition-all font-black uppercase tracking-wider" (click)="viewUserDetails(user)">
               <mat-icon>visibility</mat-icon> View Full Details
             </button>
@@ -452,6 +456,12 @@ export class AdminUsersComponent implements OnInit {
       if (result && (result.action === 'verified' || result.action === 'rejected' || result.action === 'banned')) {
         this.updateStatus(user.id, result.action, result.reason);
       }
+    });
+  }
+
+  viewCaptainProfile(user: any) {
+    this.dialog.open(AdminCaptainProfileDialogComponent, {
+      width: '95vw', maxWidth: '960px', data: { user }, autoFocus: false
     });
   }
 }

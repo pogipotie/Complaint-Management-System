@@ -4,6 +4,7 @@ import { Subject } from 'rxjs';
 import { CaptainProfileComponent } from './captain-profile.component';
 import { CaptainPhotosService } from '../../../core/services/captain-photos.service';
 import { SupabaseService } from '../../../core/services/supabase.service';
+import { CaptainDirectoryService } from '../../../core/services/captain-directory.service';
 
 describe('Captain profile photo controls', () => {
   let fixture: ComponentFixture<CaptainProfileComponent>;
@@ -26,6 +27,7 @@ describe('Captain profile photo controls', () => {
       imports: [CaptainProfileComponent],
       providers: [
         provideNoopAnimations(),
+        { provide: CaptainDirectoryService, useValue: { loadSubmission: async () => null } },
         { provide: CaptainPhotosService, useValue: photos },
         { provide: SupabaseService, useValue: { supabase: {
           auth: { getUser: async () => ({ data: { user: { id: 'user' } } }) },

@@ -180,7 +180,7 @@ import { takeUntil, filter } from 'rxjs/operators';
               </div>
             </button>
             <mat-menu #userMenu="matMenu" class="retro-menu">
-              <button mat-menu-item disabled class="!border-b-2 !border-gray-900">
+              <button mat-menu-item routerLink="/admin/profile" class="!border-b-2 !border-gray-900">
                 <mat-icon class="text-gray-900">account_circle</mat-icon>
                 <span class="font-bold uppercase tracking-wider text-[11px] text-gray-900">Admin Profile</span>
               </button>
@@ -374,6 +374,7 @@ export class AdminLayoutComponent implements OnInit, OnDestroy {
     if (url.includes('/complaints')) return 'Complaints Management';
     if (url.includes('/announcements')) return 'Announcements';
     if (url.includes('/users')) return 'User Approvals';
+    if (url.includes('/profile')) return 'Admin Profile';
     return 'Admin Portal';
   }
 

@@ -11,6 +11,7 @@ import { SupabaseService } from '../../../core/services/supabase.service';
 import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config';
 import { CaptainPhotosService } from '../../../core/services/captain-photos.service';
 import { CaptainAvatarComponent } from '../../../shared/components/captain-avatar.component';
+import { CaptainDirectoryEditorComponent } from '../../../shared/components/captain-directory-editor.component';
 
 @Component({
   selector: 'app-captain-profile',
@@ -24,7 +25,8 @@ import { CaptainAvatarComponent } from '../../../shared/components/captain-avata
     MatButtonModule,
     MatIconModule,
     MatSelectModule,
-    CaptainAvatarComponent
+    CaptainAvatarComponent,
+    CaptainDirectoryEditorComponent
   ],
   template: `
     <div class="max-w-3xl mx-auto space-y-6 pb-12">
@@ -59,7 +61,7 @@ import { CaptainAvatarComponent } from '../../../shared/components/captain-avata
             </div>
             <div class="space-y-3 flex-1 min-w-0">
               <p class="text-sm font-bold text-gray-700">Use your own photo so other officials can recognize you.</p>
-              <p id="photo-help" class="text-xs text-gray-500">JPG, PNG, or WebP. Maximum 2 MB. Photos are visible to signed-in officials.</p>
+              <p id="photo-help" class="text-xs text-gray-500">JPG, PNG, or WebP. Maximum 2 MB. Photos are visible to officials and may be published when your directory submission is approved.</p>
               <input #photoInput type="file" accept="image/jpeg,image/png,image/webp" class="sr-only" tabindex="-1"
                      aria-label="Choose your profile picture" aria-describedby="photo-help" (change)="selectPhoto($event)" [disabled]="photoBusy">
               <div class="flex flex-wrap gap-2">
@@ -174,6 +176,7 @@ import { CaptainAvatarComponent } from '../../../shared/components/captain-avata
           </div>
 
         </form>
+        <app-captain-directory-editor [userId]="currentUserId" [blocked]="saving || photoBusy"></app-captain-directory-editor>
       </ng-container>
     </div>
   `,

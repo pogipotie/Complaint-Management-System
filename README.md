@@ -50,9 +50,18 @@ A highly specialized, localized, and secure ticketing system designed for munici
 ### Captain Profile Pictures
 * Captains upload, preview, replace, and remove their own photo in **Captain Profile > Profile Settings**. Photo changes save separately from personal information.
 * JPG, PNG, and WebP files are accepted up to 2 MB. Photos appear in the captain account menu, admin captain cards, and official chat.
-* The private `captain_photos` bucket uses signed URLs. Only signed-in officials can view photos; storage policies and a database trigger restrict photo changes to the captain who owns the account, including when an admin edits other profile fields.
+* The private `captain_photos` bucket uses signed URLs. Officials can view account photos; after the directory migration, anonymous visitors can view only approved directory photos. Storage policies and a database trigger restrict photo changes to the captain who owns the account.
 * Apply `supabase/migrations/20261019000000_captain_profile_pictures.sql` before deploying the frontend. It adds `users.profile_picture_path`, creates the bucket, and installs ownership checks. Existing accounts keep their initials until they upload a photo.
 * Replacement files use unique paths. A failed profile save removes the new upload; a successful replacement removes the old photo. Storage cleanup failures are logged without undoing a saved profile.
+
+### Public Captain Directory
+* Apply `20261019000000_captain_profile_pictures.sql` first, then `supabase/migrations/20261019010000_captain_public_directory.sql`, before deploying the directory frontend. No existing profile is automatically published.
+* Captains submit an official title, term dates, office address/hours, official phone/email, and biography in Profile Settings. Explicit consent is required. The database takes name, assigned barangay, and photo from the captain's account.
+* Admins open **User Management > Barangay Captains > Profile & Publication Review** to see private account details and compare the submission with the published version. They can approve, reject with a reason, or withdraw publication.
+* The public page is `/barangay-captains`, linked from the home page. It uses a narrowly scoped RPC returning approved official fields only, never personal phone, home address, emergency contacts, or account status.
+* New submissions retain the last approved public version until approval or withdrawal. Inactive, unverified, banned, or reassigned captains are omitted from public results.
+* Photos referenced by pending or published snapshots are retained by storage deletion policies. Unreferenced older files may need periodic administrator cleanup; the photo bucket remains private.
+* Deploy the SQL before the frontend. Verify with an anonymous session that drafts and private details are inaccessible, an unrelated captain cannot review/modify another submission, and only approved photo paths can be signed. The migration must be tested on your Supabase project before production use.
 
 ---
 
