@@ -57,9 +57,6 @@ export class ConfirmDialogComponent {
       <!-- Header (Now purely functional, visual title moved to pdf-content) -->
       <div mat-dialog-title class="pt-4 pb-2 px-6 sm:px-8 border-b-2 border-gray-900 m-0 bg-gray-50 sticky top-0 z-20 flex justify-between items-center gap-4 rounded-t-sm">
         <span class="text-sm font-black uppercase tracking-widest text-gray-500">Complaint Details</span>
-        <button mat-icon-button mat-dialog-close class="scale-90 text-gray-500 hover:text-gray-900 transition-colors">
-          <mat-icon>close</mat-icon>
-        </button>
       </div>
 
       <!-- Content -->

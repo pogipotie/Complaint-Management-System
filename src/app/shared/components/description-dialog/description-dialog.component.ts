@@ -2,7 +2,6 @@ import { Component, Inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
 
 export interface DescriptionDialogData {
   title: string;
@@ -12,7 +11,7 @@ export interface DescriptionDialogData {
 @Component({
   selector: 'app-description-dialog',
   standalone: true,
-  imports: [CommonModule, MatDialogModule, MatButtonModule, MatIconModule],
+  imports: [CommonModule, MatDialogModule, MatButtonModule],
   template: `
     <div class="border-4 border-gray-900 bg-white shadow-[8px_8px_0px_0px_rgba(17,24,39,1)] flex flex-col max-h-[90vh]">
       <!-- Header -->
@@ -23,9 +22,6 @@ export interface DescriptionDialogData {
           </h2>
           <p class="text-xs font-bold text-gray-800 uppercase tracking-widest mt-1 mb-0">{{ data.title }}</p>
         </div>
-        <button mat-icon-button (click)="dialogRef.close()" class="!border-2 !border-gray-900 bg-white hover:bg-gray-100 !rounded-sm !shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] hover:!translate-y-[1px] hover:!translate-x-[1px] hover:!shadow-[1px_1px_0px_0px_rgba(17,24,39,1)] transition-all">
-          <mat-icon class="text-gray-900">close</mat-icon>
-        </button>
       </div>
 
       <!-- Content -->

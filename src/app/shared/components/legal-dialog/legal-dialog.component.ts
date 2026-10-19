@@ -2,12 +2,11 @@ import { Component, Inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
 
 @Component({
   selector: 'app-legal-dialog',
   standalone: true,
-  imports: [CommonModule, MatDialogModule, MatButtonModule, MatIconModule],
+  imports: [CommonModule, MatDialogModule, MatButtonModule],
   template: `
     <div class="bg-white rounded-sm border-2 border-gray-900 shadow-[4px_4px_0px_0px_rgba(17,24,39,1)] flex flex-col h-full max-h-[85vh]">
       
@@ -16,9 +15,6 @@ import { MatIconModule } from '@angular/material/icon';
         <h2 class="text-xl sm:text-2xl font-black text-gray-900 uppercase tracking-tight m-0" style="font-family: 'Arial Black', Impact, sans-serif;">
           {{ data.type === 'privacy' ? 'Privacy Policy' : 'Terms of Service' }}
         </h2>
-        <button mat-icon-button mat-dialog-close class="scale-90 text-gray-500 hover:text-gray-900 transition-colors">
-          <mat-icon>close</mat-icon>
-        </button>
       </div>
 
       <!-- Content -->
