@@ -11,6 +11,7 @@ import { environment } from '../../../../environments/environment';
 import { SupabaseService } from '../../../core/services/supabase.service';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { addComplaintCanvasPages, waitForComplaintImages } from '../../../shared/complaint-pdf';
 
 // A simple modern confirmation dialog directly in this file to avoid creating new components
 @Component({
@@ -393,7 +394,7 @@ export class ConfirmDialogComponent {
     </div>
 
     <!-- Hidden Print Template for PDF Export -->
-    <div id="print-template" style="position: absolute; left: -9999px; top: 0; width: 800px; background: white; padding: 40px; font-family: Arial, sans-serif; color: black; z-index: -1;">
+    <div #printTemplate id="print-template" style="position: absolute; left: -9999px; top: 0; width: 800px; background: white; padding: 40px; font-family: Arial, sans-serif; color: black; z-index: -1;">
       <div style="border-bottom: 2px solid black; padding-bottom: 20px; margin-bottom: 20px;">
         <h1 style="font-size: 24px; font-weight: bold; margin: 0; text-transform: uppercase;">Official Complaint Record</h1>
         <p style="margin: 5px 0 0 0; color: #555;">Reference ID: {{ data.id.toUpperCase() }}</p>
@@ -488,6 +489,7 @@ export class ConfirmDialogComponent {
 })
 export class ComplaintDetailDialogComponent implements OnInit, AfterViewChecked {
   @ViewChild('commentsContainer') private commentsContainer!: ElementRef;
+  @ViewChild('printTemplate') private printTemplate!: ElementRef<HTMLElement>;
   
   mapCenter: google.maps.LatLngLiteral | null = null;
   mapLoaded = false;
@@ -760,13 +762,16 @@ export class ComplaintDetailDialogComponent implements OnInit, AfterViewChecked 
   }
 
   async exportToPDF() {
+    if (this.exportingPdf) return;
     this.exportingPdf = true;
-    
-    // Slight delay to ensure UI updates before capture
-    setTimeout(async () => {
       try {
-        const element = document.getElementById('print-template');
+        await this.loadSignedEvidence();
+        if (this.data.resolution_images?.length && !this.resolutionImageUrl) {
+          throw new Error('The AFTER photo could not be loaded. Please retry.');
+        }
+        const element = this.printTemplate?.nativeElement;
         if (!element) throw new Error('PDF print template element not found');
+        await waitForComplaintImages(element);
 
         // We use html2canvas to capture the styled HTML as an image
         const canvas = await html2canvas(element, {
@@ -776,8 +781,6 @@ export class ComplaintDetailDialogComponent implements OnInit, AfterViewChecked 
           backgroundColor: '#ffffff'
         });
 
-        const imgData = canvas.toDataURL('image/jpeg', 0.95);
-        
         // Calculate PDF dimensions based on A4 size
         const pdf = new jsPDF({
           orientation: 'portrait',
@@ -785,23 +788,17 @@ export class ComplaintDetailDialogComponent implements OnInit, AfterViewChecked 
           format: 'a4'
         });
 
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-
-        // Add the captured content
-        pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+        addComplaintCanvasPages(pdf, canvas);
 
         // Save the PDF
         const filename = `Complaint_${this.data.id ? this.data.id.substring(0,8) : 'Export'}.pdf`;
         pdf.save(filename);
       } catch (err) {
         console.error('Failed to export PDF', err);
-        // Fallback to simple browser print if canvas fails due to severe CORS
-        window.print();
+        alert('Could not export the complete complaint. Check that the BEFORE and AFTER photos load, then retry.');
       } finally {
         this.exportingPdf = false;
       }
-    }, 100);
   }
 
   loadGoogleMaps() {
