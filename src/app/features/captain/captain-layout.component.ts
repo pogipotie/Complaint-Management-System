@@ -330,6 +330,10 @@ export class CaptainLayoutComponent implements OnInit, OnDestroy {
     // Complaint-related system events must not be mistaken for account notices.
     if (note.complaint_id || note.complaint?.id) {
       this.router.navigate(['/captain/complaints']);
+    } else if (note.related_user_id) {
+      this.router.navigate(['/captain/users'], {
+        queryParams: { citizen: note.related_user_id }
+      });
     } else if (note.title.includes('Registration Resubmitted') || note.type === 'system') {
       this.router.navigate(['/captain/users']);
     } else {

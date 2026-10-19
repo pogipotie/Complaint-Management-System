@@ -58,6 +58,17 @@ describe('Captain notification navigation', () => {
     expect(navigate).toHaveBeenCalledWith(['/captain/users']);
   });
 
+  it('opens the citizen identified by a new registration notification', () => {
+    component.handleNotificationClick(note({ title: 'New Citizen Registration', related_user_id: 'citizen-id' }));
+    expect(navigate).toHaveBeenCalledWith(['/captain/users'], { queryParams: { citizen: 'citizen-id' } });
+    expect(markAsRead).toHaveBeenCalledWith('notification-id');
+  });
+
+  it('keeps complaint routing first even when a related user is present', () => {
+    component.handleNotificationClick(note({ complaint_id: 'complaint-id', related_user_id: 'citizen-id' }));
+    expect(navigate).toHaveBeenCalledWith(['/captain/complaints']);
+  });
+
   it('keeps other unlinked system notifications directed to users', () => {
     component.handleNotificationClick(note({ title: 'Account Banned' }));
     expect(navigate).toHaveBeenCalledWith(['/captain/users']);

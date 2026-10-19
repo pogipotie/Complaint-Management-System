@@ -1,4 +1,6 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SupabaseService } from '../../../core/services/supabase.service';
@@ -59,6 +61,7 @@ import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config
       <div *ngIf="loading" class="mb-4">
         <mat-progress-bar mode="indeterminate" color="primary"></mat-progress-bar>
       </div>
+      <p *ngIf="notificationError" role="alert" class="mb-4 p-4 border-2 border-red-700 bg-red-50 text-red-700">{{ notificationError }}</p>
 
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         <mat-card *ngFor="let user of paginatedUsers" class="!rounded-sm !border-2 !border-gray-900 !shadow-[4px_4px_0px_0px_rgba(17,24,39,1)] flex flex-col h-full">
@@ -174,9 +177,15 @@ import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config
     }
   `]
 })
-export class CaptainUsersComponent implements OnInit {
+export class CaptainUsersComponent implements OnInit, OnDestroy {
   private supabaseService = inject(SupabaseService);
   private dialog = inject(MatDialog);
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
+  private routeSubscription?: Subscription;
+  private targetCitizen: string | null = null;
+  private loaded = false;
+  notificationError = '';
 
   // Keep in sync with the register form's transient residency types
   private readonly TRANSIENT_RESIDENCY_TYPES = [
@@ -210,8 +219,15 @@ export class CaptainUsersComponent implements OnInit {
   currentPage = 0;
 
   ngOnInit() {
+    this.routeSubscription = this.route.queryParamMap.subscribe(params => {
+      this.targetCitizen = params.get('citizen');
+      this.notificationError = '';
+      if (this.targetCitizen && this.loaded) void this.loadUsers();
+    });
     this.loadUsers();
   }
+
+  ngOnDestroy() { this.routeSubscription?.unsubscribe(); }
 
   async loadUsers() {
     this.loading = true;
@@ -292,6 +308,29 @@ export class CaptainUsersComponent implements OnInit {
       console.error('Error fetching users', error);
     }
     this.loading = false;
+    this.loaded = true;
+    if (!error) this.openNotificationCitizen();
+  }
+
+  openNotificationCitizen() {
+    if (!this.targetCitizen) return;
+    const id = this.targetCitizen;
+    this.targetCitizen = null;
+    // Only records fetched through the captain's barangay filter may be opened.
+    const citizen = this.users.find(user => user.id === id);
+    if (citizen) {
+      this.statusFilter = 'all';
+      this.applyFilters();
+      this.currentPage = Math.floor(this.filteredUsers.indexOf(citizen) / this.pageSize);
+      this.updatePaginatedUsers();
+      this.viewUserDetails(citizen);
+    } else {
+      this.notificationError = 'This citizen is no longer available in your barangay.';
+    }
+    void this.router.navigate([], {
+      relativeTo: this.route, queryParams: { citizen: null },
+      queryParamsHandling: 'merge', replaceUrl: true
+    });
   }
 
   applyFilters() {

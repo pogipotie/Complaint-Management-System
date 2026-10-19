@@ -7,6 +7,7 @@ export interface Notification {
   id: string;
   user_id: string;
   complaint_id: string;
+  related_user_id?: string | null;
   type: string;
   title: string;
   body: string;
