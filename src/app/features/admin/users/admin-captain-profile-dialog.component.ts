@@ -11,7 +11,7 @@ import { CaptainAvatarComponent } from '../../../shared/components/captain-avata
   standalone: true,
   imports: [CommonModule, FormsModule, MatDialogModule, MatButtonModule, CaptainAvatarComponent],
   template: `
-    <h2 mat-dialog-title>Captain Profile & Publication Review</h2>
+    <h2 mat-dialog-title>Captain Profile</h2>
     <mat-dialog-content>
       <section class="border-2 border-gray-900 p-4 mb-4">
         <div class="flex items-center gap-4 mb-4">

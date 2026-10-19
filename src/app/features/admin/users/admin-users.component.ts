@@ -157,7 +157,7 @@ import { AdminCaptainProfileDialogComponent } from './admin-captain-profile-dial
 
           <div class="border-t-2 border-gray-900 bg-gray-50 p-4 flex flex-col gap-3 mt-auto">
             <button *ngIf="user.role === 'brgy_captain'" mat-stroked-button color="primary" (click)="viewCaptainProfile(user)">
-              <mat-icon>visibility</mat-icon> Profile & Publication Review
+              <mat-icon>visibility</mat-icon> Profile
             </button>
             <button *ngIf="user.role === 'citizen'" mat-stroked-button color="primary" class="w-full !rounded-sm !border-2 !border-gray-900 !shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] hover:!translate-y-[1px] hover:!translate-x-[1px] hover:!shadow-[1px_1px_0px_0px_rgba(17,24,39,1)] transition-all font-black uppercase tracking-wider" (click)="viewUserDetails(user)">
               <mat-icon>visibility</mat-icon> View Full Details
