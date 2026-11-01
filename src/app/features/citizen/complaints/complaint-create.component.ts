@@ -16,6 +16,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config';
+import { RealtimeChannel } from '@supabase/supabase-js';
 
 @Component({
   selector: 'app-complaint-create',
@@ -67,9 +68,10 @@ import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config
 
       <div *ngIf="!isVerified && verificationStatus === 'pending'" class="bg-yellow-50 border-2 border-gray-900 rounded-sm p-8 shadow-[4px_4px_0px_0px_rgba(17,24,39,1)] text-center">
         <mat-icon class="text-yellow-600 scale-[2] mb-4">gpp_maybe</mat-icon>
-        <h2 class="text-2xl font-black text-gray-900 uppercase tracking-tight" style="font-family: 'Arial Black', Impact, sans-serif;">Account Pending Verification</h2>
+        <h2 class="text-2xl font-black text-gray-900 uppercase tracking-tight" style="font-family: 'Arial Black', Impact, sans-serif;">Account Pending Approval</h2>
         <p class="mt-4 font-bold text-gray-700">Your account is currently <span class="text-yellow-700 uppercase tracking-wider">{{ verificationStatus }}</span>.</p>
-        <p class="mt-2 text-sm text-gray-600">The municipality admin must review your valid ID and proof of residency before you can submit official complaints. Please check back later.</p>
+        <p class="mt-2 text-sm text-gray-600">Your Barangay Captain must review and approve your account before you can submit complaints. You will receive an email once your account is approved.</p>
+        <button mat-button (click)="checkVerificationStatus()">Refresh Approval Status</button>
         <button mat-stroked-button routerLink="/citizen/community" class="mt-6 !rounded-sm !border-2 !border-gray-900 !shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] hover:!translate-y-[1px] hover:!translate-x-[1px] hover:!shadow-[1px_1px_0px_0px_rgba(17,24,39,1)] transition-all font-black uppercase tracking-wider">
           Return to Map
         </button>
@@ -637,6 +639,7 @@ export class ComplaintCreateComponent implements OnInit, OnDestroy {
 
   isVerified = false; // Assume false until checked
   verificationStatus = 'loading';
+  private approvalChannel: RealtimeChannel | null = null;
   rejectionReason = '';
 
   scriptElement: HTMLScriptElement | null = null;
@@ -674,12 +677,12 @@ export class ComplaintCreateComponent implements OnInit, OnDestroy {
     if (user) {
       const { data } = await this.supabaseService.supabase
         .from('users')
-        .select('verification_status, rejection_reason, barangay')
+        .select('verification_status, rejection_reason, barangay, is_active')
         .eq('id', user.id)
         .single();
       
       if (data) {
-        this.isVerified = data.verification_status === 'verified';
+        this.isVerified = data.verification_status === 'verified' && data.is_active;
         this.verificationStatus = data.verification_status;
         this.rejectionReason = data.rejection_reason;
         
@@ -694,6 +697,12 @@ export class ComplaintCreateComponent implements OnInit, OnDestroy {
       } else {
         this.isVerified = false;
         this.verificationStatus = 'pending';
+      }
+      if (!this.approvalChannel) {
+        this.approvalChannel = this.supabaseService.supabase.channel(`citizen-approval-${user.id}`)
+          .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'users', filter: `id=eq.${user.id}` },
+            () => { void this.checkVerificationStatus(); })
+          .subscribe();
       }
     } else {
       this.isVerified = false;
@@ -764,7 +773,9 @@ export class ComplaintCreateComponent implements OnInit, OnDestroy {
     }
   }
 
-  ngOnDestroy() {}
+  ngOnDestroy() {
+    if (this.approvalChannel) this.supabaseService.supabase.removeChannel(this.approvalChannel);
+  }
 
   loadGoogleMaps() {
 
@@ -1028,6 +1039,17 @@ export class ComplaintCreateComponent implements OnInit, OnDestroy {
 
   async onSubmit() {
     this.formSubmitted = true;
+    this.errorMsg = '';
+    try {
+      await this.checkVerificationStatus();
+    } catch {
+      this.errorMsg = 'Unable to verify account approval. Please try again.';
+      return;
+    }
+    if (!this.isVerified) {
+      this.errorMsg = 'Your account must be approved by your Barangay Captain before submitting complaints.';
+      return;
+    }
 
     if (this.complaintForm.invalid || !this.selectedFile) {
       // Form is invalid or missing the mandatory photo/video

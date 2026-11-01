@@ -29,8 +29,13 @@ export class NotificationsService {
   public unreadCount$ = this.unreadCountSubject.asObservable();
 
   private channel: RealtimeChannel | null = null;
+  private userId: string | null = null;
+  private generation = 0;
 
   async loadNotifications(userId: string) {
+    if (this.userId && this.userId !== userId) this.unsubscribe();
+    this.userId = userId;
+    const generation = this.generation;
     const existingIds = new Set(this.notificationsSubject.value.map(note => note.id));
     const { data, error } = await this.supabaseService.supabase
       .from('notifications')
@@ -39,7 +44,7 @@ export class NotificationsService {
       .order('created_at', { ascending: false })
       .limit(20);
 
-    if (!error && data) {
+    if (!error && data && this.userId === userId && this.generation === generation) {
       // Keep live inserts that arrived while the initial request was in flight.
       const liveNotifications = this.notificationsSubject.value.filter(note =>
         note.user_id === userId && !existingIds.has(note.id)
@@ -49,7 +54,10 @@ export class NotificationsService {
   }
 
   subscribeToNotifications(userId: string) {
-    if (this.channel) return;
+    if (this.channel && this.userId === userId) return;
+    if (this.userId && this.userId !== userId) this.unsubscribe();
+    this.userId = userId;
+    const generation = this.generation;
 
     this.channel = this.supabaseService.supabase.channel(`user-notifications-${userId}`)
       .on(
@@ -69,6 +77,7 @@ export class NotificationsService {
             .single();
 
           const newNotification = (data || payload.new) as Notification;
+          if (this.userId !== userId || this.generation !== generation) return;
           const current = this.notificationsSubject.value;
           this.publishNotifications([newNotification, ...current]);
         }
@@ -77,6 +86,9 @@ export class NotificationsService {
   }
 
   unsubscribe() {
+    this.generation++;
+    this.userId = null;
+    this.publishNotifications([]);
     if (this.channel) {
       this.supabaseService.supabase.removeChannel(this.channel);
       this.channel = null;

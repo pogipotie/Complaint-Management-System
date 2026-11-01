@@ -15,6 +15,9 @@ import { filter, takeUntil } from 'rxjs/operators';
 import { Subject, Observable } from 'rxjs';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { CaptainAvatarComponent } from '../../shared/components/captain-avatar.component';
+import { MobileNotificationControlComponent } from '../../shared/components/mobile-notification-control.component';
+import { MobileNotificationsService } from '../../core/services/mobile-notifications.service';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-captain-layout',
@@ -30,7 +33,8 @@ import { CaptainAvatarComponent } from '../../shared/components/captain-avatar.c
     MatButtonModule,
     MatMenuModule,
     MatBadgeModule,
-    CaptainAvatarComponent
+    CaptainAvatarComponent,
+    MobileNotificationControlComponent
   ],
   template: `
     <mat-sidenav-container class="h-screen w-full bg-gray-50">
@@ -101,6 +105,7 @@ import { CaptainAvatarComponent } from '../../shared/components/captain-avatar.c
             </button>
             
             <mat-menu #notificationMenu="matMenu" xPosition="before" class="notification-menu">
+              <app-mobile-notification-control></app-mobile-notification-control>
               <div class="px-4 py-3 border-b-2 border-gray-900 flex justify-between items-center bg-gray-50">
                 <h3 class="text-sm font-black text-gray-900 uppercase tracking-tight" style="font-family: 'Arial Black', Impact, sans-serif;">Notifications</h3>
                 <div class="flex gap-1">
@@ -256,6 +261,7 @@ export class CaptainLayoutComponent implements OnInit, OnDestroy {
   private breakpointObserver = inject(BreakpointObserver);
   private notificationsService = inject(NotificationsService);
   private supabaseService = inject(SupabaseService);
+  private mobileNotifications = inject(MobileNotificationsService);
   photoPath: string | null = null;
   fullName = '';
 
@@ -366,7 +372,13 @@ export class CaptainLayoutComponent implements OnInit, OnDestroy {
   }
 
   async logout() {
-    await this.authService.signOut();
-    this.router.navigate(['/']);
+    try {
+      await this.mobileNotifications.disable();
+      const result = await firstValueFrom(this.authService.signOut());
+      if (result.error) throw result.error;
+      this.router.navigate(['/']);
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Unable to sign out. Please try again.');
+    }
   }
 }

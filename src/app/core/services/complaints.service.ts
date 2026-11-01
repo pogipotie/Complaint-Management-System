@@ -18,6 +18,7 @@ export interface Complaint {
   evidence_paths?: string[];
   status?: string;
   created_at?: string;
+  resolved_at?: string | null;
 }
 
 @Injectable({

@@ -6,11 +6,14 @@ import { CaptainLayoutComponent } from './captain-layout.component';
 import { AuthService } from '../../core/services/auth.service';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { Notification, NotificationsService } from '../../core/services/notifications.service';
+import { MobileNotificationsService } from '../../core/services/mobile-notifications.service';
 
 describe('Captain notification navigation', () => {
   let component: CaptainLayoutComponent;
   let navigate: jasmine.Spy;
   let markAsRead: jasmine.Spy;
+  let signOut: jasmine.Spy;
+  let disable: jasmine.Spy;
 
   function note(overrides: Partial<Notification> = {}): Notification {
     return {
@@ -23,10 +26,13 @@ describe('Captain notification navigation', () => {
   beforeEach(() => {
     navigate = jasmine.createSpy('navigate');
     markAsRead = jasmine.createSpy('markAsRead');
+    signOut = jasmine.createSpy('signOut').and.returnValue(of({ error: null }));
+    disable = jasmine.createSpy('disable').and.resolveTo();
     TestBed.configureTestingModule({
       providers: [
         { provide: Router, useValue: { navigate } },
-        { provide: AuthService, useValue: {} },
+        { provide: AuthService, useValue: { signOut } },
+        { provide: MobileNotificationsService, useValue: { disable } },
         { provide: SupabaseService, useValue: {} },
         { provide: BreakpointObserver, useValue: {} },
         { provide: NotificationsService, useValue: {
@@ -78,5 +84,12 @@ describe('Captain notification navigation', () => {
     component.handleNotificationClick(note({ type: 'status_changed', is_read: true }));
     expect(navigate).toHaveBeenCalledWith(['/captain/complaints']);
     expect(markAsRead).not.toHaveBeenCalled();
+  });
+
+  it('disables current-device push and actually executes sign-out', async () => {
+    await component.logout();
+    expect(disable).toHaveBeenCalledTimes(1);
+    expect(signOut).toHaveBeenCalledTimes(1);
+    expect(navigate).toHaveBeenCalledWith(['/']);
   });
 });

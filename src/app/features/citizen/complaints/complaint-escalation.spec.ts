@@ -81,6 +81,22 @@ describe('Complaint escalation controls', () => {
     fixture.destroy();
   });
 
+  it('shows resolution time in both the details and PDF template', () => {
+    const { fixture, component } = create();
+    component.data.status = 'resolved';
+    component.data.resolved_at = '2026-11-02T07:45:12Z';
+    fixture.detectChanges();
+    const text = fixture.nativeElement.textContent as string;
+    expect(text.match(/Nov 2, 2026, 3:45:12 PM \(PHT\)/g)?.length).toBe(2);
+    component.data.resolved_at = null;
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Resolution date unavailable');
+    component.data.status = 'pending';
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).not.toContain('Resolved On');
+    fixture.destroy();
+  });
+
   it('disables escalation during the 24-hour waiting period and displays the date', async () => {
     eligibility.can_escalate = false;
     const { fixture, component } = create();

@@ -77,7 +77,7 @@ import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config
                     'bg-red-100 text-red-800': user.verification_status === 'rejected',
                     'bg-gray-800 text-white': user.verification_status === 'banned'
                   }">
-              {{ user.verification_status || 'pending' }}
+              {{ user.verification_status === 'verified' ? 'approved' : user.verification_status || 'pending' }}
             </span>
           </div>
 
@@ -126,7 +126,7 @@ import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config
             
             <div class="flex gap-3" *ngIf="user.verification_status !== 'verified' && user.verification_status !== 'banned'">
               <button mat-flat-button class="flex-1 !bg-green-500 hover:!bg-green-600 text-white !rounded-sm !border-2 !border-gray-900 !shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] hover:!translate-y-[1px] hover:!translate-x-[1px] hover:!shadow-[1px_1px_0px_0px_rgba(17,24,39,1)] transition-all font-black uppercase tracking-wider" (click)="updateStatus(user.id, 'verified')" [disabled]="processingId === user.id">
-                <mat-icon>check</mat-icon> Verify
+                <mat-icon>check</mat-icon> Approve
               </button>
               <button mat-flat-button color="warn" class="flex-1 !rounded-sm !border-2 !border-gray-900 !shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] hover:!translate-y-[1px] hover:!translate-x-[1px] hover:!shadow-[1px_1px_0px_0px_rgba(17,24,39,1)] transition-all font-black uppercase tracking-wider" (click)="viewUserDetails(user, 'reject')" [disabled]="processingId === user.id">
                 <mat-icon>close</mat-icon> Reject

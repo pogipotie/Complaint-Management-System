@@ -37,6 +37,7 @@ describe('NotificationsService ordering', () => {
     };
     const supabase = {
       channel: () => channel,
+      removeChannel: () => Promise.resolve('ok'),
       from: () => {
         let id = '';
         const query = {
@@ -121,5 +122,18 @@ describe('NotificationsService ordering', () => {
     expect(notifications[0].id).toBe('note-19');
     expect(notifications.some(item => item.id === 'old-event')).toBeFalse();
     expect(unreadCount).toBe(20);
+  });
+
+  it('clears notices on logout and ignores late detail requests from the previous account', async () => {
+    const older = note('previous-account', '2026-10-19T09:00:00Z');
+    const slow = deferred<{ data: Notification | null }>();
+    details.set(older.id, slow.promise);
+    const pending = onInsert({ new: older });
+    service.unsubscribe();
+    service.subscribeToNotifications('user-2');
+    slow.resolve({ data: older });
+    await pending;
+    expect(notifications).toEqual([]);
+    expect(unreadCount).toBe(0);
   });
 });

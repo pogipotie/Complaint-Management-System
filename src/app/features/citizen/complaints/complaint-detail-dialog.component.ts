@@ -12,6 +12,7 @@ import { SupabaseService } from '../../../core/services/supabase.service';
 import { ComplaintEscalationService, EscalationEligibility } from '../../../core/services/complaint-escalation.service';
 import { firstValueFrom } from 'rxjs';
 import { RealtimeChannel } from '@supabase/supabase-js';
+import { formatResolutionTime } from '../../../shared/complaint-resolution-time';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { addComplaintCanvasPages, waitForComplaintImages } from '../../../shared/complaint-pdf';
@@ -180,6 +181,13 @@ export class ConfirmDialogComponent {
               <p class="text-xs font-bold text-gray-900 flex items-center uppercase tracking-wider">
                 <mat-icon class="scale-75 text-gray-400 -ml-1 mr-1 shrink-0">calendar_today</mat-icon>
                 {{ data.created_at | date:'medium' }}
+              </p>
+            </div>
+            <div *ngIf="data.status === 'resolved'" class="sm:col-span-2">
+              <p class="text-[10px] text-green-700 font-black uppercase tracking-widest mb-1">Resolved On</p>
+              <p class="text-xs font-bold text-green-900 flex items-center">
+                <mat-icon class="scale-75 text-green-700 -ml-1 mr-1 shrink-0">check_circle</mat-icon>
+                {{ formatResolutionTime(data.resolved_at) }}
               </p>
             </div>
             <div>
@@ -465,6 +473,10 @@ export class ConfirmDialogComponent {
             <td style="font-weight: bold; padding: 5px 0;">Date Reported:</td>
             <td>{{ data.created_at | date:'medium' }}</td>
           </tr>
+          <tr *ngIf="data.status === 'resolved'">
+            <td style="font-weight: bold; padding: 5px 0;">Resolved On:</td>
+            <td>{{ formatResolutionTime(data.resolved_at) }}</td>
+          </tr>
           <tr>
             <td style="font-weight: bold; padding: 5px 0;">Category:</td>
             <td>{{ data.custom_category || data.complaint_categories?.name || 'Uncategorized' }}</td>
@@ -533,6 +545,7 @@ export class ConfirmDialogComponent {
   `]
 })
 export class ComplaintDetailDialogComponent implements OnInit, OnDestroy, AfterViewChecked {
+  readonly formatResolutionTime = formatResolutionTime;
   @ViewChild('commentsContainer') private commentsContainer!: ElementRef;
   @ViewChild('printTemplate') private printTemplate!: ElementRef<HTMLElement>;
   

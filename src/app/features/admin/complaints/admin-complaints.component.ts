@@ -20,6 +20,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { ComplaintDetailDialogComponent } from '../../citizen/complaints/complaint-detail-dialog.component';
 import { AdminStatusUpdateDialogComponent } from './admin-status-update-dialog.component';
 import { DescriptionDialogComponent } from '../../../shared/components/description-dialog/description-dialog.component';
+import { resolutionCsvValue } from '../../../shared/complaint-resolution-time';
 
 @Component({
   selector: 'app-admin-complaints',
@@ -478,7 +479,8 @@ export class AdminComplaintsComponent implements OnInit, OnDestroy {
       'Barangay',
       'Priority',
       'Status',
-      'Date Reported'
+      'Date Reported',
+      'Resolved On (PHT)'
     ];
 
     // Map the data rows
@@ -492,7 +494,8 @@ export class AdminComplaintsComponent implements OnInit, OnDestroy {
         `"${(complaint.barangay || '').replace(/"/g, '""')}"`,
         `"${(complaint.priority || '').toUpperCase()}"`,
         `"${(complaint.status || '').toUpperCase().replace(/_/g, ' ')}"`,
-        `"${new Date(complaint.created_at).toLocaleString()}"`
+        `"${new Date(complaint.created_at).toLocaleString()}"`,
+        `"${resolutionCsvValue(complaint)}"`
       ].join(',');
     });
 
@@ -546,14 +549,16 @@ export class AdminComplaintsComponent implements OnInit, OnDestroy {
           }
         }
 
-        const { error } = await this.supabaseService.supabase
+        const { data: updatedComplaint, error } = await this.supabaseService.supabase
           .from('complaints')
           .update({ 
             status: newStatus, 
             resolution_notes: result.note,
             resolution_images: uploadedPaths
           })
-          .eq('id', complaint.id);
+          .eq('id', complaint.id)
+          .select('resolved_at')
+          .single();
 
         // Create an internal comment for the status update note if provided
         if (!error && result.note && result.note.trim() !== '') {
@@ -575,6 +580,7 @@ export class AdminComplaintsComponent implements OnInit, OnDestroy {
           complaint.status = oldStatus;
         } else {
           complaint.status = newStatus;
+          complaint.resolved_at = updatedComplaint?.resolved_at ?? null;
           complaint.resolution_notes = result.note;
           complaint.resolution_images = uploadedPaths;
           selectElement.value = newStatus;
