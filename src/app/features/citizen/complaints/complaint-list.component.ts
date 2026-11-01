@@ -79,6 +79,9 @@ import { ComplaintDeleteDialogComponent } from './complaint-delete-dialog.compon
 
               <!-- Content Body -->
               <div class="p-6 flex-1 flex flex-col">
+                <span *ngIf="complaint.is_escalated" class="self-start mb-3 px-2 py-1 text-[10px] font-black uppercase tracking-wider border-2 border-red-900 bg-red-100 text-red-900 rounded-sm">
+                  Escalated to Admin
+                </span>
                 <div class="flex items-start gap-4 mb-4">
                   <div class="bg-primary-100 border-2 border-gray-900 text-primary-900 rounded-full flex items-center justify-center h-12 w-12 shrink-0">
                     <mat-icon>{{ getCategoryIcon(complaint.complaint_categories?.name) }}</mat-icon>

@@ -192,7 +192,7 @@ import { LegalDialogComponent } from '../../shared/components/legal-dialog/legal
           </p>
           <div class="flex gap-4 text-sm text-gray-400">
             <button (click)="openLegal('privacy')" class="hover:text-white transition-colors bg-transparent border-none p-0 cursor-pointer">Privacy Policy</button>
-            <button (click)="openLegal('terms')" class="hover:text-white transition-colors bg-transparent border-none p-0 cursor-pointer">Terms of Service</button>
+            <button (click)="openLegal('terms')" class="hover:text-white transition-colors bg-transparent border-none p-0 cursor-pointer">User Agreement</button>
             <a href="mailto:support@municipality.gov.ph" class="hover:text-white transition-colors">Contact Us</a>
           </div>
         </div>

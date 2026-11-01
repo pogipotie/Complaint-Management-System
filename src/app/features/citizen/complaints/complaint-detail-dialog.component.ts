@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit, ViewChild, ElementRef, AfterViewChecked, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, Inject, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewChecked, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef, MatDialog } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
@@ -9,6 +9,9 @@ import { FormsModule } from '@angular/forms';
 import { GoogleMap, MapMarker } from '@angular/google-maps';
 import { environment } from '../../../../environments/environment';
 import { SupabaseService } from '../../../core/services/supabase.service';
+import { ComplaintEscalationService, EscalationEligibility } from '../../../core/services/complaint-escalation.service';
+import { firstValueFrom } from 'rxjs';
+import { RealtimeChannel } from '@supabase/supabase-js';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { addComplaintCanvasPages, waitForComplaintImages } from '../../../shared/complaint-pdf';
@@ -17,7 +20,7 @@ import { addComplaintCanvasPages, waitForComplaintImages } from '../../../shared
 @Component({
   selector: 'app-confirm-dialog',
   standalone: true,
-  imports: [CommonModule, MatDialogModule, MatButtonModule, MatIconModule],
+  imports: [CommonModule, FormsModule, MatDialogModule, MatButtonModule, MatIconModule, MatInputModule, MatFormFieldModule],
   template: `
     <div class="bg-white rounded-sm border-2 border-gray-900 shadow-[4px_4px_0px_0px_rgba(17,24,39,1)]">
       <div class="pt-6 pb-4 px-6 border-b-2 border-gray-900 bg-red-50 flex items-center gap-3">
@@ -26,16 +29,27 @@ import { addComplaintCanvasPages, waitForComplaintImages } from '../../../shared
       </div>
       <mat-dialog-content class="!p-6 !py-8">
         <p class="text-sm font-bold text-gray-700 uppercase tracking-wider leading-relaxed">{{ data.message }}</p>
+        <mat-form-field *ngIf="data.requireReason" appearance="outline" class="w-full mt-4">
+          <mat-label>Reason for Escalation</mat-label>
+          <textarea matInput [(ngModel)]="reason" rows="4" required minlength="10" maxlength="2000"
+            placeholder="Explain why the complaint needs administrator attention."></textarea>
+          <mat-hint>10-2000 characters. This reason will be shared with the admin and captain.</mat-hint>
+        </mat-form-field>
       </mat-dialog-content>
       <mat-dialog-actions align="end" class="!px-6 !pb-6 !pt-4 border-t-2 border-gray-900 m-0 bg-gray-50 gap-3">
-        <button mat-flat-button mat-dialog-close color="primary" class="!px-6 !rounded-sm !border-2 !border-gray-900 !shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] hover:!translate-y-[1px] hover:!translate-x-[1px] hover:!shadow-[1px_1px_0px_0px_rgba(17,24,39,1)] transition-all font-black uppercase tracking-wider text-[11px] !bg-gray-200 !text-gray-900">Cancel</button>
-        <button mat-flat-button [mat-dialog-close]="true" color="warn" class="!px-6 !rounded-sm !border-2 !border-gray-900 !shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] hover:!translate-y-[1px] hover:!translate-x-[1px] hover:!shadow-[1px_1px_0px_0px_rgba(17,24,39,1)] transition-all font-black uppercase tracking-wider text-[11px]">{{ data.confirmText }}</button>
+        <button mat-flat-button mat-dialog-close color="primary" class="!px-6 !rounded-sm !border-2 !border-gray-900 !shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] hover:!translate-y-[1px] hover:!translate-x-[1px] hover:!shadow-[1px_1px_0px_0px_rgba(17,24,39,1)] transition-all font-black uppercase tracking-wider text-[11px] !bg-gray-200 !text-gray-900">Close</button>
+        <button mat-flat-button [mat-dialog-close]="data.requireReason ? reason.trim() : true"
+          [disabled]="data.requireReason && (reason.trim().length < 10 || reason.trim().length > 2000)"
+          color="warn" class="!px-6 !rounded-sm !border-2 !border-gray-900 !shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] hover:!translate-y-[1px] hover:!translate-x-[1px] hover:!shadow-[1px_1px_0px_0px_rgba(17,24,39,1)] transition-all font-black uppercase tracking-wider text-[11px]">{{ data.confirmText }}</button>
       </mat-dialog-actions>
     </div>
   `
 })
 export class ConfirmDialogComponent {
-  constructor(@Inject(MAT_DIALOG_DATA) public data: { title: string, message: string, confirmText: string }) {}
+  reason = '';
+  constructor(@Inject(MAT_DIALOG_DATA) public data: {
+    title: string, message: string, confirmText: string, requireReason?: boolean
+  }) {}
 }
 
 @Component({
@@ -227,6 +241,15 @@ export class ConfirmDialogComponent {
           </div>
 
           <!-- Admin Resolution Notes (if any) -->
+          <div *ngIf="data.is_escalated && data.escalation_reason" class="bg-red-50 border-2 border-red-900 p-5 rounded-sm">
+            <h4 class="text-sm font-black text-red-900 uppercase tracking-tight mb-2">Escalation Record</h4>
+            <p class="text-xs text-red-900 mb-2">
+              Escalated by {{ data.escalated_by_role === 'citizen' ? 'Citizen' : 'Barangay Captain' }}
+              on {{ data.escalated_at | date:'medium' }}.
+            </p>
+            <p class="text-sm text-gray-800 whitespace-pre-wrap">{{ data.escalation_reason }}</p>
+          </div>
+
           <div *ngIf="data.resolution_notes" class="bg-green-50 border-2 border-green-600 p-5 rounded-sm shadow-[2px_2px_0px_0px_rgba(17,24,39,1)]">
             <h4 class="text-sm font-black text-green-900 mb-2 uppercase tracking-tight flex items-center" style="font-family: 'Arial Black', Impact, sans-serif;">
               <mat-icon class="scale-75 mr-1 -ml-1 text-green-600">check_circle</mat-icon>
@@ -334,7 +357,7 @@ export class ConfirmDialogComponent {
                       <mat-icon class="text-gray-500 mt-0.5">info</mat-icon>
                       <div class="flex-1">
                         <div class="flex items-center justify-between mb-1">
-                          <span class="text-[10px] font-black uppercase tracking-widest text-gray-700">{{ comment.user_full_name || 'System' }} ({{ comment.user_role === 'brgy_captain' ? 'Captain' : 'Admin' }})</span>
+                          <span class="text-[10px] font-black uppercase tracking-widest text-gray-700">{{ comment.user_full_name || 'System' }} ({{ comment.user_role === 'citizen' ? 'Citizen' : (comment.user_role === 'brgy_captain' ? 'Captain' : 'Admin') }})</span>
                           <span class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{{ comment.created_at | date:'short' }}</span>
                         </div>
                         <div class="text-xs font-bold uppercase tracking-wider text-gray-800 whitespace-pre-wrap leading-relaxed">
@@ -374,12 +397,32 @@ export class ConfirmDialogComponent {
           </div>
 
         </div>
+        <div *ngIf="isCitizen && currentRole === 'citizen' && isOpenComplaint && !data.is_escalated"
+          class="mt-6 p-4 border-2 border-amber-700 bg-amber-50 rounded-sm space-y-2">
+          <h4 class="text-sm font-black uppercase text-amber-900">Need Admin Assistance?</h4>
+          <p class="text-sm text-amber-900">
+            You can escalate after 24 hours without a captain status change or discussion response.
+            Each captain action restarts this waiting period.
+          </p>
+          <p *ngIf="loadingEligibility" class="text-sm">Checking eligibility...</p>
+          <p *ngIf="eligibility && !eligibility.can_escalate" class="text-sm font-bold text-amber-900">
+            Available on {{ eligibility.eligible_at | date:'medium' }} if no further captain action is taken.
+          </p>
+          <p *ngIf="eligibility?.can_escalate" class="text-sm font-bold text-amber-900">
+            No captain action in the last 24 hours. You may now escalate this complaint.
+          </p>
+          <button mat-button (click)="refreshEscalationEligibility()" [disabled]="loadingEligibility || escalating">
+            Refresh Eligibility
+          </button>
+        </div>
+        <p *ngIf="escalationError" role="alert" class="mt-4 text-sm text-red-700">{{ escalationError }}</p>
+        <p *ngIf="escalationSuccess" role="status" class="mt-4 text-sm text-green-800">{{ escalationSuccess }}</p>
       </mat-dialog-content>
 
       <!-- Actions -->
       <mat-dialog-actions align="end" class="!px-6 sm:!px-8 !pb-6 !pt-4 border-t-2 border-gray-900 m-0 bg-gray-50 rounded-b-sm flex-wrap gap-2">
         
-        <button *ngIf="!isCitizen && !data.is_escalated && currentRole === 'brgy_captain' && data.status !== 'resolved' && data.status !== 'rejected'" mat-flat-button color="warn" class="h-10 px-4 mr-auto font-black uppercase tracking-wider text-[10px] !rounded-sm !border-2 !border-gray-900 !shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] hover:!translate-y-[1px] hover:!translate-x-[1px] hover:!shadow-[1px_1px_0px_0px_rgba(17,24,39,1)] transition-all" (click)="escalateComplaint()" [disabled]="escalating">
+        <button *ngIf="showEscalationAction" mat-flat-button color="warn" class="h-10 px-4 mr-auto font-black uppercase tracking-wider text-[10px] !rounded-sm !border-2 !border-gray-900 !shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] hover:!translate-y-[1px] hover:!translate-x-[1px] hover:!shadow-[1px_1px_0px_0px_rgba(17,24,39,1)] transition-all" (click)="escalateComplaint()" [disabled]="escalating || loadingEligibility || !eligibility?.can_escalate">
           <mat-icon>whatshot</mat-icon>
           {{ escalating ? 'Escalating...' : 'Escalate to Admin' }}
         </button>
@@ -406,6 +449,8 @@ export class ConfirmDialogComponent {
           <p style="margin: 0; font-size: 14px;"><strong>Status:</strong> {{ data.status.replace('_', ' ').toUpperCase() }}</p>
           <p style="margin: 5px 0 0 0; font-size: 14px;"><strong>Priority:</strong> {{ data.priority.toUpperCase() }}</p>
           <p *ngIf="data.is_escalated" style="margin: 5px 0 0 0; font-size: 14px; color: red;"><strong>ESCALATED TO ADMIN</strong></p>
+          <p *ngIf="data.escalation_reason" style="font-size: 14px; white-space: pre-wrap;"><strong>Escalation reason:</strong> {{ data.escalation_reason }}</p>
+          <p *ngIf="data.escalated_at" style="font-size: 14px;"><strong>Escalated by:</strong> {{ data.escalated_by_role === 'citizen' ? 'Citizen' : 'Barangay Captain' }} on {{ data.escalated_at | date:'medium' }}</p>
         </div>
       </div>
 
@@ -487,7 +532,7 @@ export class ConfirmDialogComponent {
     }
   `]
 })
-export class ComplaintDetailDialogComponent implements OnInit, AfterViewChecked {
+export class ComplaintDetailDialogComponent implements OnInit, OnDestroy, AfterViewChecked {
   @ViewChild('commentsContainer') private commentsContainer!: ElementRef;
   @ViewChild('printTemplate') private printTemplate!: ElementRef<HTMLElement>;
   
@@ -513,6 +558,13 @@ export class ComplaintDetailDialogComponent implements OnInit, AfterViewChecked 
   exportingPdf = false;
   escalating = false;
   currentRole: string | null = null;
+  eligibility: EscalationEligibility | null = null;
+  loadingEligibility = false;
+  escalationError = '';
+  escalationSuccess = '';
+  private eligibilityTimer?: ReturnType<typeof setInterval>;
+  private commentsChannel?: RealtimeChannel;
+  private destroyed = false;
 
   // Signed URLs for the bucket (resolved in ngOnInit)
   evidenceImageUrl: string | null = null;
@@ -525,6 +577,7 @@ export class ComplaintDetailDialogComponent implements OnInit, AfterViewChecked 
   private supabaseService = inject(SupabaseService);
   private dialog = inject(MatDialog);
   private cdr = inject(ChangeDetectorRef);
+  private escalationService = inject(ComplaintEscalationService);
 
   constructor(
     public dialogRef: MatDialogRef<ComplaintDetailDialogComponent>,
@@ -544,6 +597,7 @@ export class ComplaintDetailDialogComponent implements OnInit, AfterViewChecked 
     }
 
     const { data: { user } } = await this.supabaseService.supabase.auth.getUser();
+    if (this.destroyed) return;
     if (user) {
       this.currentUserId = user.id;
       // Determine if the current user is the citizen who created it
@@ -561,10 +615,20 @@ export class ComplaintDetailDialogComponent implements OnInit, AfterViewChecked 
       }
     }
 
+    if (this.destroyed) return;
+    if (this.showEscalationAction) {
+      await this.refreshEscalationEligibility();
+      if (this.destroyed) return;
+      this.eligibilityTimer = setInterval(() => {
+        if (!this.escalating && this.showEscalationAction) this.refreshEscalationEligibility();
+      }, 60000);
+    }
+
     // Resolve all evidence references to signed URLs (the bucket is private).
     // Runs in parallel; gracefully degrades if a file is missing or forbidden.
     await this.loadSignedEvidence();
 
+    if (this.destroyed) return;
     this.loadComments();
     this.subscribeToComments();
   }
@@ -592,7 +656,7 @@ export class ComplaintDetailDialogComponent implements OnInit, AfterViewChecked 
       this.resolutionImageUrl = url;
     }
 
-    this.cdr.detectChanges();
+    if (!this.destroyed) this.cdr.detectChanges();
   }
 
   ngAfterViewChecked() {
@@ -628,11 +692,12 @@ export class ComplaintDetailDialogComponent implements OnInit, AfterViewChecked 
   }
 
   subscribeToComments() {
-    this.supabaseService.supabase.channel(`comments-${this.data.id}`)
+    this.commentsChannel = this.supabaseService.supabase.channel(`comments-${this.data.id}`)
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'complaint_comments', filter: `complaint_id=eq.${this.data.id}` },
         async (payload: any) => {
+          if (this.destroyed) return;
           // Fetch user info for the new comment
           const { data: userData } = await this.supabaseService.supabase
             .from('users')
@@ -645,6 +710,7 @@ export class ComplaintDetailDialogComponent implements OnInit, AfterViewChecked 
             user_full_name: userData?.full_name,
             user_role: userData?.role
           };
+          if (this.destroyed) return;
           
           // Only add if we don't already have it (optimistic update might have added it)
           if (!this.comments.find(c => c.id === newComment.id)) {
@@ -652,6 +718,7 @@ export class ComplaintDetailDialogComponent implements OnInit, AfterViewChecked 
             this.shouldScrollToBottom = true;
             this.cdr.detectChanges(); // Force UI update for realtime event
           }
+          if (this.showEscalationAction) await this.refreshEscalationEligibility();
         }
       )
       .subscribe();
@@ -687,52 +754,84 @@ export class ComplaintDetailDialogComponent implements OnInit, AfterViewChecked 
     this.postingComment = false;
   }
 
-  async escalateComplaint() {
-    if (this.data.status === 'resolved' || this.data.status === 'rejected') {
-      alert('Cannot escalate a complaint that is already resolved or rejected.');
-      return;
+  get isOpenComplaint(): boolean {
+    return this.data.status === 'pending' || this.data.status === 'assigned';
+  }
+
+  get showEscalationAction(): boolean {
+    return this.isOpenComplaint && !this.data.is_escalated && (
+      (this.currentRole === 'citizen' && this.isCitizen && this.currentUserId === this.data.created_by)
+      || this.currentRole === 'brgy_captain'
+    );
+  }
+
+  async refreshEscalationEligibility() {
+    if (this.loadingEligibility || this.destroyed) return;
+    this.loadingEligibility = true;
+    if (this.escalationError === 'Could not check escalation eligibility. Please refresh and try again.') {
+      this.escalationError = '';
     }
+    try {
+      const eligibility = await this.escalationService.eligibility(this.data.id);
+      if (this.destroyed) return;
+      this.eligibility = eligibility;
+      const { can_escalate, eligible_at, server_now, ...record } = eligibility;
+      Object.assign(this.data, record);
+    } catch {
+      this.eligibility = null;
+      this.escalationError = 'Could not check escalation eligibility. Please refresh and try again.';
+    } finally {
+      this.loadingEligibility = false;
+      if (!this.destroyed) this.cdr.detectChanges();
+    }
+  }
 
-    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      width: '90vw',
-      maxWidth: '400px',
-      panelClass: 'modern-dialog',
-      data: {
-        title: 'Confirm Escalation',
-        message: 'Are you sure you want to escalate this complaint to the Municipal Admin? This should be used for issues requiring municipal resources.',
-        confirmText: 'Yes, Escalate'
-      }
-    });
-
-    dialogRef.afterClosed().subscribe(async (result) => {
-      if (result) {
-        this.escalating = true;
-        const { error } = await this.supabaseService.supabase
-          .from('complaints')
-          .update({ is_escalated: true })
-          .eq('id', this.data.id);
-
-        if (error) {
-          alert('Failed to escalate complaint: ' + error.message);
-        } else {
-          this.data.is_escalated = true;
-          
-          // Note: The system notification to Admins is now handled automatically by a secure database trigger (on_complaint_escalation)
-          // so we don't need to insert it manually from the frontend.
-
-          // Insert an automatic comment noting the escalation
-          if (this.currentUserId) {
-            await this.supabaseService.supabase.from('complaint_comments').insert({
-              complaint_id: this.data.id,
-              user_id: this.currentUserId,
-              body: 'Complaint escalated to Municipal Admin for assistance.',
-              is_internal: true
-            });
-          }
+  async escalateComplaint() {
+    if (this.escalating || this.loadingEligibility || !this.showEscalationAction) return;
+    this.escalating = true;
+    this.escalationError = '';
+    this.escalationSuccess = '';
+    try {
+      await this.refreshEscalationEligibility();
+      if (!this.eligibility?.can_escalate || this.destroyed) return;
+      const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+        width: '90vw',
+        maxWidth: '500px',
+        panelClass: 'modern-dialog',
+        data: {
+          title: 'Escalate to Admin',
+          message: this.isCitizen
+            ? 'No captain action has been recorded for 24 hours. Explain why you need municipal administrator assistance. The captain will also be notified.'
+            : 'Refer this complaint to the Municipal Admin for issues requiring municipal assistance.',
+          confirmText: 'Escalate',
+          requireReason: true
         }
-        this.escalating = false;
+      });
+      const reason = await firstValueFrom(dialogRef.afterClosed());
+      if (typeof reason !== 'string' || reason.trim().length < 10 || reason.trim().length > 2000 || this.destroyed) return;
+      const record = await this.escalationService.escalate(this.data.id, reason);
+      if (this.destroyed) return;
+      Object.assign(this.data, record);
+      this.escalationSuccess = 'Your complaint has been escalated to the Municipal Admin.';
+      try {
+        await this.loadComments();
+      } catch (error) {
+        // The referral is already committed; a chat refresh failure is not a failed escalation.
+        console.error('Could not refresh comments after escalation', error);
       }
-    });
+    } catch (error: any) {
+      this.escalationError = error.message || 'Could not escalate the complaint. Please try again.';
+      await this.refreshEscalationEligibility();
+    } finally {
+      this.escalating = false;
+      if (!this.destroyed) this.cdr.detectChanges();
+    }
+  }
+
+  ngOnDestroy() {
+    this.destroyed = true;
+    if (this.eligibilityTimer) clearInterval(this.eligibilityTimer);
+    if (this.commentsChannel) this.supabaseService.supabase.removeChannel(this.commentsChannel);
   }
 
   setRating(rating: number) {

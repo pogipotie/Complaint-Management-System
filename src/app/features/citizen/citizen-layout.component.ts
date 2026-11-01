@@ -203,7 +203,7 @@ import { Observable } from 'rxjs';
           <p class="text-sm text-gray-500">© 2026 Municipality Portal. All rights reserved.</p>
           <div class="flex space-x-4 mt-4 sm:mt-0">
             <button (click)="openLegal('privacy')" class="text-gray-400 hover:text-gray-500 bg-transparent border-none p-0 cursor-pointer">Privacy Policy</button>
-            <button (click)="openLegal('terms')" class="text-gray-400 hover:text-gray-500 bg-transparent border-none p-0 cursor-pointer">Terms of Service</button>
+            <button (click)="openLegal('terms')" class="text-gray-400 hover:text-gray-500 bg-transparent border-none p-0 cursor-pointer">User Agreement</button>
           </div>
         </div>
       </footer>

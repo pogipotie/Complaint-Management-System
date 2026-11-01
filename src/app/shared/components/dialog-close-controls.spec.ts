@@ -46,11 +46,12 @@ describe('Dialog close controls', () => {
   });
 
   for (const type of ['privacy', 'terms'] as const) {
-    it(`keeps the ${type} acknowledgment functional without a duplicate X`, async () => {
+    it(`keeps the ${type} Close button functional without a duplicate X`, async () => {
       const ref = dialog.open(LegalDialogComponent, { data: { type } });
       ref.componentRef!.changeDetectorRef.detectChanges();
       const close = spyOn(ref, 'close').and.callThrough();
-      assertSingleDismissButton('I Understand').click();
+      assertSingleDismissButton('Close').click();
+      expect(overlay.textContent).toContain(type === 'terms' ? 'User Agreement' : 'Privacy Policy');
       expect(close).toHaveBeenCalledTimes(1);
     });
   }

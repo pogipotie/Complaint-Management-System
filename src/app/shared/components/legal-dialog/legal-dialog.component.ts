@@ -13,7 +13,7 @@ import { MatButtonModule } from '@angular/material/button';
       <!-- Header -->
       <div mat-dialog-title class="pt-6 pb-4 px-6 sm:px-8 border-b-2 border-gray-900 m-0 bg-gray-50 flex justify-between items-center gap-4 shrink-0">
         <h2 class="text-xl sm:text-2xl font-black text-gray-900 uppercase tracking-tight m-0" style="font-family: 'Arial Black', Impact, sans-serif;">
-          {{ data.type === 'privacy' ? 'Privacy Policy' : 'Terms of Service' }}
+          {{ data.type === 'privacy' ? 'Privacy Policy' : 'User Agreement' }}
         </h2>
       </div>
 
@@ -63,13 +63,13 @@ import { MatButtonModule } from '@angular/material/button';
         </div>
 
 
-        <!-- TERMS OF SERVICE -->
+        <!-- USER AGREEMENT -->
         <div *ngIf="data.type === 'terms'" class="space-y-6 text-gray-800 text-sm leading-relaxed font-medium">
           <p class="font-bold text-xs uppercase tracking-widest text-gray-500 mb-4">Last Updated: July 2026</p>
           
           <div>
             <h3 class="text-base font-black text-gray-900 uppercase tracking-tight mb-2">1. Acceptance of Terms</h3>
-            <p>By registering and using the Municipal Complaint Registration and Management System (CRMS), you agree to comply with and be bound by these Terms of Service. This platform is provided by the Local Government Unit (LGU) exclusively for its residents.</p>
+            <p>By registering and using the Municipal Complaint Registration and Management System (CRMS), you agree to comply with and be bound by this User Agreement. This platform is provided by the Local Government Unit (LGU) exclusively for its residents.</p>
           </div>
 
           <div>
@@ -102,7 +102,7 @@ import { MatButtonModule } from '@angular/material/button';
 
       <!-- Footer -->
       <mat-dialog-actions align="end" class="!px-6 sm:!px-8 !py-4 border-t-2 border-gray-900 m-0 bg-gray-50 shrink-0">
-        <button mat-flat-button mat-dialog-close color="primary" class="!px-8 !rounded-sm !border-2 !border-gray-900 !shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] hover:!translate-y-[1px] hover:!translate-x-[1px] hover:!shadow-[1px_1px_0px_0px_rgba(17,24,39,1)] transition-all font-black uppercase tracking-wider text-[11px]">I Understand</button>
+        <button mat-flat-button mat-dialog-close color="primary" class="!px-8 !rounded-sm !border-2 !border-gray-900 !shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] hover:!translate-y-[1px] hover:!translate-x-[1px] hover:!shadow-[1px_1px_0px_0px_rgba(17,24,39,1)] transition-all font-black uppercase tracking-wider text-[11px]">Close</button>
       </mat-dialog-actions>
     </div>
   `,

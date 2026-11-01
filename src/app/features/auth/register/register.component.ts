@@ -18,6 +18,8 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { LegalDialogComponent } from '../../../shared/components/legal-dialog/legal-dialog.component';
 import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config';
 
 @Component({
@@ -39,7 +41,8 @@ import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config
     MatDatepickerModule,
     MatNativeDateModule,
     MatDividerModule,
-    MatAutocompleteModule
+    MatAutocompleteModule,
+    MatDialogModule
   ],
   template: `
     <div class="min-h-screen bg-gray-50 flex flex-col lg:flex-row">
@@ -185,6 +188,25 @@ import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config
                   <mat-error *ngIf="registerForm.get('password')?.hasError('required')">Password is required</mat-error>
                   <mat-error *ngIf="registerForm.get('password')?.hasError('minlength')">Must be at least 6 characters</mat-error>
                 </mat-form-field>
+              </div>
+              <div class="mt-2 p-4 bg-primary-50 border-2 border-gray-900 rounded-sm space-y-2">
+                <mat-checkbox formControlName="accepted_policies" color="primary"
+                  aria-describedby="registration-agreement-help">
+                  I have read and agree to the User Agreement and Privacy Policy.
+                </mat-checkbox>
+                <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+                  <span class="text-gray-600">Read:</span>
+                  <button type="button" (click)="openLegal('terms')" class="text-primary-700 font-bold underline underline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-600">User Agreement</button>
+                  <span class="text-gray-600">and</span>
+                  <button type="button" (click)="openLegal('privacy')" class="text-primary-700 font-bold underline underline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-600">Privacy Policy</button>
+                </div>
+                <p id="registration-agreement-help" class="text-xs text-gray-600">
+                  You must check the box before continuing with registration.
+                </p>
+                <p role="alert" class="text-sm text-red-600"
+                  *ngIf="registerForm.get('accepted_policies')?.touched && !hasAcceptedPolicies">
+                  Please agree to the User Agreement and Privacy Policy to continue.
+                </p>
               </div>
             </div>
 
@@ -515,16 +537,16 @@ import { MUNICIPALITY_CONFIG } from '../../../core/constants/municipality.config
             </button>
             <div *ngIf="currentStep === 1 || currentStep === 4"></div> <!-- Spacer -->
 
-            <button *ngIf="currentStep < 3" type="button" mat-flat-button color="primary" (click)="nextStep()" class="!px-8 !rounded-sm !border-2 !border-gray-900 !shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] hover:!translate-y-[1px] hover:!translate-x-[1px] hover:!shadow-[1px_1px_0px_0px_rgba(17,24,39,1)] transition-all font-black uppercase tracking-wider">
+            <button *ngIf="currentStep < 3" type="button" mat-flat-button color="primary" (click)="nextStep()" [disabled]="loading || !hasAcceptedPolicies" class="!px-8 !rounded-sm !border-2 !border-gray-900 !shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] hover:!translate-y-[1px] hover:!translate-x-[1px] hover:!shadow-[1px_1px_0px_0px_rgba(17,24,39,1)] transition-all font-black uppercase tracking-wider">
               Next Step <mat-icon iconPositionEnd>arrow_forward</mat-icon>
             </button>
 
-            <button *ngIf="currentStep === 3" type="submit" [disabled]="loading" mat-flat-button color="primary" class="!px-8 !bg-green-500 hover:!bg-green-600 !rounded-sm !border-2 !border-gray-900 !shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] hover:!translate-y-[1px] hover:!translate-x-[1px] hover:!shadow-[1px_1px_0px_0px_rgba(17,24,39,1)] transition-all font-black uppercase tracking-wider">
+            <button *ngIf="currentStep === 3" type="submit" [disabled]="loading || !hasAcceptedPolicies" mat-flat-button color="primary" class="!px-8 !bg-green-500 hover:!bg-green-600 !rounded-sm !border-2 !border-gray-900 !shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] hover:!translate-y-[1px] hover:!translate-x-[1px] hover:!shadow-[1px_1px_0px_0px_rgba(17,24,39,1)] transition-all font-black uppercase tracking-wider">
               <mat-icon *ngIf="loading" class="animate-spin mr-2">autorenew</mat-icon>
               {{ loading ? 'Sending...' : 'Send Code' }}
             </button>
 
-            <button *ngIf="currentStep === 4" type="submit" [disabled]="loading" mat-flat-button color="primary" class="!px-8 !bg-green-500 hover:!bg-green-600 !rounded-sm !border-2 !border-gray-900 !shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] hover:!translate-y-[1px] hover:!translate-x-[1px] hover:!shadow-[1px_1px_0px_0px_rgba(17,24,39,1)] transition-all font-black uppercase tracking-wider">
+            <button *ngIf="currentStep === 4" type="submit" [disabled]="loading || !hasAcceptedPolicies" mat-flat-button color="primary" class="!px-8 !bg-green-500 hover:!bg-green-600 !rounded-sm !border-2 !border-gray-900 !shadow-[2px_2px_0px_0px_rgba(17,24,39,1)] hover:!translate-y-[1px] hover:!translate-x-[1px] hover:!shadow-[1px_1px_0px_0px_rgba(17,24,39,1)] transition-all font-black uppercase tracking-wider">
               <mat-icon *ngIf="loading" class="animate-spin mr-2">autorenew</mat-icon>
               {{ loading ? 'Verifying...' : 'Verify & Complete' }}
             </button>
@@ -595,10 +617,12 @@ export class RegisterComponent implements OnInit, OnDestroy {
   private supabaseService = inject(SupabaseService);
   private authService = inject(AuthService);
   private router = inject(Router);
+  private dialog = inject(MatDialog);
 
   registerForm: FormGroup = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(6)]],
+    accepted_policies: [false, Validators.requiredTrue],
     full_name: ['', Validators.required],
     date_of_birth: ['', Validators.required],
     gender: ['', Validators.required],
@@ -697,12 +721,36 @@ export class RegisterComponent implements OnInit, OnDestroy {
   }
 
   // ---- Wizard Logic ----
+  get hasAcceptedPolicies(): boolean {
+    return this.registerForm.get('accepted_policies')?.value === true;
+  }
+
+  openLegal(type: 'privacy' | 'terms') {
+    this.dialog.open(LegalDialogComponent, {
+      width: '95vw',
+      maxWidth: '700px',
+      panelClass: 'modern-dialog',
+      data: { type }
+    });
+  }
+
+  private requirePolicyAcceptance(): boolean {
+    if (this.hasAcceptedPolicies) return true;
+
+    this.registerForm.get('accepted_policies')?.markAsTouched();
+    this.errorMsg = 'Please agree to the User Agreement and Privacy Policy to continue.';
+    this.currentStep = 1;
+    return false;
+  }
+
   async nextStep() {
+    if (this.loading) return;
     this.errorMsg = '';
+    if (!this.requirePolicyAcceptance()) return;
     
     // Validate Step 1
     if (this.currentStep === 1) {
-      const step1Fields = ['email', 'password'];
+      const step1Fields = ['email', 'password', 'accepted_policies'];
       let isValid = true;
       step1Fields.forEach(field => {
         const control = this.registerForm.get(field);
@@ -747,6 +795,8 @@ export class RegisterComponent implements OnInit, OnDestroy {
       });
       if (!isValid) return;
     }
+
+    if (!this.requirePolicyAcceptance()) return;
 
     if (this.currentStep < 3) {
       this.currentStep++;
@@ -837,8 +887,8 @@ export class RegisterComponent implements OnInit, OnDestroy {
     }
   }
 
-  filterBoardingHouses(value: string) {
-    const filterValue = value.toLowerCase();
+  filterBoardingHouses(value: string | null) {
+    const filterValue = (value || '').toLowerCase();
     this.filteredBoardingHouses = this.approvedBoardingHouses.filter(house => 
       house.name.toLowerCase().includes(filterValue) || 
       house.street_address.toLowerCase().includes(filterValue)
@@ -1070,9 +1120,17 @@ export class RegisterComponent implements OnInit, OnDestroy {
 
   // ---- Submit Logic ----
   async onSubmit() {
+    if (this.loading) return;
     this.formSubmitted = true;
     this.errorMsg = '';
     this.successMsg = '';
+    if (!this.requirePolicyAcceptance()) return;
+
+    // Enter on an earlier step must validate that step, not create an account.
+    if (this.currentStep < 3) {
+      await this.nextStep();
+      return;
+    }
 
     if (this.currentStep === 4) {
       await this.verifyOtpAndComplete();
@@ -1106,6 +1164,10 @@ export class RegisterComponent implements OnInit, OnDestroy {
     try {
       // Check if email already exists
       const emailExists = await this.authService.checkEmailExists(formVals.email);
+      if (!this.requirePolicyAcceptance()) {
+        this.loading = false;
+        return;
+      }
       
       if (emailExists) {
         const { error: signInCheckError } = await this.supabaseService.supabase.auth.signInWithPassword({
@@ -1114,6 +1176,10 @@ export class RegisterComponent implements OnInit, OnDestroy {
         });
 
         if (signInCheckError?.message.toLowerCase().includes('email not confirmed')) {
+          if (!this.requirePolicyAcceptance()) {
+            this.loading = false;
+            return;
+          }
           this.errorMsg = 'This email is already registered but unverified. We are resending your code...';
           
           const { error: resendError } = await this.supabaseService.supabase.auth.resend({
@@ -1169,6 +1235,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
   }
 
   async verifyOtpAndComplete() {
+    if (this.loading || !this.requirePolicyAcceptance()) return;
     const otpControl = this.registerForm.get('otp');
     otpControl?.setValidators([Validators.required, Validators.pattern('^[0-9]{6}$')]);
     otpControl?.updateValueAndValidity();
@@ -1217,7 +1284,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
   }
 
   async resendOtp() {
-    if (this.resendTimer > 0) return;
+    if (this.loading || !this.requirePolicyAcceptance() || this.resendTimer > 0) return;
     
     this.loading = true;
     this.errorMsg = '';
@@ -1249,6 +1316,10 @@ export class RegisterComponent implements OnInit, OnDestroy {
   }
 
   private async uploadProfileAndComplete(userId: string) {
+    if (!this.requirePolicyAcceptance()) {
+      this.loading = false;
+      return;
+    }
     try {
       const formVals = this.registerForm.value;
 
@@ -1310,7 +1381,7 @@ export class RegisterComponent implements OnInit, OnDestroy {
       if (profileError) throw profileError;
 
       this.successMsg = 'Registration successful! You can now log in.';
-      this.registerForm.reset();
+      this.registerForm.reset({ accepted_policies: false });
       this.selectedFile = null;
       this.formSubmitted = false;
       this.currentStep = 1;
